@@ -4,7 +4,8 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/**", "node_modules/**", "tmp/**"] },
+  // ios/: the native project (Swift) and its copy of dist/.
+  { ignores: ["dist/**", "node_modules/**", "tmp/**", "ios/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

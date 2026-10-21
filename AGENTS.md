@@ -41,7 +41,8 @@ Never report work as done without a green `verify`. Re-run one check alone:
    tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/inter
    (bundled typeface, so it works offline), mediabunny (lossless MP4/MOV
    trimming — the platform has no muxer; loaded only when someone trims),
-   @supabase/supabase-js (accounts; loaded only when someone signs in).
+   @supabase/supabase-js (accounts; loaded only when someone signs in),
+   @capacitor/core (native iPhone app bridge; inert in a browser).
    Server: @vercel/functions (only for `next()` in the middleware). That is
    the list.
 5. **Design system first:** [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
@@ -63,6 +64,7 @@ src/timeline/  the waveform timeline: pure model (tested) + canvas
 src/cleanup/   "Recently deleted" (bring back, delete now)
 src/account/   the Supabase adapter: sign-in, subscription (nothing else talks to Supabase)
 supabase/      migrations (schema + row-level security) and the policy checklist
+ios/, src/native/  the native iPhone app (Capacitor) and its Photos plugin — docs/NATIVE.md
 src/trim/      the video trim dialog (filmstrip, handles, preview)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
 src/ui/kit/    design-system components: Button, Tip, Kbd, Segmented, Switch, Popover, Dialog
