@@ -69,9 +69,10 @@ export type Media = {
   /**
    * Off the rail, in "Recently deleted". `path`: where the file waits inside
    * `_reel_trash/` — deleted for good after `until`. No `path`: only hidden
-   * (files mode, or a folder that is left as it is).
+   * (files mode, or a folder that is left as it is). `from`: where the file
+   * was taken from — where "bring back" puts it.
    */
-  binned?: { path?: string; until: string };
+  binned?: { path?: string; until: string; from?: string };
   /** A trim kept as a decision, applied on export (folder left as it is). Seconds. */
   trim?: { start: number; end: number };
 };

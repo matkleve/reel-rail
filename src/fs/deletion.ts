@@ -63,18 +63,19 @@ export function withoutMedia(reel: ReelFile, ids: Iterable<string>): ReelFile {
 }
 
 /**
- * Removes one file for good. A file that is already gone counts as deleted
- * (that is the goal); anything else throws.
+ * Removes one file for good. Returns false if it was already gone (the goal
+ * either way); anything else throws.
  */
-export async function deletePath(root: FileSystemDirectoryHandle, path: string): Promise<void> {
+export async function deletePath(root: FileSystemDirectoryHandle, path: string): Promise<boolean> {
   const parts = path.split("/");
   const name = parts.pop()!;
   try {
     let dir = root;
     for (const p of parts) dir = await dir.getDirectoryHandle(p);
     await dir.removeEntry(name);
+    return true;
   } catch (err) {
-    if (err instanceof DOMException && err.name === "NotFoundError") return;
+    if (err instanceof DOMException && err.name === "NotFoundError") return false;
     throw err;
   }
 }

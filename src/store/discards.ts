@@ -40,6 +40,24 @@ export function editsInPlace(): boolean {
 }
 
 let sweeping = false;
+/** Media a file operation is working on right now (sweep, trim) — the others keep their hands off. */
+const busy = new Set<string>();
+
+/** Runs `fn` with `id` reserved; refuses if something else is already moving that file. */
+export async function withFileLock<T>(id: string, fn: () => Promise<T>): Promise<T> {
+  if (busy.has(id)) throw new Error("This file is being moved right now — try again in a moment.");
+  busy.add(id);
+  try {
+    return await fn();
+  } finally {
+    busy.delete(id);
+  }
+}
+
+const stillDiscarded = (id: string) => {
+  const m = reel().media[id];
+  return !!m && m.rating === DISCARD && !m.binned && !m.missing;
+};
 
 /** Takes discards whose countdown ran out off the rail; in place: into _reel_trash/. */
 export async function sweep(): Promise<void> {
@@ -49,26 +67,32 @@ export async function sweep(): Promise<void> {
   const due = dueToLeave(reel(), Date.now(), graceMs());
   if (!due.length) return;
   sweeping = true;
+  // Everything below works on THIS source and its root, even if another folder is opened meanwhile.
   const source = getSource();
+  const root = source.kind === "folder" ? getFolder().dir : undefined;
+  const current = () => getSource() === source;
   try {
     for (const m of due) {
-      const now = reel().media[m.id];
-      // Rated up, restored or gone since the list was made: leave it.
-      if (getSource() !== source || !now || now.rating !== DISCARD || now.binned || now.missing) continue;
-      if (!editsInPlace()) {
+      // Rated up, restored, gone or being trimmed since the list was made: leave it.
+      if (!current() || !stillDiscarded(m.id) || busy.has(m.id)) continue;
+      if (!root || !editsInPlace()) {
         patch(m.id, (x) => ({ ...x, binned: { until: binUntil() } }));
         continue;
       }
-      try {
-        const file = await getSource().getFile(now.path);
+      await withFileLock(m.id, async () => {
+        const now = reel().media[m.id]!;
+        const file = await source.getFile(now.path);
         // The file at that path must still be the one that was rated.
-        if (now.size !== undefined && (file.size !== now.size || file.lastModified !== now.mtime)) continue;
-        const path = await moveToTrash(getFolder().dir, now.path, takenBinPaths());
-        if (getSource() !== source) return;
-        patch(m.id, (x) => ({ ...x, binned: { path, until: binUntil() } }));
-      } catch (err) {
-        console.warn(`reel-rail: could not move ${now.path} out`, err);
-      }
+        if (now.size !== undefined && (file.size !== now.size || file.lastModified !== now.mtime)) return;
+        if (!current() || !stillDiscarded(m.id)) return;
+        const path = await moveToTrash(root, now.path, takenBinPaths());
+        // Kept (Keep, Z, swipe up) or another folder opened while the file moved: put it back.
+        if (!current() || !stillDiscarded(m.id)) {
+          await moveFile(root, path, now.path).catch((err) => console.error("reel-rail: could not move back", err));
+          return;
+        }
+        patch(m.id, (x) => ({ ...x, binned: { path, until: binUntil(), from: now.path } }));
+      }).catch((err) => console.warn(`reel-rail: could not move ${m.path} out`, err));
     }
   } finally {
     sweeping = false;
@@ -85,10 +109,11 @@ export function startSweep(): () => void {
 export async function restore(id: string): Promise<void> {
   const m = reel().media[id];
   if (!m?.binned) return;
-  let path = m.path;
+  // Where it was taken from (the record's path may since point at a byte-identical copy).
+  let path = m.binned.from ?? m.path;
   if (m.binned.path) {
     try {
-      path = await moveFile(getFolder().dir, m.binned.path, m.path);
+      path = await moveFile(getFolder().dir, m.binned.path, path);
     } catch (err) {
       showToast(`Couldn’t bring it back: ${err instanceof Error ? err.message : err}`, "error");
       return;
@@ -111,6 +136,7 @@ async function destroy(
   const source = getSource();
   const root = getFolder().dir;
   const gone: string[] = [];
+  const backByHand: string[] = [];
   let bytes = 0;
   let failed = 0;
   for (const id of ids) {
@@ -118,15 +144,27 @@ async function destroy(
     if (getSource() !== source) break;
     if (!m?.binned?.path || !due(m) || !m.binned.path.startsWith(`${TRASH_DIR}/`)) continue;
     try {
-      await deletePath(root, m.binned.path);
-      gone.push(id);
-      bytes += m.size ?? 0;
+      const existed = await deletePath(root, m.binned.path);
+      // Not in the trash any more but found in the library: someone moved it back by hand — keep the record.
+      if (!existed && !m.missing) backByHand.push(id);
+      else {
+        gone.push(id);
+        bytes += m.size ?? 0;
+      }
     } catch (err) {
       console.warn(`reel-rail: could not delete ${m.binned.path}`, err);
       failed++;
     }
   }
-  if (getSource() === source && gone.length) useReel.getState().refresh(withoutMedia(reel(), gone));
+  if (getSource() === source && (gone.length || backByHand.length)) {
+    const next = withoutMedia(reel(), gone);
+    for (const id of backByHand) {
+      const m = { ...next.media[id]! };
+      delete m.binned;
+      next.media[id] = m;
+    }
+    useReel.getState().refresh(next);
+  }
   return { count: gone.length, bytes, failed };
 }
 

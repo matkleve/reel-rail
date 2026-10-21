@@ -6,7 +6,7 @@ import { moveFile, moveToTrash } from "@/fs/trash";
 import { trimToBlob, trimToWritable, trimmedTakenAt, type TrimRange } from "@/fs/trimVideo";
 import { DISCARD, type Media } from "@/types";
 
-import { editsInPlace } from "./discards";
+import { editsInPlace, withFileLock } from "./discards";
 import { saveNow } from "./persist";
 import { useReel, withRating } from "./useReel";
 
@@ -35,7 +35,8 @@ export async function saveTrim(media: Media, range: TrimRange, onProgress: Progr
   const original = await getMediaFile(media);
   const when = await trimmedTakenAt(original, media.takenAt, range.start);
   if (getSource().kind === "folder") {
-    await trimInPlace(media, original, range, when, onProgress);
+    // Reserved, so the discard sweep cannot move this video while it is being replaced.
+    await withFileLock(media.id, () => trimInPlace(media, original, range, when, onProgress));
     return { kind: "replaced" };
   }
   return { kind: "share", file: await trimForSharing(media, original, range, when, onProgress) };
@@ -63,25 +64,25 @@ async function trimInPlace(media: Media, original: File, range: TrimRange, when:
     throw err;
   });
 
-  // 2. Only now does the original leave — and comes back if anything after this fails.
+  // 2. Only now does the original leave. From here on, any failure puts everything back.
   const taken = new Set(
     Object.values(useReel.getState().reel.media).flatMap((m) => (m.binned?.path ? [m.binned.path] : [])),
   );
   const parked = await moveToTrash(root, media.path, taken);
-  let file: File;
+  const before = useReel.getState().reel;
   try {
+    // 3. The record first, on disk: if the tab dies after this, the original is still
+    //    findable in Recently deleted. Then the trimmed file takes the original's name.
+    const old = withRating({ ...media, binned: { path: parked, until: binUntil(), from: media.path } }, DISCARD);
+    takeOver(media, { id, file: await tmp.getFile(), path: media.path, when }, old);
+    await saveNow();
     await rename(dir, tmp, tmpName, name);
-    file = await (await dir.getFileHandle(name)).getFile();
   } catch (err) {
+    useReel.getState().refresh(before);
     await moveFile(root, parked, media.path).catch(() => {});
     await dropTmp();
     throw err;
   }
-
-  // 3. The reel, saved at once: the trimmed file and where the original went.
-  const old = withRating({ ...media, binned: { path: parked, until: binUntil() } }, DISCARD);
-  takeOver(media, { id, file, path: media.path, when }, old);
-  await saveNow();
 }
 
 async function rename(dir: FileSystemDirectoryHandle, tmp: Renamable, tmpName: string, name: string) {
