@@ -1,6 +1,6 @@
 import type { Media } from "@/types";
 
-import { getRoot } from "./session";
+import { getFolder } from "./session";
 
 export const TRASH_DIR = "_reel_trash";
 
@@ -24,7 +24,7 @@ export async function moveToTrash(
   items: Media[],
   onProgress: (done: number) => void,
 ): Promise<{ id: string; path: string }[]> {
-  const root = getRoot();
+  const root = getFolder().dir;
   const moved: { id: string; path: string }[] = [];
   for (const [i, m] of items.entries()) {
     const parts = m.path.split("/");

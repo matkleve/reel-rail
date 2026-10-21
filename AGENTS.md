@@ -42,9 +42,9 @@ Never report work as done without a green `verify`. Re-run one check alone:
 ## Where things live
 
 ```
-src/fs/        file access: walk, hash, EXIF/video metadata, .reel.json, thumbnails, export
+src/fs/        file access: Source (FolderSource | FilesSource), hash, metadata, .reel.json, thumbnails, share, export
 src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, stacks, autosave
-src/carousel/  the 3D carousel: pure layout (tested) + cards
+src/carousel/  the 3D carousel: pure layout + gesture classifier (tested), cards, swipe hook
 src/timeline/  the waveform timeline: pure model (tested) + canvas
 src/cleanup/   the "Unusable" view (move to _reel_trash)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
@@ -56,7 +56,13 @@ docs/          TRAPS.md (code that misleads), diary/ (what was decided)
 ```
 
 Pure logic gets a `*.test.ts` next to it. Browser behaviour gets a step in
-`scripts/e2e.mjs` — jsdom cannot see the File System Access API.
+`scripts/e2e.mjs` (folder mode) or `scripts/e2e-ipad.mjs` (files mode, touch,
+iPad viewports) — jsdom cannot see the File System Access API.
+
+**Two modes, one app.** Folder mode (Chrome/Edge desktop) can write; files
+mode (iPad, Safari, Firefox, Brave) is read-only and shares instead. Anything
+that touches files goes through `getSource()`; anything only a folder can do
+checks `sourceKind` and offers the files-mode alternative.
 
 ## Code style
 

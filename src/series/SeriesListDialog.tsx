@@ -1,4 +1,4 @@
-import { Eye, FolderOutput, Layers } from "lucide-react";
+import { Eye, FolderOutput, Layers, Share } from "lucide-react";
 
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -40,6 +40,7 @@ export function SeriesListDialog() {
 function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
   const media = useReel((s) => s.reel.media);
   const { state, run } = useExport();
+  const share = useUi((s) => s.sourceKind === "files");
   const items = series.mediaIds.flatMap((id) => (media[id] ? [media[id]] : []));
 
   const show = () => {
@@ -57,7 +58,7 @@ function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
         <strong>{series.title}</strong>
         <span className="text-3">
           {items.length} items · {WHEN.format(new Date(series.createdAt))}
-          {series.exportedPath && <> · exported to {series.exportedPath}</>}
+          {series.exportedPath && <> · {series.exportedPath === "shared" || series.exportedPath === "downloads" ? series.exportedPath : `exported to ${series.exportedPath}`}</>}
         </span>
         <div className="thumb-strip is-small">
           {items.slice(1, 12).map((m) => (
@@ -71,8 +72,14 @@ function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
         <Button size="sm" icon={Eye} onClick={show}>
           Show
         </Button>
-        <Button size="sm" variant="secondary" icon={FolderOutput} onClick={() => void run(series)} disabled={state.kind === "running"}>
-          {series.exportedPath ? "Export again" : "Export"}
+        <Button
+          size="sm"
+          variant="secondary"
+          icon={share ? Share : FolderOutput}
+          onClick={() => void run(series)}
+          disabled={state.kind === "running"}
+        >
+          {share ? "Share" : series.exportedPath ? "Export again" : "Export"}
         </Button>
       </div>
     </li>

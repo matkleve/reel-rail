@@ -1,4 +1,4 @@
-import { Dices, FolderOutput } from "lucide-react";
+import { Dices, FolderOutput, Share } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useReel } from "@/store/useReel";
@@ -26,6 +26,7 @@ function CreateSeries({ onDone }: { onDone(): void }) {
   const [title, setTitle] = useState(() => suggestTitle(media));
   const [created, setCreated] = useState<Series>();
   const { state, run } = useExport();
+  const share = useUi((s) => s.sourceKind === "files");
 
   const create = () => {
     const series: Series = {
@@ -44,11 +45,12 @@ function CreateSeries({ onDone }: { onDone(): void }) {
       open
       onClose={onDone}
       title={created ? "Series created" : "New series"}
-      subtitle={`${media.length} items · saved in .reel.json — files are only copied when you export`}
+      subtitle={`${media.length} items · saved with your ratings — files are only copied when you ${share ? "share" : "export"}`}
       wide
       footer={
         <SeriesFooter
           created={created}
+          share={share}
           exporting={state.kind}
           onCancel={onDone}
           onCreateAndExport={() => void run(create())}
@@ -98,6 +100,8 @@ function CreateSeries({ onDone }: { onDone(): void }) {
 
 type FooterProps = {
   created?: Series;
+  /** Files mode: the series goes to the share sheet instead of a folder. */
+  share: boolean;
   exporting: ExportState["kind"];
   onCancel(): void;
   onCreateAndExport(): void;
@@ -116,8 +120,8 @@ function SeriesFooter(p: FooterProps) {
           Cancel
         </Button>
         <span className="spacer" />
-        <Button variant="secondary" icon={FolderOutput} onClick={p.onCreateAndExport}>
-          Create & export…
+        <Button variant="secondary" icon={p.share ? Share : FolderOutput} onClick={p.onCreateAndExport}>
+          {p.share ? "Create & share…" : "Create & export…"}
         </Button>
         <Button variant="primary" type="submit" form="series-form">
           Create series
@@ -128,8 +132,8 @@ function SeriesFooter(p: FooterProps) {
     <div className="footer-row" key="created">
       <span className="spacer" />
       {p.exporting === "idle" && (
-        <Button variant="secondary" icon={FolderOutput} onClick={p.onExport}>
-          Export…
+        <Button variant="secondary" icon={p.share ? Share : FolderOutput} onClick={p.onExport}>
+          {p.share ? "Share…" : "Export…"}
         </Button>
       )}
       <Button variant="primary" onClick={p.onCancel} disabled={p.exporting === "running"}>

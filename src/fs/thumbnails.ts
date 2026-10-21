@@ -79,6 +79,11 @@ async function imageSource(file: File): Promise<ImageBitmap> {
   try {
     return await createImageBitmap(file, { resizeWidth: SIZE, resizeQuality: "medium" });
   } catch {
+    // Safari rejects the resize options on some versions — decode at full size, draw() scales.
+  }
+  try {
+    return await createImageBitmap(file);
+  } catch {
     // Chrome cannot decode HEIC — but iPhones embed a JPEG preview in it.
     const jpeg = await exifr.thumbnail(file);
     if (!jpeg) throw new Error("undecodable");
@@ -93,6 +98,9 @@ function videoFrame(file: File): Promise<HTMLVideoElement & { close(): void }> {
     const done = () => URL.revokeObjectURL(url);
     v.muted = true;
     v.preload = "auto";
+    // iOS only decodes inline video with playsinline; without it the seek never lands.
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
     v.onloadedmetadata = () => (v.currentTime = Math.min(0.5, (v.duration || 1) / 2));
     v.onseeked = () => resolve(Object.assign(v, { close: done }));
     v.onerror = () => {

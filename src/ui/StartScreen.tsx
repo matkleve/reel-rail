@@ -1,34 +1,34 @@
-import { ArrowDownToLine, ArrowUpDown, FolderOpen, Lock, MonitorSmartphone } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { loadHandle } from "@/fs/handleStore";
 import type { ScanProgress } from "@/fs/scan";
-import { hasFileSystemAccess } from "@/fs/support";
-import { openFolder, pickAndOpen } from "@/store/openFolder";
+import { sourceMode } from "@/fs/support";
+import { openFolder, pickAndOpen } from "@/store/openSource";
 import { useUi } from "@/store/useUi";
 
+import { FilesStart } from "./FilesStart";
 import { Button } from "./kit/Button";
-import { Kbd } from "./kit/Kbd";
-import { Logo } from "./Logo";
+import { Hero, Privacy, Shell, StartError, Steps } from "./StartParts";
 
-/** Welcome, remembered folder, scan progress, and the unsupported-browser state. */
+/** Welcome (folder or files mode), and scan progress. */
 export function StartScreen() {
-  const { phase, progress, error, folderName } = useUi();
+  const { phase, progress, folderName } = useUi();
+  if (phase === "scanning") return <Scanning progress={progress} folderName={folderName} />;
+  return sourceMode() === "folder" ? <FolderStart /> : <FilesStart />;
+}
+
+function FolderStart() {
+  const error = useUi((s) => s.error);
   const [remembered, setRemembered] = useState<FileSystemDirectoryHandle>();
 
   useEffect(() => {
-    if (hasFileSystemAccess()) void loadHandle("root").then(setRemembered);
+    void loadHandle("root").then(setRemembered);
   }, []);
-
-  if (!hasFileSystemAccess()) return <Unsupported />;
-  if (phase === "scanning") return <Scanning progress={progress} folderName={folderName} />;
 
   return (
     <Shell>
-      <h1 className="start-title">Sort a day of travel shots in minutes.</h1>
-      <p className="start-lead">
-        Your photos and videos on one timeline. Rate them with two keys, pick the keepers, bundle them into series.
-      </p>
+      <Hero />
       <div className="start-actions">
         {remembered ? (
           <>
@@ -45,46 +45,12 @@ export function StartScreen() {
           </Button>
         )}
       </div>
-      {error && (
-        <p className="error-text" role="alert">
-          {error}
-        </p>
-      )}
+      <StartError error={error} />
       <Steps />
-      <p className="start-privacy">
-        <Lock size={13} aria-hidden="true" />
-        <span>
-          Nothing leaves this computer. Your originals are never changed — reel-rail only writes one file,{" "}
-          <code>.reel.json</code>.
-        </span>
-      </p>
-    </Shell>
-  );
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="start">
-      <div className="start-brand">
-        <Logo size={26} />
-        reel-rail
-      </div>
-      <div className="start-body">{children}</div>
-    </main>
-  );
-}
-
-function Unsupported() {
-  return (
-    <Shell>
-      <div className="start-icon">
-        <MonitorSmartphone size={22} />
-      </div>
-      <h2 className="start-title-sm">Open reel-rail in Chrome or Edge on a computer</h2>
-      <p className="start-lead">
-        It works directly with a folder on your disk — that is how it stays private and never uploads anything. This
-        browser does not allow that (yet).
-      </p>
+      <Privacy>
+        Nothing leaves this computer. Your originals are never changed — reel-rail only writes one file,{" "}
+        <code>.reel.json</code>.
+      </Privacy>
     </Shell>
   );
 }
@@ -113,28 +79,3 @@ function Scanning({ progress, folderName }: { progress?: ScanProgress; folderNam
   );
 }
 
-function Steps() {
-  return (
-    <ol className="start-steps">
-      <li>
-        <FolderOpen size={18} aria-hidden="true" />
-        <strong>Open</strong>
-        <span>a trip folder — sub-folders included</span>
-      </li>
-      <li>
-        <ArrowUpDown size={18} aria-hidden="true" />
-        <strong>Rate</strong>
-        <span>
-          <Kbd>↑</Kbd> <Kbd>↓</Kbd> five levels, from discard to favorite
-        </span>
-      </li>
-      <li>
-        <ArrowDownToLine size={18} aria-hidden="true" />
-        <strong>Pick</strong>
-        <span>
-          <Kbd>Space</Kbd> copies the keeper to your picks folder
-        </span>
-      </li>
-    </ol>
-  );
-}

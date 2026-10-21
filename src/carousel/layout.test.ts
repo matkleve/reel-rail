@@ -91,3 +91,12 @@ describe("layoutCarousel", () => {
     expect(cards[0]!.w).toBeLessThanOrEqual(STAGE.w * 0.7 + 0.001);
   });
 });
+
+describe("floor", () => {
+  it("rises in a portrait stage so cards are not pushed to the bottom", () => {
+    const land = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 1600, h: 600 }).cards[0]!;
+    const port = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 600, h: 1000 }).cards[0]!;
+    expect(land.bottom / 600).toBeCloseTo(0.8);
+    expect(port.bottom / 1000).toBeCloseTo(0.68);
+  });
+});

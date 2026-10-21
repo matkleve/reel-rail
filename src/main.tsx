@@ -10,6 +10,7 @@ import "./styles/layout.css";
 import "./styles/carousel.css";
 import "./styles/waveform.css";
 import "./styles/screens.css";
+import "./styles/responsive.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

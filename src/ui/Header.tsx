@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   Moon,
   Settings,
+  Share,
   SlidersHorizontal,
   Sun,
   Trash2,
@@ -16,7 +17,8 @@ import {
 
 import { pickPicksFolder } from "@/fs/picksFolder";
 import { activeExtras, type RatingFilter } from "@/store/filters";
-import { pickAndOpen } from "@/store/openFolder";
+import { pickAndOpen } from "@/store/openSource";
+import { sharePicks } from "@/store/picks";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import { DISCARD, PICKS } from "@/types";
@@ -27,6 +29,7 @@ import { Popover } from "./kit/Popover";
 import { Segmented } from "./kit/Segmented";
 import { Logo } from "./Logo";
 import { FilterPanel } from "./FilterPanel";
+import { LibraryMenu } from "./LibraryMenu";
 
 const RATING_OPTIONS: { value: RatingFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -51,6 +54,7 @@ export function Header() {
   });
   const [discards, picks] = counts.split(":").map(Number) as [number, number];
   const { theme, set } = useUi();
+  const files = useUi((s) => s.sourceKind === "files");
   const extras = activeExtras(filters);
 
   return (
@@ -60,7 +64,7 @@ export function Header() {
           <Logo />
           reel-rail
         </span>
-        <FolderMenu />
+        {files ? <LibraryMenu /> : <FolderMenu />}
       </div>
 
       <div className="header-center">
@@ -72,8 +76,8 @@ export function Header() {
         />
         <Popover
           trigger={(p) => (
-            <Button icon={SlidersHorizontal} variant={extras ? "secondary" : "ghost"} count={extras} {...p}>
-              Filter
+            <Button icon={SlidersHorizontal} variant={extras ? "secondary" : "ghost"} count={extras} title="Filter" {...p}>
+              <span className="btn-label is-minor">Filter</span>
             </Button>
           )}
         >
@@ -83,14 +87,20 @@ export function Header() {
 
       <div className="header-right">
         <SaveState />
-        <Button icon={ArrowDownToLine} count={picks} onClick={() => void choosePicks()} title="Where Space copies to">
-          Picks
+        {files ? (
+          <Button icon={Share} count={picks} onClick={() => void sharePicks()} title="Share all picks — Photos, Files, AirDrop…">
+            <span className="btn-label">Share picks</span>
+          </Button>
+        ) : (
+          <Button icon={ArrowDownToLine} count={picks} onClick={() => void choosePicks()} title="Where Space copies to">
+            <span className="btn-label">Picks</span>
+          </Button>
+        )}
+        <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })} title="Series">
+          <span className="btn-label">Series</span>
         </Button>
-        <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })}>
-          Series
-        </Button>
-        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })}>
-          Discards
+        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title="Discards">
+          <span className="btn-label">Discards</span>
         </Button>
         <span className="divider-v" />
         <Button

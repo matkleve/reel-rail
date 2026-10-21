@@ -15,7 +15,14 @@ export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.34, [-1]: 0.58, 0:
 export const LIFT: Record<Rating, number> = { [-2]: -0.1, [-1]: -0.045, 0: 0, 1: 0.045, 2: 0.09 };
 
 const BASE = 0.6; // base card height / stage height
-export const FLOOR = 0.8; // floor line / stage height — leaves room for the dock below
+/**
+ * Floor line / stage height. Low in landscape (room for the dock below); in a
+ * portrait stage cards are width-bound and would leave a void above, so the
+ * floor rises toward the middle.
+ */
+export function floorFor(stage: { w: number; h: number }): number {
+  return stage.h > stage.w ? 0.68 : 0.8;
+}
 const GAP = 14;
 const DAY_GAP = 72;
 const MAX_SIDE = 24; // cards per side, upper bound
@@ -58,13 +65,14 @@ export function layoutCarousel(
   const seps: DaySep[] = [];
   if (current < 0 || current >= ids.length || stage.w <= 0) return { cards, seps };
 
+  const floor = floorFor(stage);
   const size = (id: string, d: number) => {
     const m = media[id]!;
     const aspect = Math.max(0.5, Math.min(2.2, aspectOf(id) ?? DEFAULT_ASPECT));
     let h = stage.h * BASE * RATING_SCALE[m.rating] * falloff(d);
     // A panorama in the centre must still leave room for its neighbours.
     if (d === 0 && h * aspect > stage.w * 0.7) h = (stage.w * 0.7) / aspect;
-    return { w: h * aspect, h, bottom: stage.h * (FLOOR - LIFT[m.rating]) };
+    return { w: h * aspect, h, bottom: stage.h * (floor - LIFT[m.rating]) };
   };
   const place = (i: number, d: number, x: number) => {
     const { w, h, bottom } = size(ids[i]!, d);

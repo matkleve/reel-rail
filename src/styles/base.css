@@ -23,6 +23,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  /* App, not document: no double-tap zoom, no rubber-band scrolling of the shell. */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,

@@ -1,6 +1,7 @@
 import { MapPin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { isTouch } from "@/fs/support";
 import { setPlace } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -105,6 +106,16 @@ function Hints() {
       // Private mode: hidden for this session only.
     }
   };
+  if (isTouch()) {
+    return (
+      <div className="hints" role="note">
+        <span>Swipe ← → to browse</span>
+        <span>↑ ↓ to rate</span>
+        <span>Hold to select</span>
+        <Button icon={X} label="Hide hints" size="sm" onClick={dismiss} />
+      </div>
+    );
+  }
   return (
     <div className="hints" role="note">
       <span>

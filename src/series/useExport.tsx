@@ -1,7 +1,9 @@
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useState } from "react";
 
-import { exportSeries } from "@/fs/exportSeries";
+import { exportName, exportSeries } from "@/fs/exportSeries";
+import { getMediaFile, getSource } from "@/fs/session";
+import { renamed, shareFiles } from "@/fs/share";
 import { useReel } from "@/store/useReel";
 import type { Series } from "@/types";
 
@@ -11,7 +13,11 @@ export type ExportState =
   | { kind: "done"; path: string }
   | { kind: "error"; message: string };
 
-/** Pick a target folder, copy the series into it, record `exportedTo`. */
+/**
+ * Folder mode: pick a target folder, copy the series into it.
+ * Files mode: hand the series to the share sheet, named 01_…, 02_….
+ * Either way `exportedTo` records it.
+ */
 export function useExport() {
   const [state, setState] = useState<ExportState>({ kind: "idle" });
 
@@ -21,6 +27,21 @@ export function useExport() {
       const m = reel.media[id];
       return m && !m.missing ? [m] : [];
     });
+    if (getSource().kind === "files") {
+      try {
+        const files = await Promise.all(
+          media.map(async (m, i) => renamed(await getMediaFile(m), exportName(i, media.length, m.path))),
+        );
+        const result = await shareFiles(files, series.title);
+        if (result === "cancelled") return;
+        const path = result === "shared" ? "shared" : "downloads";
+        markExported(series.id, path);
+        setState({ kind: "done", path });
+      } catch (err) {
+        setState({ kind: "error", message: err instanceof Error ? err.message : String(err) });
+      }
+      return;
+    }
     let target: FileSystemDirectoryHandle;
     try {
       target = await window.showDirectoryPicker({ id: "reel-export", mode: "readwrite" });
@@ -59,7 +80,8 @@ export function ExportStatus({ state }: { state: ExportState }) {
   if (state.kind === "done")
     return (
       <p className="export-status success-text" aria-live="polite">
-        <CircleCheck size={15} aria-hidden="true" /> Exported to <code>{state.path}</code>
+        <CircleCheck size={15} aria-hidden="true" />
+        {state.path === "shared" ? "Shared" : state.path === "downloads" ? "Downloaded" : <>Exported to <code>{state.path}</code></>}
       </p>
     );
   if (state.kind === "error")

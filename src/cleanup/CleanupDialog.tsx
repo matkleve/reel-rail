@@ -25,6 +25,8 @@ function Cleanup({ onDone }: { onDone(): void }) {
   );
   const bytes = items.reduce((n, m) => n + (m.size ?? 0), 0);
   const [confirming, setConfirming] = useState(false);
+  // Files mode has read-only access: nothing can be moved, so this is a checklist.
+  const canMove = useUi((s) => s.sourceKind === "folder");
   const [done, setDone] = useState<number>();
 
   const run = async () => {
@@ -48,7 +50,12 @@ function Cleanup({ onDone }: { onDone(): void }) {
       subtitle={items.length ? `${items.length} items · ${formatBytes(bytes)}` : undefined}
       wide
       footer={
-        items.length ? (
+        items.length && !canMove ? (
+          <span className="note">
+            reel-rail can’t delete from your photo library. Use this list to clear them out in the Photos app — or keep
+            them; they stay marked.
+          </span>
+        ) : items.length ? (
           <CleanupFooter
             count={items.length}
             bytes={bytes}

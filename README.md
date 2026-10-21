@@ -9,8 +9,8 @@ timeline, with the keyboard, entirely on your own computer.
   `.reel.json`, inside the folder.
 - **Installable** as an app (PWA) and works offline.
 
-Runs in **Chrome or Edge on a desktop computer** (Windows, macOS, Linux,
-ChromeOS). For iPad, see [below](#ipad).
+Best in **Chrome or Edge on a computer** (folder mode). On an **iPad**, in
+Safari, Firefox or Brave it runs in [files mode](#ipad-safari-firefox-brave--files-mode).
 
 ---
 
@@ -39,6 +39,7 @@ Other commands:
 ```bash
 npm test           # unit tests
 npm run e2e        # end-to-end test in real Chromium (needs a build)
+npm run e2e:ipad   # files mode on iPad-sized touch viewports (needs a build)
 npm run verify     # everything: typecheck, lint, tests, build, e2e
 ```
 
@@ -204,53 +205,50 @@ type Series = {
 
 ---
 
-## iPad
+## iPad, Safari, Firefox, Brave — files mode
 
-**Today it does not run on iPad.** Every browser on iPadOS uses Apple's WebKit
-engine, and WebKit does not offer the folder access (`showDirectoryPicker`)
-that reel-rail is built on. Chrome or Edge on an iPad behave like Safari here.
-You get the "open in Chrome or Edge on a computer" screen instead.
+Folder mode (above) needs Chrome or Edge on a computer. **Everywhere else
+reel-rail switches to files mode by itself:** iPad and iPhone (every browser
+there is Safari underneath), Safari on the Mac, Firefox, and Brave (which
+turns folder access off by default).
 
-What an **iPad mode** would look like (about a day of work, plus the touch
-gestures from phase 3):
+**On the iPad:**
 
-1. **Host it** as a static site over HTTPS (Netlify, Cloudflare Pages or
-   GitHub Pages; there is no server code). In Safari: Share → **Add to Home
-   Screen**. That makes it a full-screen app, and Safari does not clear
-   storage for home-screen apps.
-2. **Import with the normal file picker** instead of a folder: "Choose files"
-   lets your brother pick from **Photos** or **Files** (iCloud Drive, a USB-C
-   SSD or SD-card reader, a network share), and multi-select works.
-3. **Keep `.reel.json` in browser storage** (IndexedDB) instead of in the
-   folder. Media are not copied: on the next session he picks the files again,
-   and the content hash puts every rating back in place. This is exactly what
-   the hash design is good for.
-4. **Export via the share sheet** (`navigator.share` with files): "Save to
-   Files", "Save Images" to Photos, AirDrop, or straight into Instagram. Files
-   keep the `01_`, `02_` order prefixes.
-5. **Touch:** swipe up/down to rate, left/right to move, long-press to select;
-   the waveform already works with a finger.
-   With a Magic Keyboard, all shortcuts above work as they are.
-6. **Sync with the desktop** by exporting/importing the review file (for
-   example through iCloud Drive).
+1. Open **https://reel-rail.vercel.app** in Safari, log in, then Share →
+   **Add to Home Screen**. From then on it opens full-screen like an app (log
+   in once more inside the app — home-screen apps keep their own cookies).
+2. Tap **Add photos & videos** → Photo Library (or Choose File for the Files
+   app, an SD-card reader or a USB-C drive). Select an album → Select all.
+3. **Swipe** left/right to browse, **swipe up/down** to rate (a label shows
+   the level you will land on), **press and hold** a photo to select it. The
+   dock buttons do the same by tap; a Magic Keyboard runs all shortcuts.
+4. **Pick** the keepers, then **Share picks** in the header: the share sheet
+   offers Save to Photos, Save to Files, AirDrop, Instagram…
+   A series is shared the same way, numbered `01_…`, `02_…`.
+5. Ratings, tags, picks and series are saved **on the device**. Next time,
+   add the same photos again and everything comes back (matched by content
+   hash) — the start screen says how many rated items it remembers.
 
-Caveats: photos picked from the Photos app may be converted from HEIC to JPEG
-(then their hash differs from the original on the Mac), and the picker can
-strip location data if "Location" is switched off in its options. Picking from
-**Files** passes the originals through unchanged.
+**What is different from folder mode:** the browser only lends files for one
+session and cannot write to them, so there is no `.reel.json` next to the
+photos, no picks *folder* (share instead), and "Discards" is a checklist —
+delete those in the Photos app. On desktop Safari/Firefox/Brave you can also
+add a whole folder (read-only). Try files mode in Chrome with
+`?mode=files` in the address.
 
-The alternative is a native wrapper (e.g. Capacitor) with real file access.
-That works, but it needs an Apple developer account and App Store/TestFlight
-distribution.
+Caveats: the Photos picker may convert HEIC to JPEG ("Options → Most
+Compatible"), and then a photo's hash differs from the original on the Mac;
+picking from **Files** passes originals through unchanged. Switch
+"Location" on in the picker's options to keep GPS.
 
 ---
 
 ## Project layout
 
 ```
-src/fs/        file access: walk, hash, EXIF/video metadata, .reel.json, thumbnails, export, picks, trash
+src/fs/        file access: sources (folder / picked files), hash, EXIF/video metadata, .reel.json, thumbnails, share, export, picks, trash
 src/store/     zustand stores, filters, stacks, autosave, actions
-src/carousel/  the 3D carousel: pure layout (tested), cards, original/video
+src/carousel/  the 3D carousel: pure layout + gestures (tested), cards, swipe, original/video
 src/timeline/  the waveform: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
 src/cleanup/   the "Discards" view

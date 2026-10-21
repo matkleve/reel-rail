@@ -1,12 +1,11 @@
-import { saveReel } from "@/fs/reelFile";
-import { getRoot } from "@/fs/session";
+import { getSource } from "@/fs/session";
 
 import { useReel } from "./useReel";
 
 const DEBOUNCE_MS = 500;
 
 /**
- * Saves `.reel.json` 500 ms after the last change. Writes never overlap: a
+ * Saves the reel (`.reel.json`, or the browser library in files mode) 500 ms after the last change. Writes never overlap: a
  * change that lands mid-write schedules exactly one follow-up save.
  */
 export function startAutosave(): () => void {
@@ -24,7 +23,7 @@ export function startAutosave(): () => void {
     const { reel, setSaveState } = useReel.getState();
     setSaveState("saving");
     try {
-      await saveReel(getRoot(), reel);
+      await getSource().saveReel(reel);
       setSaveState("saved");
     } catch (err) {
       console.error("reel-rail: save failed", err);

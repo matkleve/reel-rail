@@ -1,4 +1,5 @@
-import { getMediaFile } from "@/fs/session";
+import { getMediaFile, getSource } from "@/fs/session";
+import { renamed, shareFiles } from "@/fs/share";
 import { copyInto, getPicksFolder, removeCopy } from "@/fs/picksFolder";
 import { PICKS, type Media } from "@/types";
 
@@ -17,6 +18,7 @@ export async function togglePick(): Promise<void> {
   const s = useReel.getState();
   const items = targetIds(s).flatMap((id) => (s.reel.media[id] ? [s.reel.media[id]] : []));
   if (!items.length) return;
+  if (getSource().kind === "files") return toggleMark(items);
 
   let dir: FileSystemDirectoryHandle;
   try {
@@ -57,4 +59,43 @@ async function takeBack(dir: FileSystemDirectoryHandle, items: Media[]): Promise
       ? `Removed from the list — ${kept} copy(ies) left in ${dir.name} because they changed`
       : `Removed from ${dir.name}`,
   );
+}
+
+/**
+ * Files mode has no folder to copy into: a pick is a mark, and the picks are
+ * handed over together with "Share picks" (share sheet / downloads).
+ */
+function toggleMark(items: Media[]): void {
+  const off = items.every(isPicked);
+  const at = new Date().toISOString();
+  useReel.getState().patch(
+    items.map((m) => m.id),
+    (m) => ({
+      ...m,
+      exportedTo: off ? m.exportedTo.filter((e) => e.series !== PICKS) : isPicked(m) ? m.exportedTo : [...m.exportedTo, { series: PICKS, at }],
+    }),
+  );
+  showToast(off ? "Unpicked" : `Picked${items.length > 1 ? ` ${items.length}` : ""} — share them with “Share picks”`);
+}
+
+/** All picked items that are loaded right now, in timeline order. */
+export function pickedMedia(): Media[] {
+  const { order, reel } = useReel.getState();
+  return order.flatMap((id) => (reel.media[id] && isPicked(reel.media[id]) ? [reel.media[id]] : []));
+}
+
+/** Files mode: hand every pick to the share sheet (or download them). From a click only. */
+export async function sharePicks(): Promise<void> {
+  const items = pickedMedia();
+  if (!items.length) {
+    showToast("Nothing picked yet — tap Pick (or press Space) on a photo first");
+    return;
+  }
+  try {
+    const files = await Promise.all(items.map(async (m) => renamed(await getMediaFile(m), baseName(m.path))));
+    const result = await shareFiles(files, "reel-rail picks");
+    if (result === "downloaded") showToast(`${files.length} files downloaded`);
+  } catch (err) {
+    showToast(`Could not share: ${err instanceof Error ? err.message : err}`, "error");
+  }
 }

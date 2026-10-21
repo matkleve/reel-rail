@@ -79,6 +79,22 @@ Every interactive element has all five states: default, hover, active
 └ waveform 112px — days, tag-coloured waves, cursor ───────────────────────────────────────────────────────────────────┘
 ```
 
+## Touch
+
+`src/styles/responsive.css` holds every touch and small-screen override.
+
+- `(pointer: coarse)`: controls grow to 40 px, rating buttons to 46 px
+  (Apple's 44 px minimum), the dock to 62 px.
+- `(hover: none)`: tooltips are off — they would stick after a tap. So on
+  touch an icon-only button must be self-explanatory or keep its label.
+- Header labels collapse in two steps: minor ones (Filter, Saved) below
+  1240 px, the rest below 1100 px. An 11" iPad in landscape keeps "Share
+  picks", "Series" and "Discards" as words.
+- The stage owns every gesture (`touch-action: none`); swipes give live
+  feedback (the row follows the finger, a pill names the level you will land
+  on) before they commit.
+- Safe-area insets pad the header and the waveform in the home-screen app.
+
 ## Rules
 
 - No raw colour, radius, shadow or duration in a component or CSS rule:

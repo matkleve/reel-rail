@@ -9,6 +9,8 @@ export type DialogKind = "createSeries" | "seriesList" | "help" | "settings" | "
 type UiState = {
   phase: Phase;
   folderName?: string;
+  /** Which kind of source is open — the UI offers folder or share actions accordingly. */
+  sourceKind?: "folder" | "files";
   progress?: ScanProgress;
   error?: string;
   dialog: DialogKind;

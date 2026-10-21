@@ -1,0 +1,149 @@
+/* ---------------------------------------------------------------------------
+   Touch and smaller screens (iPad landscape 1024–1366, portrait 768–1024).
+   Only overrides — every rule here adjusts something defined elsewhere.
+--------------------------------------------------------------------------- */
+
+/* Home-screen app on iPad/iPhone: content runs under the status bar and the
+   home indicator (viewport-fit=cover), so the edges take the safe-area insets. */
+.app {
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    calc(var(--wave-h) + env(safe-area-inset-bottom, 0px));
+}
+.header {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: calc(var(--space-4) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
+}
+.wave {
+  border-bottom: env(safe-area-inset-bottom, 0px) solid var(--wave-bg);
+}
+.start {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* No hover on touch: a tooltip would stick after the tap. */
+@media (hover: none) {
+  .tip {
+    display: none;
+  }
+  .card:not(.is-current) .card-face:hover {
+    filter: brightness(var(--dim, 1));
+  }
+}
+
+/* Fingers need 44 px targets (Apple HIG). */
+@media (pointer: coarse) {
+  :root {
+    --control-sm: 36px;
+    --control-md: 40px;
+  }
+  .rate-btn {
+    width: 46px;
+    height: 46px;
+  }
+  .dock {
+    height: 62px;
+    border-radius: 20px;
+  }
+  .segmented button {
+    height: 34px;
+  }
+  .menu-item {
+    min-height: 42px;
+  }
+  .kbd-key {
+    display: none; /* "Space" on a Pick button means nothing without a keyboard */
+  }
+}
+
+/* Safari has no field-sizing yet: give the place field a sensible width. */
+@supports not (field-sizing: content) {
+  .place-field input {
+    width: 12ch;
+  }
+}
+
+/* Header: labels collapse to icons (+ counts) before anything overlaps.
+   First the minor ones (Filter, Saved) — an 11" iPad in landscape (1180)
+   keeps "Share picks", "Series", "Discards": on touch there are no tooltips
+   to explain a bare icon. */
+@media (max-width: 1240px) {
+  .header .btn-label.is-minor {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .save-state {
+    font-size: 0;
+    gap: 0;
+  }
+}
+@media (max-width: 1100px) {
+  .header .btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .header .btn:has(.btn-label) {
+    padding: 0 var(--space-2);
+  }
+}
+
+@media (max-width: 1000px) {
+  .wordmark {
+    margin-right: var(--space-1);
+    font-size: 0;
+    gap: 0;
+  }
+  .save-state {
+    font-size: 0;
+    gap: 0;
+  }
+  .header {
+    gap: var(--space-2);
+  }
+  .folder-btn {
+    max-width: 150px;
+  }
+  .segmented button {
+    padding: 0 var(--space-2);
+  }
+  /* The hints move from the top centre (where the date now needs the room) to above the dock. */
+  .hints {
+    top: auto;
+    bottom: 96px;
+  }
+  .stage-meta {
+    max-width: 62%;
+  }
+}
+
+@media (max-width: 1000px) and (pointer: coarse) {
+  .hints {
+    bottom: 104px;
+  }
+}
+
+/* Start screen on a portrait tablet / phone. */
+@media (max-width: 720px) {
+  .start-title {
+    font-size: 36px;
+  }
+  .start-steps {
+    grid-template-columns: 1fr;
+    max-width: 360px;
+    width: 100%;
+  }
+  .shortcut-groups,
+  .preset-grid {
+    grid-template-columns: 1fr;
+  }
+}

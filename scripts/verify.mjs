@@ -13,6 +13,7 @@ const CHECKS = [
   ["build", "npm", ["run", "--silent", "build"]],
   // After build: drives the production build in a real browser.
   ["e2e", "node", ["scripts/e2e.mjs"]],
+  ["e2e-ipad", "node", ["scripts/e2e-ipad.mjs"]],
 ];
 
 const only = process.argv.slice(2);

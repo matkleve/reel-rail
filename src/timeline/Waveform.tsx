@@ -1,5 +1,5 @@
 import { Star, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { useReel } from "@/store/useReel";
@@ -9,7 +9,8 @@ import { useSize } from "@/ui/useSize";
 import { tagColor, tagStyle } from "@/ui/tagColor";
 
 import { BIN_PX, drawWave, resolveColor } from "./drawWave";
-import { NEUTRAL, buildWave, maxZoom, nearest, waveLayers, windowAt, type Window } from "./waveform";
+import { useWavePointers } from "./useWavePointers";
+import { NEUTRAL, buildWave, maxZoom, waveLayers, windowAt } from "./waveform";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const LABEL_SPACING = 84;
@@ -33,10 +34,11 @@ export function Waveform() {
   const model = useMemo(() => buildWave(order, media), [order, media]);
   const index = currentId ? order.indexOf(currentId) : -1;
   const focus = index >= 0 ? model.pos[index]! : 0;
-  // While dragging, the window holds still — otherwise it would re-centre under
-  // the pointer on every jump and run away.
-  const [dragWin, setDragWin] = useState<Window>();
-  const win = dragWin ?? windowAt(model, zoom, focus);
+  const maxZ = maxZoom(model);
+  // The pointer hook owns the drag window; it needs the current one to start from.
+  const baseWin = windowAt(model, zoom, focus);
+  const { dragWin, handlers } = useWavePointers(box, model, baseWin, maxZ);
+  const win = dragWin ?? baseWin;
   const nBins = Math.max(1, Math.floor(size.w / BIN_PX));
   const waves = useMemo(() => waveLayers(model, media, win, nBins), [model, media, win.start, win.span, nBins]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -48,15 +50,9 @@ export function Waveform() {
     drawWave(el, waves, colorOf, size.w, size.h);
   }, [waves, size, theme, presets]);
 
-  useWheelZoom(box, maxZoom(model));
+  useWheelZoom(box, maxZ);
 
   const toX = (p: number) => ((p - win.start) / win.span) * size.w;
-  const jump = (e: PointerEvent, w: Window) => {
-    const rect = box.current!.getBoundingClientRect();
-    const p = w.start + ((e.clientX - rect.left) / rect.width) * w.span;
-    const id = model.ids[nearest(model.pos, p)];
-    if (id) useReel.getState().setCurrent(id);
-  };
 
   let lastLabel = -Infinity;
   const labels = model.days.flatMap((d) => {
@@ -71,19 +67,12 @@ export function Waveform() {
       className="wave"
       ref={box}
       role="slider"
-      aria-label="Timeline — click or drag to jump"
+      aria-label="Timeline — tap or drag to jump, pinch or scroll to zoom"
       aria-valuemin={1}
       aria-valuemax={order.length}
       aria-valuenow={index + 1}
       tabIndex={-1}
-      onPointerDown={(e) => {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        setDragWin(win);
-        jump(e, win);
-      }}
-      onPointerMove={(e) => dragWin && jump(e, dragWin)}
-      onPointerUp={() => setDragWin(undefined)}
-      onPointerCancel={() => setDragWin(undefined)}
+      {...handlers}
     >
       <canvas ref={canvas} className="wave-canvas" style={{ width: size.w, height: size.h }} />
       {model.days.map((d) => {

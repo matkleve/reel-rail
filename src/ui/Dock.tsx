@@ -20,6 +20,7 @@ export function Dock() {
   const selected = useReel((s) => s.selection.size);
   if (!media) return null;
   const picked = media.exportedTo.some((e) => e.series === PICKS);
+  const files = useUi.getState().sourceKind === "files";
 
   return (
     <div className="dock-wrap">
@@ -53,10 +54,18 @@ export function Dock() {
           icon={picked ? Check : ArrowDownToLine}
           variant={picked ? "secondary" : "ghost"}
           onClick={() => void togglePick()}
-          title={picked ? "Take the copy back out (Space)" : "Copy to your picks folder (Space)"}
+          title={
+            files
+              ? picked
+                ? "Unpick (Space)"
+                : "Pick — share all picks from the header (Space)"
+              : picked
+                ? "Take the copy back out (Space)"
+                : "Copy to your picks folder (Space)"
+          }
         >
           {picked ? "Picked" : "Pick"}
-          <kbd className="kbd">Space</kbd>
+          <kbd className="kbd kbd-key">Space</kbd>
         </Button>
       </div>
     </div>

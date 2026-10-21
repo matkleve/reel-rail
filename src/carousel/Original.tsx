@@ -55,5 +55,5 @@ export function Original({ media }: { media: Media }) {
     return <video ref={video} className="card-original" src={url} autoPlay muted loop playsInline />;
   }
   // HEIC does not decode in Chrome — the embedded-preview thumbnail underneath then stays visible.
-  return broken ? null : <img className="card-original" src={url} alt="" onError={() => setBroken(true)} />;
+  return broken ? null : <img className="card-original" src={url} alt="" draggable={false} onError={() => setBroken(true)} />;
 }

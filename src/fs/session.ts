@@ -1,23 +1,35 @@
 import type { Media } from "@/types";
 
-import { fileAt } from "./walk";
+import type { FolderSource } from "./folderSource";
+import type { Source } from "./source";
 
 /**
- * The open folder. Kept outside the zustand store on purpose: handles are not
- * serialisable state, and a store subscriber should never re-render because a
- * handle object changed identity.
+ * The open source. Kept outside the zustand store on purpose: handles and
+ * File objects are not serialisable state, and a store subscriber should
+ * never re-render because one changed identity.
  */
-let root: FileSystemDirectoryHandle | undefined;
+let source: Source | undefined;
 
-export function setRoot(handle: FileSystemDirectoryHandle | undefined): void {
-  root = handle;
+export function setSource(s: Source | undefined): void {
+  source = s;
 }
 
-export function getRoot(): FileSystemDirectoryHandle {
-  if (!root) throw new Error("No folder open");
-  return root;
+export function peekSource(): Source | undefined {
+  return source;
 }
 
-export async function getMediaFile(media: Pick<Media, "path">): Promise<File> {
-  return (await fileAt(getRoot(), media.path)).getFile();
+export function getSource(): Source {
+  if (!source) throw new Error("Nothing open");
+  return source;
+}
+
+/** The folder, for what only a writable folder can do (trash). */
+export function getFolder(): FolderSource {
+  const s = getSource();
+  if (s.kind !== "folder") throw new Error("Only possible with a folder opened in Chrome or Edge");
+  return s as FolderSource;
+}
+
+export function getMediaFile(media: Pick<Media, "path">): Promise<File> {
+  return getSource().getFile(media.path);
 }

@@ -6,10 +6,13 @@ import { subscribeThumbs, thumbFor, thumbsVersion } from "@/fs/thumbnails";
 import { passes } from "@/store/filters";
 import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel } from "@/store/useReel";
+import { RATING_LABEL, ratingClass, type Rating } from "@/types";
 import { useSize } from "@/ui/useSize";
 
 import { Card } from "./Card";
-import { FLOOR, layoutCarousel } from "./layout";
+import { SWIPE_MIN } from "./gesture";
+import { floorFor, layoutCarousel } from "./layout";
+import { useSwipe } from "./useSwipe";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 
@@ -54,6 +57,8 @@ export function Carousel() {
   );
 
   useWheelSteps(stage);
+  const drag = useSwipe(stage);
+  const current = shownId ? s.media[shownId] : undefined;
 
   const { setCurrent } = s;
   const onPick = useCallback(
@@ -62,9 +67,16 @@ export function Carousel() {
   );
 
   return (
-    <div className="stage" ref={stage}>
+    <div
+      className={drag ? "stage is-dragging" : "stage"}
+      ref={stage}
+      style={{
+        ["--drag-x" as string]: drag?.axis === "x" ? `${drag.dx * 0.8}px` : "0px",
+        ["--drag-y" as string]: drag?.axis === "y" ? `${Math.max(-60, Math.min(60, drag.dy * 0.3))}px` : "0px",
+      }}
+    >
       <div className="stage-spotlight" />
-      <div className="stage-floor" style={{ top: `${FLOOR * 100}%` }} />
+      <div className="stage-floor" style={{ top: `${floorFor(size) * 100}%` }} />
       <div className="stage-plane">
         {layout.seps.map((sep) => (
           <div key={sep.key} className="day-sep" style={{ transform: `translateX(${sep.x}px)` }}>
@@ -89,6 +101,7 @@ export function Carousel() {
           );
         })}
       </div>
+      {drag?.axis === "y" && current && <RatePreview from={current.rating} dy={drag.dy} />}
       {ids.length === 0 && (
         <div className="stage-empty">
           <ImageOff size={28} aria-hidden="true" />
@@ -117,4 +130,15 @@ function useWheelSteps(ref: RefObject<HTMLElement | null>) {
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
   }, [ref]);
+}
+
+/** While swiping up / down: the level the current item will get on release. */
+function RatePreview({ from, dy }: { from: Rating; dy: number }) {
+  const armed = Math.abs(dy) >= SWIPE_MIN;
+  const to = Math.max(-2, Math.min(2, from + (dy < 0 ? 1 : -1))) as Rating;
+  return (
+    <div className={`rate-preview ${ratingClass(to)}${armed ? " is-armed" : ""}`} aria-hidden="true">
+      {dy < 0 ? "↑" : "↓"} {to === from ? RATING_LABEL[from] : RATING_LABEL[to]}
+    </div>
+  );
 }

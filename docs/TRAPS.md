@@ -6,6 +6,20 @@ Newest at the top. (Format from grundriss.)
 
 ---
 
+## A swipe that starts on an <img> never ends
+
+**Looked right:** pointerdown/move/up listeners on the stage; tests of the
+gesture maths green.
+
+**Was true:** the centre card's full-size `<img>` was draggable. The browser
+started a native image drag on the first move and cancelled the pointer
+stream — no pointerup ever arrived, so nothing happened. Thumbnails had
+`draggable={false}`; the original did not.
+
+**The check:** `draggable={false}` + `-webkit-user-drag: none` on stage
+images and `dragstart` prevented on the stage; `scripts/e2e-ipad.mjs` swipes
+starting on the centre card.
+
 ## A canvas reads colour tokens before the theme attribute is set
 
 **Looked right:** the waveform redraws when `theme` changes, reading its

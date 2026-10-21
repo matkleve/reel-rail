@@ -16,7 +16,7 @@ import { next } from "@vercel/functions";
 const COOKIE = "reel_auth";
 const LOGIN_PATH = "/__login";
 // The browser fetches these without cookies; the app cannot install without them.
-const PUBLIC = /^\/(manifest\.webmanifest|icon(-\d+)?\.(png|svg))$/;
+const PUBLIC = /^\/(manifest\.webmanifest|icon(-\d+)?\.(png|svg)|apple-touch-icon\.png)$/;
 
 async function tokenFor(password: string): Promise<string> {
   const data = new TextEncoder().encode(`reel-rail:${password}`);
@@ -34,14 +34,17 @@ function cookieValue(request: Request): string | undefined {
 
 function loginPage(error: boolean, status: number): Response {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0c0f">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#131316">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="reel-rail">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">
 <title>reel-rail</title><style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0c0f;color:#f1f2f4;font:16px system-ui,sans-serif}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0c0c0e;color:#f2f2f4;font:16px system-ui,-apple-system,sans-serif}
 form{display:flex;flex-direction:column;gap:12px;width:min(320px,calc(100vw - 32px))}
 h1{margin:0 0 8px;font-size:40px;letter-spacing:-.03em}
-input{height:44px;padding:0 12px;border:1px solid #5d6472;border-radius:10px;background:#15171c;color:inherit;font:inherit}
-button{height:44px;border:0;border-radius:10px;background:#ffb547;color:#1a1206;font:600 16px system-ui,sans-serif;cursor:pointer}
-p{margin:0;color:#ff8f86}</style></head><body>
+input{height:48px;padding:0 14px;border:1px solid #3c3c44;border-radius:12px;background:#131316;color:inherit;font:inherit}
+input:focus{outline:none;border-color:#6f9dff;box-shadow:0 0 0 3px rgb(111 157 255/.2)}
+button{height:48px;border:0;border-radius:12px;background:#f2f2f4;color:#0c0c0e;font:600 16px system-ui,-apple-system,sans-serif;cursor:pointer}
+p{margin:0;color:#f77b7b}</style></head><body>
 <form method="post" action="${LOGIN_PATH}"><h1>reel-rail</h1>
 <input type="password" name="password" placeholder="Password" autocomplete="current-password" autofocus required>
 ${error ? "<p>Wrong password.</p>" : ""}<button>Open</button></form></body></html>`;

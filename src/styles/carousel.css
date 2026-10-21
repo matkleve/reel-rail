@@ -9,6 +9,11 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  /* Every drag on the stage is ours (swipe to browse / rate) — no browser panning or zooming. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   perspective: 1800px;
   perspective-origin: 50% 35%;
   background: var(--bg-stage);
@@ -32,8 +37,68 @@
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  transform: rotateX(4deg);
+  /* --drag-x: the row follows a sideways swipe, then springs to the new position. */
+  transform: rotateX(4deg) translateX(var(--drag-x, 0px));
   transform-origin: 50% 80%;
+  transition: transform 260ms var(--ease-out);
+}
+.stage.is-dragging .stage-plane {
+  transition: none;
+}
+/* --drag-y: the current card follows an up / down swipe a little. */
+.card.is-current {
+  translate: 0 var(--drag-y, 0px);
+}
+.stage:not(.is-dragging) .card.is-current {
+  transition:
+    transform 260ms var(--ease-spring),
+    width 260ms var(--ease-spring),
+    height 260ms var(--ease-spring),
+    translate 260ms var(--ease-spring),
+    opacity var(--dur-2) var(--ease-out);
+}
+
+.rate-preview {
+  position: absolute;
+  left: 50%;
+  top: 14%;
+  z-index: var(--z-stage-ui);
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--text-2);
+  font-size: var(--text-md);
+  font-weight: 650;
+  translate: -50% 0;
+  opacity: 0.6;
+  transition:
+    opacity var(--dur-1),
+    scale var(--dur-2) var(--ease-spring);
+  pointer-events: none;
+}
+.rate-preview.is-armed {
+  opacity: 1;
+  scale: 1.06;
+  color: var(--level);
+  border-color: color-mix(in srgb, var(--level) 50%, transparent);
+}
+.rate-preview.r2 {
+  --level: var(--rating-2);
+}
+.rate-preview.r1 {
+  --level: var(--rating-1);
+}
+.rate-preview.r0 {
+  --level: var(--rating-0);
+}
+.rate-preview.rm1 {
+  --level: var(--rating-m1);
+}
+.rate-preview.rm2 {
+  --level: var(--rating-m2);
 }
 .stage-empty {
   position: absolute;
@@ -96,6 +161,7 @@
 .card-thumb,
 .card-original,
 .card-ph {
+  -webkit-user-drag: none;
   position: absolute;
   inset: 0;
   display: block;
@@ -179,6 +245,7 @@
   padding-left: 2px;
   border-radius: 50%;
   background: rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   color: var(--white);
   translate: -50% -50%;
@@ -205,6 +272,7 @@
   padding: 0 8px;
   border-radius: var(--radius-full);
   background: rgb(0 0 0 / 0.55);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   color: var(--white);
   font-size: var(--text-xs);
@@ -229,6 +297,7 @@
   height: 22px;
   border-radius: 50%;
   background: rgb(0 0 0 / 0.55);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   color: var(--white);
 }

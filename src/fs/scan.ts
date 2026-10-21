@@ -3,7 +3,7 @@ import type { ReelFile } from "@/types";
 import { hashFile } from "./hash";
 import { readMetadata } from "./metadata";
 import { reconcile, type Scanned } from "./reconcile";
-import { walk, type FoundFile } from "./walk";
+import type { Source, SourceFile } from "./source";
 
 export type ScanProgress = { phase: "listing" | "hashing"; done: number; total: number };
 
@@ -16,20 +16,20 @@ const CONCURRENCY = 4;
  * without being read at all — that is what makes re-opening a folder of
  * 2,000 files near-instant.
  */
-export async function scanFolder(
-  root: FileSystemDirectoryHandle,
+export async function scanSource(
+  source: Source,
   prev: ReelFile,
   onProgress: (p: ScanProgress) => void,
 ): Promise<ReelFile> {
-  const found = await walk(root, (n) => onProgress({ phase: "listing", done: 0, total: n }));
+  const found = await source.list((n) => onProgress({ phase: "listing", done: 0, total: n }));
 
   const byPath = new Map(Object.values(prev.media).map((m) => [m.path, m]));
   const results: Scanned[] = [];
   let done = 0;
   onProgress({ phase: "hashing", done, total: found.length });
 
-  const identify = async (f: FoundFile) => {
-    const file = await f.handle.getFile();
+  const identify = async (f: SourceFile) => {
+    const file = await f.file();
     const known = byPath.get(f.path);
     if (known && known.size === file.size && known.mtime === file.lastModified) {
       results.push({ id: known.id, path: f.path, type: f.type, size: file.size, mtime: file.lastModified });

@@ -40,7 +40,7 @@ export const Card = memo(function Card(p: Props) {
   } as CSSProperties;
 
   return (
-    <div className={cls} style={style}>
+    <div className={cls} style={style} data-id={media.id}>
       <button
         type="button"
         className="card-face"
