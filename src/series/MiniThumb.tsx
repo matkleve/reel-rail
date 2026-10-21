@@ -1,5 +1,5 @@
-import { useThumb } from "@/ui/useThumb";
 import type { Media } from "@/types";
+import { useThumb } from "@/ui/useThumb";
 
 export function MiniThumb({ media }: { media: Media }) {
   const thumb = useThumb(media);

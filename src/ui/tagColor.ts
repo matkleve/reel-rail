@@ -9,3 +9,8 @@ export function tagColor(tag: string, presets: string[]): string {
   }
   return `var(--tag-${i})`;
 }
+
+/** Inline style that feeds a `.tag` chip its colour. */
+export function tagStyle(tag: string, presets: string[]): React.CSSProperties {
+  return { ["--tag-color" as string]: tagColor(tag, presets) };
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
+import { ImageOff } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
 import { subscribeThumbs, thumbFor, thumbsVersion } from "@/fs/thumbnails";
@@ -8,9 +9,10 @@ import { useReel } from "@/store/useReel";
 import { useSize } from "@/ui/useSize";
 
 import { Card } from "./Card";
-import { layoutCarousel } from "./layout";
+import { FLOOR, layoutCarousel } from "./layout";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+
 /** Wheel/trackpad travel per step through the carousel. */
 const WHEEL_STEP = 70;
 
@@ -61,7 +63,8 @@ export function Carousel() {
 
   return (
     <div className="stage" ref={stage}>
-      <div className="stage-floor" />
+      <div className="stage-spotlight" />
+      <div className="stage-floor" style={{ top: `${FLOOR * 100}%` }} />
       <div className="stage-plane">
         {layout.seps.map((sep) => (
           <div key={sep.key} className="day-sep" style={{ transform: `translateX(${sep.x}px)` }}>
@@ -86,7 +89,12 @@ export function Carousel() {
           );
         })}
       </div>
-      {ids.length === 0 && <p className="stage-empty muted">No photos or videos in this folder yet.</p>}
+      {ids.length === 0 && (
+        <div className="stage-empty">
+          <ImageOff size={28} aria-hidden="true" />
+          <p>No photos or videos in this folder yet.</p>
+        </div>
+      )}
     </div>
   );
 }

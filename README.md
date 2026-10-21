@@ -55,8 +55,9 @@ site stays locked. Locally (`npm run dev`) there is no password.
 ## How it works
 
 **The carousel.** Your photos and videos stand side by side on a slightly
-tilted, reflective floor; the current one is big in the middle and plays
-(videos start muted). **Its rating is its size and height:**
+tilted, reflective floor. The current one is big, in the middle and lit;
+its neighbours dim with distance. Videos start playing muted. **Its rating
+is its size and height:**
 
 | Rating | What happens |
 | --- | --- |
@@ -67,7 +68,12 @@ tilted, reflective floor; the current one is big in the middle and plays
 | −2 Discard | small, faded, sunk below the floor |
 
 Arrow keys, the mouse wheel or a two-finger swipe flip through the carousel.
-Day changes show as a dashed separator with the date.
+Day changes show as a separator with the date.
+
+**The dock** floats under the photo: the five rating levels (click one),
+tags, and Pick. With a selection, a bar above it offers "Create series".
+Every button's tooltip shows its keyboard shortcut. Date, time and place sit
+at the top left; click the place (or press P) to type one.
 
 **The waveform** at the bottom is the whole trip as glowing waves:
 
@@ -248,7 +254,8 @@ src/carousel/  the 3D carousel: pure layout (tested), cards, original/video
 src/timeline/  the waveform: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
 src/cleanup/   the "Discards" view
-src/ui/        start screen, info bar, top bar, tags, keyboard, dialogs
+src/ui/kit/    design-system components (see docs/DESIGN-SYSTEM.md)
+src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 middleware.ts  password gate when hosted on Vercel
 scripts/       verify gate, e2e test, icon renderer
 docs/          TRAPS.md, diary/

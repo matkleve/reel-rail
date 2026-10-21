@@ -1,123 +1,221 @@
 /* ---------------------------------------------------------------------------
-   Design tokens — the single source of truth for every value in the UI
-   (pattern from grundriss). Components never contain raw colors, radii or
-   shadows; a new value becomes a token here first.
+   reel-rail design tokens — the only place raw values live.
+   See docs/DESIGN-SYSTEM.md for what each layer is for.
 
-   - `-deep` = stronger tone for hover/active   - `-soft` = tinted background
-   - `-ink`  = text legible ON that fill
+   1. Primitives   neutral grey ramp + a few hues. Never used by components.
+   2. Semantic     what a value MEANS (surface, text, border, accent, rating).
+   3. Scales       type, space, radius, depth, motion, layout.
 
-   Dark is the default on purpose: photos read better on a dark surround.
-   [data-theme="light"] is the opt-in.
+   Photos are judged against this UI, so every surface is a pure neutral grey
+   (zero saturation): a tinted chrome shifts how colours in a photo read.
+   Dark is the default. [data-theme="light"] swaps only the semantic layer.
 --------------------------------------------------------------------------- */
 
 :root {
+  /* ---- 1. Primitives ---------------------------------------------------- */
+  --gray-0: #060607;
+  --gray-1: #0c0c0e;
+  --gray-2: #131316;
+  --gray-3: #1a1a1e;
+  --gray-4: #222227;
+  --gray-5: #2c2c32;
+  --gray-6: #3c3c44;
+  --gray-7: #55555f;
+  --gray-8: #75757f;
+  --gray-9: #a3a3ad;
+  --gray-10: #d6d6dc;
+  --gray-11: #f2f2f4;
+  --white: #ffffff;
+  --black: #000000;
+
+  --amber-4: #f6b94c;
+  --amber-5: #e9a531;
+  --amber-6: #b97a10;
+  --green-4: #5ee08f;
+  --green-6: #15803d;
+  --orange-4: #fb9b53;
+  --red-4: #f77b7b;
+  --red-6: #c53030;
+  --blue-4: #6f9dff;
+  --blue-6: #2f62e0;
+
+  /* ---- 2. Semantic: dark (default) -------------------------------------- */
   color-scheme: dark;
 
-  --color-canvas: #0b0c0f;
-  --color-surface: #15171c;
-  --color-surface-raised: #1d2027;
-  --color-ink: #f1f2f4;
-  --color-muted: #9aa1ae;
-  --color-line: #2a2e37;
-  --color-line-strong: #5d6472;
+  --bg: var(--gray-1);
+  --bg-stage: var(--gray-0);
+  --surface-1: var(--gray-2); /* header, waveform, panels */
+  --surface-2: var(--gray-3); /* popovers, dialogs, inputs */
+  --surface-3: var(--gray-4); /* hover on surface-2 */
+  --surface-press: var(--gray-5);
+  --glass: rgb(22 22 26 / 0.74); /* floating dock, toasts */
+  --glass-blur: 22px;
 
-  --color-accent: #ffb547;
-  --color-accent-deep: #ffc875;
-  --color-accent-soft: #3a2a10;
-  --color-accent-ink: #1a1206;
+  --border: rgb(255 255 255 / 0.07);
+  --border-strong: rgb(255 255 255 / 0.13);
+  --hairline: rgb(255 255 255 / 0.05);
 
-  --color-select: #7fb2ff;
-  --color-select-soft: rgb(127 178 255 / 0.18);
+  --text: var(--gray-11);
+  --text-2: var(--gray-9);
+  --text-3: var(--gray-8);
+  --text-on-accent: #1b1406;
+  --text-on-primary: var(--gray-1);
 
-  --color-star: #ffd34d;
-  --color-success: #6fd6a2;
-  --color-danger: #ff8f86;
-  --color-danger-ink: #1a0f0e;
-  --color-pick: #6fd6a2;
+  --primary: var(--gray-11); /* main call to action: neutral, never competes with photos */
+  --primary-hover: var(--white);
+  --accent: var(--amber-4); /* brand + the one warm thing on screen: favourites, current */
+  --accent-hover: #f9c96f;
+  --accent-soft: rgb(246 185 76 / 0.14);
+  --focus: var(--blue-4);
+  --select: var(--blue-4);
+  --select-soft: rgb(111 157 255 / 0.2);
+  --pick: var(--green-4);
+  --pick-soft: rgb(94 224 143 / 0.16);
+  --danger: var(--red-4);
+  --danger-soft: rgb(247 123 123 / 0.14);
+  --success: var(--green-4);
 
-  --color-scrim: rgb(0 0 0 / 0.55);
-  --color-wave: #7fa8d8;
-  --color-wave-bg: #050608;
-  /* The carousel floor: a soft glow that fades into the canvas. */
-  --color-floor: #1a1d24;
-  --color-glow: rgb(255 181 71 / 0.07);
-  --reflection: rgb(255 255 255 / 0.13);
+  /* Five rating levels: red → orange → neutral → green → gold. */
+  --rating-2: var(--amber-4);
+  --rating-1: var(--green-4);
+  --rating-0: var(--gray-10);
+  --rating-m1: var(--orange-4);
+  --rating-m2: var(--red-4);
 
-  /* Tag chips: nine hues, legible with --color-tag-ink on top. */
-  --color-tag-ink: #101114;
-  --tag-0: #f6a05a;
-  --tag-1: #f3d36b;
+  /* Tag hues — evenly spaced, equal lightness, so no tag shouts. */
+  --tag-ink: #0d0d10;
+  --tag-0: #f4a261;
+  --tag-1: #e9d16b;
   --tag-2: #8fd694;
-  --tag-3: #c9b8a4;
-  --tag-4: #8ec5ff;
-  --tag-5: #ff9b8a;
-  --tag-6: #f7a8d8;
-  --tag-7: #7fd8c8;
-  --tag-8: #b8a6ff;
+  --tag-3: #6fd3c8;
+  --tag-4: #7fb6ff;
+  --tag-5: #a99bff;
+  --tag-6: #f29bd4;
+  --tag-7: #ff8f8f;
+  --tag-8: #c7b9a2;
 
-  --radius-thumb: 6px;
-  --radius-card: 12px;
-  --radius-pill: 999px;
+  /* Waveform */
+  --wave-bg: var(--gray-0);
+  --wave-neutral: #8fb3e6;
+  --wave-spine: var(--gray-11);
 
-  --shadow-raised: 0 8px 28px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.35);
-  --shadow-thumb: 0 2px 8px rgb(0 0 0 / 0.45);
+  /* Depth */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  --shadow-3: 0 24px 64px rgb(0 0 0 / 0.6), 0 4px 12px rgb(0 0 0 / 0.35);
+  --shadow-photo: 0 18px 40px rgb(0 0 0 / 0.55), 0 4px 10px rgb(0 0 0 / 0.35);
+  --inset-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --scrim: rgb(0 0 0 / 0.6);
+  --reflection: rgb(255 255 255 / 0.1);
+  --floor: linear-gradient(to bottom, rgb(255 255 255 / 0.035), transparent 70%);
+  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 255 255 / 0.05), transparent 72%);
 
-  /* Motion. The overshoot curve is the "spring": items grow a touch past
-     their size and settle, which is what makes rating feel physical. */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-spring: 220ms;
-  --dur-fast: 150ms;
+  /* ---- 3. Scales -------------------------------------------------------- */
+  --font: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --text-2xs: 10px;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 48px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-photo: 10px;
+  --radius-full: 999px;
+
+  --control-sm: 26px;
+  --control-md: 32px;
+  --control-lg: 44px;
+
+  --header-h: 52px;
+  --wave-h: 112px;
+
+  /* Motion: 120 for feedback, 200 for UI moves, 320 for entrances. The
+     spring overshoots a little — it is what makes rating feel physical. */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+
+  --z-stage-ui: 10;
+  --z-dock: 20;
+  --z-toast: 60;
 }
 
+/* ---- 2b. Semantic: light ------------------------------------------------ */
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --color-canvas: #f4f3f0;
-  --color-surface: #ffffff;
-  --color-surface-raised: #ffffff;
-  --color-ink: #17181c;
-  --color-muted: #5b6070;
-  --color-line: #e2e0db;
-  --color-line-strong: #8e8d87;
+  --bg: #f4f4f6;
+  --bg-stage: #ececef;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f1f1f4;
+  --surface-press: #e6e6ea;
+  --glass: rgb(255 255 255 / 0.78);
 
-  --color-accent: #c26a00;
-  --color-accent-deep: #9c5500;
-  --color-accent-soft: #fbecd6;
-  --color-accent-ink: #ffffff;
+  --border: rgb(0 0 0 / 0.08);
+  --border-strong: rgb(0 0 0 / 0.14);
+  --hairline: rgb(0 0 0 / 0.05);
 
-  --color-select: #2f5ad0;
-  --color-select-soft: rgb(47 90 208 / 0.14);
+  --text: #141417;
+  --text-2: #5c5c66;
+  --text-3: #85858f;
+  --text-on-primary: #ffffff;
 
-  --color-star: #d99a00;
-  --color-success: #1c6b45;
-  --color-danger: #b3261e;
-  --color-danger-ink: #ffffff;
-  --color-pick: #1c6b45;
+  --primary: #141417;
+  --primary-hover: #000000;
+  --accent: var(--amber-6);
+  --accent-hover: #9c6608;
+  --accent-soft: rgb(185 122 16 / 0.12);
+  --focus: var(--blue-6);
+  --select: var(--blue-6);
+  --select-soft: rgb(47 98 224 / 0.14);
+  --pick: var(--green-6);
+  --pick-soft: rgb(21 128 61 / 0.12);
+  --danger: var(--red-6);
+  --danger-soft: rgb(197 48 48 / 0.1);
+  --success: var(--green-6);
 
-  --color-scrim: rgb(23 24 28 / 0.4);
-  --color-wave: #8a96a8;
-  --color-wave-bg: #fbfaf8;
-  --color-floor: #e6e3dc;
-  --color-glow: rgb(194 106 0 / 0.08);
-  --reflection: rgb(0 0 0 / 0.1);
+  --rating-2: var(--amber-5);
+  --rating-1: #22a35a;
+  --rating-0: #6b6b75;
+  --rating-m1: #e07a2e;
+  --rating-m2: #d64545;
 
-  --color-tag-ink: #101114;
-  --tag-0: #f2b27c;
-  --tag-1: #efd57f;
-  --tag-2: #a5dca8;
-  --tag-3: #d8cbbb;
-  --tag-4: #a9d2ff;
-  --tag-5: #ffb2a6;
-  --tag-6: #f6bde0;
-  --tag-7: #9be0d3;
-  --tag-8: #cbbdff;
+  --wave-bg: #fafafb;
+  --wave-neutral: #6b8fc4;
+  --wave-spine: #141417;
 
-  --shadow-raised: 0 8px 24px rgb(23 24 28 / 0.14), 0 2px 4px rgb(23 24 28 / 0.06);
-  --shadow-thumb: 0 2px 6px rgb(23 24 28 / 0.18);
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08);
+  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.1), 0 2px 6px rgb(0 0 0 / 0.06);
+  --shadow-3: 0 24px 64px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.08);
+  --shadow-photo: 0 18px 36px rgb(0 0 0 / 0.18), 0 4px 10px rgb(0 0 0 / 0.1);
+  --inset-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
+  --scrim: rgb(20 20 23 / 0.35);
+  --reflection: rgb(0 0 0 / 0.07);
+  --floor: linear-gradient(to bottom, rgb(0 0 0 / 0.035), transparent 70%);
+  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 255 255 / 0.7), transparent 72%);
 }
 
 @media (prefers-reduced-motion: reduce) {

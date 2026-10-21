@@ -12,11 +12,11 @@ import type { Media, Rating } from "@/types";
 /** Card height per rating, as a fraction of the base height. */
 export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.34, [-1]: 0.58, 0: 0.74, 1: 0.88, 2: 1 };
 /** How far a card rises above (or sinks below) the floor, as a fraction of stage height. */
-export const LIFT: Record<Rating, number> = { [-2]: -0.15, [-1]: -0.06, 0: 0, 1: 0.045, 2: 0.09 };
+export const LIFT: Record<Rating, number> = { [-2]: -0.1, [-1]: -0.045, 0: 0, 1: 0.045, 2: 0.09 };
 
-const BASE = 0.58; // base card height / stage height
-const FLOOR = 0.8; // floor line / stage height
-const GAP = 16;
+const BASE = 0.6; // base card height / stage height
+export const FLOOR = 0.8; // floor line / stage height — leaves room for the dock below
+const GAP = 14;
 const DAY_GAP = 72;
 const MAX_SIDE = 24; // cards per side, upper bound
 const DEFAULT_ASPECT = 4 / 3;

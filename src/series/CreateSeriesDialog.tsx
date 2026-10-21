@@ -1,27 +1,23 @@
+import { Dices, FolderOutput } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import type { Media, Series } from "@/types";
-import { Dialog } from "@/ui/Dialog";
-import { DiceIcon } from "@/ui/icons";
+import { Button } from "@/ui/kit/Button";
+import { Dialog } from "@/ui/kit/Dialog";
 
 import { MiniThumb } from "./MiniThumb";
 import { funnyTitle, suggestTitle } from "./titles";
 import { ExportStatus, useExport, type ExportState } from "./useExport";
 
-/** Title the selection, save it as a virtual series, optionally export it right away. */
+/** Title the selection, save it as a series, optionally export it right away. */
 export function CreateSeriesDialog() {
   const open = useUi((s) => s.dialog === "createSeries");
-  const close = () => useUi.getState().set({ dialog: null });
-  return (
-    <Dialog open={open} onClose={close} title="Create series" wide>
-      {open && <CreateSeriesBody onDone={close} />}
-    </Dialog>
-  );
+  return open ? <CreateSeries onDone={() => useUi.getState().set({ dialog: null })} /> : null;
 }
 
-function CreateSeriesBody({ onDone }: { onDone(): void }) {
+function CreateSeries({ onDone }: { onDone(): void }) {
   const media = useMemo(() => {
     const { selection, order, reel } = useReel.getState();
     // Series keep timeline order, whatever order things were clicked in.
@@ -44,91 +40,101 @@ function CreateSeriesBody({ onDone }: { onDone(): void }) {
   };
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!created) create();
-      }}
-    >
-      <div className="title-row">
-        <input
-          className="input"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          aria-label="Series title"
-          disabled={!!created}
-          autoFocus
+    <Dialog
+      open
+      onClose={onDone}
+      title={created ? "Series created" : "New series"}
+      subtitle={`${media.length} items · saved in .reel.json — files are only copied when you export`}
+      wide
+      footer={
+        <SeriesFooter
+          created={created}
+          exporting={state.kind}
+          onCancel={onDone}
+          onCreateAndExport={() => void run(create())}
+          onExport={() => created && void run(created)}
         />
-        <button
-          type="button"
-          className="btn btn-ghost icon"
-          onClick={() => setTitle(funnyTitle(media))}
-          aria-label="Roll a funny title"
-          title="Roll a funny title"
-          disabled={!!created}
-        >
-          <DiceIcon />
-        </button>
-      </div>
-      <div className="mini-strip">
+      }
+    >
+      <form
+        id="series-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!created) create();
+        }}
+      >
+        <label className="field-label" htmlFor="series-title">
+          Title
+        </label>
+        <div className="title-row">
+          <input
+            id="series-title"
+            className="input input-lg"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            aria-label="Series title"
+            disabled={!!created}
+            data-autofocus
+          />
+          <Button
+            variant="secondary"
+            size="lg"
+            icon={Dices}
+            label="Roll a funny title"
+            onClick={() => setTitle(funnyTitle(media))}
+            disabled={!!created}
+          />
+        </div>
+      </form>
+      <div className="thumb-strip">
         {media.map((m) => (
           <MiniThumb key={m.id} media={m} />
         ))}
       </div>
-      <p className="muted small">
-        {media.length} items · saved in <code>.reel.json</code> — files are only copied when you export.
-      </p>
       <ExportStatus state={state} />
-      <Footer
-        created={!!created}
-        exporting={state.kind}
-        onDone={onDone}
-        onCreateAndExport={() => void run(create())}
-        onExport={() => created && void run(created)}
-      />
-    </form>
+    </Dialog>
   );
 }
 
 type FooterProps = {
-  created: boolean;
+  created?: Series;
   exporting: ExportState["kind"];
-  onDone(): void;
+  onCancel(): void;
   onCreateAndExport(): void;
   onExport(): void;
 };
 
 /**
- * The two footers carry different keys on purpose. Without them React reuses
- * the clicked "Create & export" <button> as the new type="submit" "Done"
- * button during the click — and the browser then runs the submit default on
- * it, closing the dialog mid-export. (docs/TRAPS.md)
+ * Distinct keys per state: React must not reuse the clicked button as the new
+ * one mid-click (docs/TRAPS.md § a button that changes type).
  */
-function Footer(p: FooterProps) {
+function SeriesFooter(p: FooterProps) {
   if (!p.created)
     return (
-      <div className="dialog-footer" key="draft">
-        <button type="button" className="btn btn-ghost" onClick={p.onDone}>
+      <div className="footer-row" key="draft">
+        <Button variant="ghost" onClick={p.onCancel}>
           Cancel
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={p.onCreateAndExport}>
+        </Button>
+        <span className="spacer" />
+        <Button variant="secondary" icon={FolderOutput} onClick={p.onCreateAndExport}>
           Create & export…
-        </button>
-        <button type="submit" className="btn btn-primary">
-          Create
-        </button>
+        </Button>
+        <Button variant="primary" type="submit" form="series-form">
+          Create series
+        </Button>
       </div>
     );
   return (
-    <div className="dialog-footer" key="created">
+    <div className="footer-row" key="created">
+      <span className="spacer" />
       {p.exporting === "idle" && (
-        <button type="button" className="btn btn-ghost" onClick={p.onExport}>
+        <Button variant="secondary" icon={FolderOutput} onClick={p.onExport}>
           Export…
-        </button>
+        </Button>
       )}
-      <button type="button" className="btn btn-primary" onClick={p.onDone} disabled={p.exporting === "running"}>
+      <Button variant="primary" onClick={p.onCancel} disabled={p.exporting === "running"}>
         Done
-      </button>
+      </Button>
     </div>
   );
 }

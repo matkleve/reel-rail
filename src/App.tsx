@@ -6,12 +6,13 @@ import { CreateSeriesDialog } from "@/series/CreateSeriesDialog";
 import { SeriesListDialog } from "@/series/SeriesListDialog";
 import { useUi } from "@/store/useUi";
 import { Waveform } from "@/timeline/Waveform";
+import { Dock } from "@/ui/Dock";
+import { Header } from "@/ui/Header";
 import { HelpDialog } from "@/ui/HelpDialog";
-import { InfoBar } from "@/ui/InfoBar";
 import { SettingsDialog } from "@/ui/SettingsDialog";
+import { StageOverlay } from "@/ui/StageOverlay";
 import { StartScreen } from "@/ui/StartScreen";
 import { Toast } from "@/ui/Toast";
-import { TopBar } from "@/ui/TopBar";
 import { useKeyboard } from "@/ui/useKeyboard";
 
 export function App() {
@@ -29,9 +30,12 @@ export function App() {
 
   return (
     <div className="app">
-      <TopBar />
-      <Carousel />
-      <InfoBar />
+      <Header />
+      <main className="stage-wrap">
+        <Carousel />
+        <StageOverlay />
+        <Dock />
+      </main>
       <Waveform />
       <Toast />
       <CreateSeriesDialog />

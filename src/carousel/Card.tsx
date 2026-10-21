@@ -1,8 +1,8 @@
-import { memo, type MouseEvent } from "react";
+import { ArrowDownToLine, Check, CircleCheck, Layers, Play, Star } from "lucide-react";
+import { memo, type CSSProperties, type MouseEvent } from "react";
 
 import { PICKS, ratingClass, type Media } from "@/types";
-import { CheckIcon, PickIcon, PlayIcon, StarIcon } from "@/ui/icons";
-import { tagColor } from "@/ui/tagColor";
+import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
 
 import type { CardPlace } from "./layout";
@@ -19,32 +19,28 @@ type Props = {
   onPick(id: string, e: MouseEvent): void;
 };
 
-/** One photo/video standing on the carousel floor. Size and height are its rating. */
+/**
+ * One photo/video standing on the floor. Size and height are its rating;
+ * brightness falls off with distance from the centre (the spotlight).
+ */
 export const Card = memo(function Card(p: Props) {
   const { media, place } = p;
   const thumb = useThumb(media);
   const picked = media.exportedTo.some((e) => e.series === PICKS);
   const exported = media.exportedTo.some((e) => e.series !== PICKS);
-  const cls = [
-    "card",
-    ratingClass(media.rating),
-    p.current && "is-current",
-    p.selected && "is-selected",
-    p.dimmed && "is-dimmed",
-  ]
+  const cls = ["card", ratingClass(media.rating), p.current && "is-current", p.selected && "is-selected", p.dimmed && "is-dimmed"]
     .filter(Boolean)
     .join(" ");
+  const style = {
+    width: place.w,
+    height: place.h,
+    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotateY(${place.rotY}deg)`,
+    zIndex: 100 - Math.abs(place.d),
+    "--dim": Math.max(0.35, 1 - Math.abs(place.d) * 0.16),
+  } as CSSProperties;
 
   return (
-    <div
-      className={cls}
-      style={{
-        width: place.w,
-        height: place.h,
-        transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotateY(${place.rotY}deg)`,
-        zIndex: 100 - Math.abs(place.d),
-      }}
-    >
+    <div className={cls} style={style}>
       <button
         type="button"
         className="card-face"
@@ -57,35 +53,39 @@ export const Card = memo(function Card(p: Props) {
         {thumb.url ? <img className="card-thumb" src={thumb.url} alt="" draggable={false} /> : <span className="card-ph" />}
         {p.current && <Original media={media} />}
         {media.type === "video" && !p.current && (
-          <span className="card-play">
-            <PlayIcon size={18} />
+          <span className="card-play" aria-hidden="true">
+            <Play size={16} fill="currentColor" />
           </span>
         )}
       </button>
-      {p.stackCount && <span className="card-count">{p.stackCount}</span>}
-      <span className="card-badges">
+
+      {p.selected && <CircleCheck className="card-check" size={22} fill="var(--select)" color="white" aria-hidden="true" />}
+      {p.stackCount && (
+        <span className="card-count" aria-hidden="true">
+          <Layers size={12} /> {p.stackCount}
+        </span>
+      )}
+      <span className="card-badges" aria-hidden="true">
         {media.rating === 2 && (
-          <span className="badge star" title="Favorite">
-            <StarIcon size={14} />
+          <span className="badge is-fav">
+            <Star size={12} fill="currentColor" strokeWidth={0} />
           </span>
         )}
         {picked && (
-          <span className="badge pick" title="In your picks folder">
-            <PickIcon size={13} />
+          <span className="badge is-pick">
+            <ArrowDownToLine size={12} strokeWidth={2.6} />
           </span>
         )}
         {exported && (
-          <span className="badge done" title="Exported in a series">
-            <CheckIcon size={10} />
+          <span className="badge is-done">
+            <Check size={12} strokeWidth={3} />
           </span>
         )}
       </span>
       {media.rating >= 1 && media.tags.length > 0 && (
-        <span className="card-tags">
+        <span className="card-tags" aria-hidden="true">
           {media.tags.map((t) => (
-            <span key={t} className="tag-chip" style={{ background: tagColor(t, p.presets) }}>
-              {t}
-            </span>
+            <span key={t} className="tag-dot" style={tagStyle(t, p.presets)} title={t} />
           ))}
         </span>
       )}

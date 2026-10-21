@@ -1,3 +1,4 @@
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { useState } from "react";
 
 import { exportSeries } from "@/fs/exportSeries";
@@ -42,22 +43,29 @@ export function useExport() {
 }
 
 export function ExportStatus({ state }: { state: ExportState }) {
-  if (state.kind === "running")
+  if (state.kind === "running") {
+    const pct = state.total ? (state.done / state.total) * 100 : 0;
     return (
-      <p className="muted tabular" aria-live="polite">
-        Copying {state.done} / {state.total}…
-      </p>
+      <div className="export-status" aria-live="polite">
+        <div className="progress">
+          <div className="progress-bar" style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-2 tabular">
+          Copying {state.done} of {state.total}…
+        </span>
+      </div>
     );
+  }
   if (state.kind === "done")
     return (
-      <p className="success" aria-live="polite">
-        Exported to <code>{state.path}</code>
+      <p className="export-status success-text" aria-live="polite">
+        <CircleCheck size={15} aria-hidden="true" /> Exported to <code>{state.path}</code>
       </p>
     );
   if (state.kind === "error")
     return (
-      <p className="error" role="alert">
-        Export failed: {state.message}
+      <p className="export-status error-text" role="alert">
+        <CircleAlert size={15} aria-hidden="true" /> Export failed: {state.message}
       </p>
     );
   return null;

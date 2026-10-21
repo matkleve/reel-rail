@@ -26,10 +26,14 @@ Never report work as done without a green `verify`. Re-run one check alone:
    refuses versions it does not know rather than guessing.
 3. **No cloud, no backend, no network calls** at runtime.
 4. **No new dependency without saying what it replaces and why the platform
-   cannot do it.** Browser deps: react, zustand, exifr. Server: @vercel/functions
-   (only for `next()` in the middleware). That is the list.
-5. **No raw colors, radii or shadows in components or CSS rules** — tokens in
-   `src/styles/tokens.css` only (dark is the default theme).
+   cannot do it.** Browser deps: react, zustand, exifr, lucide-react (icons —
+   tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/inter
+   (bundled typeface, so it works offline). Server: @vercel/functions (only for
+   `next()` in the middleware). That is the list.
+5. **Design system first:** [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
+   No raw colors, radii, shadows or durations in components or CSS rules —
+   tokens in `src/styles/tokens.css` only. Buttons, tooltips, popovers and
+   dialogs come from `src/ui/kit/`. Check both themes.
 6. **Stay fast at 2,000+ media.** The carousel only mounts the cards around the
    current one and the waveform is one canvas; anything that
    renders per-medium must be O(visible), and per-change work at most O(n).
@@ -44,7 +48,8 @@ src/carousel/  the 3D carousel: pure layout (tested) + cards
 src/timeline/  the waveform timeline: pure model (tested) + canvas
 src/cleanup/   the "Unusable" view (move to _reel_trash)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
-src/ui/        screens, preview, info bar, top bar, keyboard, dialogs
+src/ui/kit/    design-system components: Button, Tip, Kbd, Segmented, Switch, Popover, Dialog
+src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 scripts/       verify gate, e2e smoke test, icon renderer
 middleware.ts  Vercel password gate (REEL_PASSWORD) — server side, never shipped to the browser
 docs/          TRAPS.md (code that misleads), diary/ (what was decided)

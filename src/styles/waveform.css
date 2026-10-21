@@ -1,0 +1,106 @@
+.wave {
+  position: relative;
+  border-top: 1px solid var(--border);
+  background: var(--wave-bg);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+.wave-canvas {
+  display: block;
+}
+.wave-day {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+  pointer-events: none;
+}
+.wave-label {
+  position: absolute;
+  top: 6px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--wave-bg) 80%, transparent);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.wave-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  pointer-events: none;
+}
+.wave-cursor::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 0 0 50% 50%;
+  background: var(--accent);
+  translate: -50% 0;
+}
+.wave-zoom {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  translate: -50% 0;
+  pointer-events: none;
+}
+.wave-axis {
+  position: absolute;
+  right: 6px;
+  padding: 1px 4px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--wave-bg) 80%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-3);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+.wave-axis.up {
+  top: 6px;
+}
+.wave-axis.down {
+  bottom: 6px;
+}
+.wave-legend {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--wave-bg) 80%, transparent);
+  display: flex;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: var(--text-xs);
+  pointer-events: none;
+}
+.wave-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}

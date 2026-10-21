@@ -59,7 +59,7 @@ export function drawWave(
   const step = (h / 2 - 14) / 2.4; // px per rating level
   const amp = h * 0.2; // thickness of the busiest moment
 
-  g.fillStyle = token(canvas, "--color-line");
+  g.fillStyle = token(canvas, "--border-strong");
   g.fillRect(0, mid - 0.5, w, 1);
   g.globalCompositeOperation = dark ? "lighter" : "source-over";
 
@@ -92,8 +92,8 @@ export function drawWave(
   // The spine: overall average rating over time.
   g.globalAlpha = dark ? 0.55 : 0.6;
   g.shadowBlur = dark ? 8 : 0;
-  g.shadowColor = token(canvas, "--color-ink");
-  g.strokeStyle = token(canvas, "--color-ink");
+  g.shadowColor = token(canvas, "--wave-spine");
+  g.strokeStyle = token(canvas, "--wave-spine");
   g.lineWidth = 1.2;
   g.beginPath();
   curve(

@@ -1,22 +1,41 @@
-/** Single source for the help overlay; README mirrors it. */
-export const SHORTCUTS: [string, string][] = [
-  ["← / →", "Previous / next (skips filtered ones) — or wheel / swipe on the photos"],
-  ["↑", "Better: bigger and higher (Discard → Not great → Normal → Good → Favorite)"],
-  ["↓", "Worse: smaller, slides down"],
-  ["Space", "Pick: copy to your picks folder (again: take it back)"],
-  ["V / M", "Video: play/pause / sound on/off"],
-  ["Shift + ← / →", "Extend selection"],
-  ["Ctrl/⌘ + click", "Add / remove single item from selection"],
-  ["Shift + click", "Select range"],
-  ["Esc", "Clear selection"],
-  ["Z", "Undo last rating"],
-  ["1 – 9", "Toggle tag preset (Settings ⚙ to edit)"],
-  ["T", "Type a free tag"],
-  ["P", "Edit place (applies to selection)"],
-  ["Enter", "Open / close a burst"],
-  ["X", "In an open burst: mark all but the best as discard"],
-  ["S", "Create series from selection"],
-  ["+ / − / 0", "Zoom the timeline in / out / whole trip (or wheel on it)"],
-  ["Home / End", "First / last"],
-  ["?", "Show / hide this overlay"],
+/** Single source for the shortcut overlay; README mirrors it. */
+export const SHORTCUT_GROUPS: { title: string; items: [string[], string][] }[] = [
+  {
+    title: "Browse",
+    items: [
+      [["←", "→"], "Previous / next (wheel and swipe work too)"],
+      [["Home", "End"], "First / last"],
+      [["Enter"], "Open / close a burst"],
+      [["+", "−", "0"], "Zoom the timeline in / out / whole trip"],
+    ],
+  },
+  {
+    title: "Rate & keep",
+    items: [
+      [["↑"], "Better — bigger and higher"],
+      [["↓"], "Worse — smaller, slides down"],
+      [["Z"], "Undo the last rating"],
+      [["X"], "Open burst: all but the best → discard"],
+      [["Space"], "Pick: copy to your picks folder (again: undo)"],
+    ],
+  },
+  {
+    title: "Select",
+    items: [
+      [["Shift", "←/→"], "Extend the selection"],
+      [["⌘/Ctrl", "Click"], "Add or remove one item"],
+      [["Esc"], "Clear the selection"],
+      [["S"], "Create a series from the selection"],
+    ],
+  },
+  {
+    title: "Describe & view",
+    items: [
+      [["1–9"], "Toggle a tag preset"],
+      [["T"], "Tag menu"],
+      [["P"], "Edit the place"],
+      [["V", "M"], "Video: play/pause, sound"],
+      [["?"], "This overlay"],
+    ],
+  },
 ];

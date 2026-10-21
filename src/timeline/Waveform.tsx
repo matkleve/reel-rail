@@ -1,3 +1,4 @@
+import { Star, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type RefObject } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -5,7 +6,7 @@ import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import { useSize } from "@/ui/useSize";
 
-import { tagColor } from "@/ui/tagColor";
+import { tagColor, tagStyle } from "@/ui/tagColor";
 
 import { BIN_PX, drawWave, resolveColor } from "./drawWave";
 import { NEUTRAL, buildWave, maxZoom, nearest, waveLayers, windowAt, type Window } from "./waveform";
@@ -43,7 +44,7 @@ export function Waveform() {
     const el = canvas.current;
     if (!el || !size.w) return;
     const colorOf = (tag: string) =>
-      tag === NEUTRAL ? resolveColor(el, "var(--color-wave)") : resolveColor(el, tagColor(tag, presets));
+      tag === NEUTRAL ? resolveColor(el, "var(--wave-neutral)") : resolveColor(el, tagColor(tag, presets));
     drawWave(el, waves, colorOf, size.w, size.h);
   }, [waves, size, theme, presets]);
 
@@ -105,12 +106,16 @@ export function Waveform() {
 function Legend({ tags, presets }: { tags: string[]; presets: string[] }) {
   return (
     <>
-      <span className="wave-axis up">Favorite</span>
-      <span className="wave-axis down">Discard</span>
+      <span className="wave-axis up">
+        <Star size={10} fill="currentColor" strokeWidth={0} /> Better
+      </span>
+      <span className="wave-axis down">
+        <Trash2 size={10} /> Weaker
+      </span>
       <span className="wave-legend">
         {tags.map((t) => (
           <span key={t}>
-            <i style={{ background: tagColor(t, presets) }} />
+            <i className="tag-dot" style={tagStyle(t, presets)} />
             {t}
           </span>
         ))}

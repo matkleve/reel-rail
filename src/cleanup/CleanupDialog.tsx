@@ -1,25 +1,22 @@
+import { ArchiveRestore, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { TRASH_DIR, formatBytes, moveToTrash } from "@/fs/trash";
+import { MiniThumb } from "@/series/MiniThumb";
 import { markTrashed } from "@/store/actions";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
 import { DISCARD, type Media } from "@/types";
-import { Dialog } from "@/ui/Dialog";
-import { MiniThumb } from "@/series/MiniThumb";
+import { Button } from "@/ui/kit/Button";
+import { Dialog } from "@/ui/kit/Dialog";
 
-/** Everything rated "discard", as a grid, with its total size — and one button to move it out of the way. */
+/** Everything rated "discard", as a grid with its total size, and one button to move it out of the way. */
 export function CleanupDialog() {
   const open = useUi((s) => s.dialog === "cleanup");
-  const close = () => useUi.getState().set({ dialog: null });
-  return (
-    <Dialog open={open} onClose={close} title="Discards" wide>
-      {open && <CleanupBody onDone={close} />}
-    </Dialog>
-  );
+  return open ? <Cleanup onDone={() => useUi.getState().set({ dialog: null })} /> : null;
 }
 
-function CleanupBody({ onDone }: { onDone(): void }) {
+function Cleanup({ onDone }: { onDone(): void }) {
   const order = useReel((s) => s.order);
   const media = useReel((s) => s.reel.media);
   const items = useMemo(
@@ -43,53 +40,96 @@ function CleanupBody({ onDone }: { onDone(): void }) {
     }
   };
 
-  if (!items.length) return <p className="muted">Nothing marked as discard. Press ↓ twice on a normal item to mark one.</p>;
-
   return (
-    <>
-      <p>
-        <strong className="tabular">{items.length}</strong> items · <strong className="tabular">{formatBytes(bytes)}</strong>
-      </p>
-      <div className="cleanup-grid">
-        {items.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            className="cleanup-tile"
-            title={`${m.path} — click to keep (rating back to neutral)`}
-            onClick={() => useReel.getState().setRatings([{ id: m.id, rating: 0 }])}
-          >
-            <MiniThumb media={m} />
-          </button>
-        ))}
+    <Dialog
+      open
+      onClose={onDone}
+      title="Discards"
+      subtitle={items.length ? `${items.length} items · ${formatBytes(bytes)}` : undefined}
+      wide
+      footer={
+        items.length ? (
+          <CleanupFooter
+            count={items.length}
+            bytes={bytes}
+            done={done}
+            confirming={confirming}
+            onConfirm={setConfirming}
+            onRun={() => void run()}
+          />
+        ) : undefined
+      }
+    >
+      {!items.length ? (
+        <div className="empty-state">
+          <Trash2 size={28} aria-hidden="true" />
+          <strong>Nothing marked as discard</strong>
+          <p>Press ↓ twice on a normal shot, or click the bin in the dock.</p>
+        </div>
+      ) : (
+        <>
+          <p className="note">Click a shot to keep it after all — it goes back to normal.</p>
+          <div className="cleanup-grid">
+            {items.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className="cleanup-tile"
+                title={`${m.path} — keep`}
+                onClick={() => useReel.getState().setRatings([{ id: m.id, rating: 0 }])}
+              >
+                <MiniThumb media={m} />
+                <span className="cleanup-keep">
+                  <ArchiveRestore size={16} /> Keep
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </Dialog>
+  );
+}
+
+type FooterProps = {
+  count: number;
+  bytes: number;
+  done?: number;
+  confirming: boolean;
+  onConfirm(v: boolean): void;
+  onRun(): void;
+};
+
+/** Idle → confirm → progress. Keys keep React from reusing the clicked button across states. */
+function CleanupFooter(p: FooterProps) {
+  if (p.done !== undefined)
+    return (
+      <span className="text-2 tabular">
+        Moving {p.done} of {p.count}…
+      </span>
+    );
+  if (p.confirming)
+    return (
+      <div className="footer-row" key="confirm">
+        <span className="text-2">
+          Move {p.count} files ({formatBytes(p.bytes)}) to <code>{TRASH_DIR}/</code>?
+        </span>
+        <span className="spacer" />
+        <Button variant="ghost" onClick={() => p.onConfirm(false)}>
+          Cancel
+        </Button>
+        <Button variant="danger" icon={Trash2} onClick={p.onRun} autoFocus>
+          Move {p.count} files
+        </Button>
       </div>
-      <p className="muted small">
-        Click a tile to keep it. Moving puts the files into <code>{TRASH_DIR}/</code> inside your folder — nothing is
-        deleted, and moving a file back brings it back with its rating.
-      </p>
-      <div className="dialog-footer">
-        {done !== undefined ? (
-          <span className="muted tabular">
-            Moving {done} / {items.length}…
-          </span>
-        ) : confirming ? (
-          <>
-            <span className="muted">
-              Move {items.length} files ({formatBytes(bytes)})?
-            </span>
-            <button type="button" className="btn btn-ghost" onClick={() => setConfirming(false)}>
-              Cancel
-            </button>
-            <button type="button" className="btn btn-danger" onClick={() => void run()} autoFocus>
-              Move to {TRASH_DIR}
-            </button>
-          </>
-        ) : (
-          <button type="button" className="btn btn-primary" onClick={() => setConfirming(true)}>
-            Move to trash folder…
-          </button>
-        )}
-      </div>
-    </>
+    );
+  return (
+    <div className="footer-row" key="idle">
+      <span className="note">Nothing is deleted. Move a file back and it returns with its rating.</span>
+      <span className="spacer" />
+      <Button variant="primary" icon={Trash2} onClick={() => p.onConfirm(true)}>
+        Move to trash folder…
+      </Button>
+    </div>
   );
 }

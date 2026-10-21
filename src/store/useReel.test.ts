@@ -9,7 +9,7 @@ function seed() {
     media(id, { takenAt: new Date(Date.UTC(2026, 9, 14, 10, i)).toISOString() }),
   );
   useReel.getState().load({ ...emptyReel(), media: Object.fromEntries(list.map((m) => [m.id, m])) });
-  useReel.getState().setFilters({ rating: "all", neverExported: false, tags: [] });
+  useReel.getState().setFilters({ rating: "all", hideDiscards: false, neverExported: false, tags: [] });
 }
 
 const s = () => useReel.getState();

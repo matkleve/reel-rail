@@ -1,4 +1,4 @@
-import { DISCARD } from "@/types";
+import { DISCARD, type Rating } from "@/types";
 
 import { coverOf } from "./stacks";
 import { targetIds, useReel } from "./useReel";
@@ -85,4 +85,10 @@ export function markTrashed(moves: { id: string; path: string }[]): void {
     if (m) reel.media[id] = { ...m, path, missing: true };
   }
   s.refresh(reel);
+}
+
+/** Clicking a level in the dock: set the rating of the current item / selection (one undo step). */
+export function rateTo(rating: Rating): void {
+  const s = get();
+  s.setRatings(targetIds(s).map((id) => ({ id, rating })));
 }

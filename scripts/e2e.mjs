@@ -135,12 +135,13 @@ ok("seeded 10 photos + 1 duplicate + 1 non-media file");
 
 // ---- Open & scan ------------------------------------------------------------
 await page.reload();
-await page.getByRole("button", { name: "Open folder" }).click();
+await page.getByRole("button", { name: "Open a folder" }).click();
 await page.locator(".card").first().waitFor({ timeout: 15000 });
 if ((await page.locator(".card").count()) < 5) await fail("expected the carousel to show several cards");
-if ((await page.getByText("1 / 10").count()) !== 1) await fail("expected 10 items (duplicate merged, txt ignored)");
+const counter = () => page.locator(".stage-count").innerText();
+if ((await counter()) !== "1 / 10") await fail(`expected 10 items (duplicate merged, txt ignored), got ${await counter()}`);
 ok("scan: 10 items, duplicate collapsed, txt ignored");
-if ((await page.locator(".card-count").first().innerText()) !== "2") await fail("burst counter should read 2");
+if ((await page.locator(".card-count").first().innerText()).trim() !== "2") await fail("burst counter should read 2");
 await page.keyboard.press("End");
 await page.waitForTimeout(400);
 if ((await page.locator(".day-sep").count()) < 1) await fail("expected a day separator in the carousel");
@@ -200,9 +201,10 @@ await page.keyboard.type("Tram");
 await page.keyboard.press("Enter");
 await page.keyboard.press("Escape");
 await page.waitForTimeout(300);
-const chips = await page.locator(".card.is-current .card-tags .tag-chip").allInnerTexts();
-if (chips.join(",") !== "Food,Tram") await fail(`tag chips under the top card: ${chips}`);
-ok("tags: preset key 1 + free tag via T, chips under liked cards");
+const chips = await page.locator(".dock .tag > span").allInnerTexts();
+if (chips.join(",") !== "Food,Tram") await fail(`tag chips in the dock: ${chips}`);
+if ((await page.locator(".card.is-current .card-tags .tag-dot").count()) !== 2) await fail("tag dots under the favorite");
+ok("tags: preset key 1 + free tag via T, chips in the dock, dots under liked cards");
 
 // ---- Picks (Space) -------------------------------------------------------------------
 await page.keyboard.press(" ");
@@ -215,7 +217,8 @@ const picks = async () =>
     return out;
   });
 if ((await picks()).join() !== "IMG_1000.JPG") await fail(`picks folder: ${await picks()}`);
-if ((await page.locator(".card.is-current .badge.pick").count()) !== 1) await fail("picked card should show the pick badge");
+if ((await page.locator(".card.is-current .badge.is-pick").count()) !== 1) await fail("picked card should show the pick badge");
+if (!(await page.getByRole("button", { name: /Picked/ }).count())) await fail("dock should say Picked");
 await page.keyboard.press(" ");
 await page.getByText(/Removed from Picks/).waitFor({ timeout: 5000 });
 if ((await picks()).length !== 0) await fail("second Space should take the copy back");
@@ -227,7 +230,7 @@ ok("Space copies into the picks folder, again takes it back");
 const wave = await page.locator(".wave").boundingBox();
 await page.mouse.click(wave.x + wave.width - 3, wave.y + wave.height / 2);
 await page.waitForTimeout(300);
-if (!(await page.getByText("10 / 10").count())) await fail("clicking the waveform's right end should jump to the last item");
+if ((await counter()) !== "10 / 10") await fail("clicking the waveform's right end should jump to the last item");
 await page.keyboard.press("Home");
 ok("waveform click jumps in time");
 
@@ -283,7 +286,7 @@ if (files.length !== 4 || !files[0].startsWith("01_") || !files[3].startsWith("0
 ok(`export: ${Object.keys(exported)[0]}/ → ${files.join(", ")}`);
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForTimeout(400);
-if ((await page.locator(".badge.done").count()) < 3) await fail("exported items should show the check badge");
+if ((await page.locator(".badge.is-done").count()) < 3) await fail("exported items should show the check badge");
 ok("exported items show the check badge");
 await page.keyboard.press("Escape");
 await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
@@ -291,7 +294,7 @@ await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
 // ---- Clean up: discards → _reel_trash ------------------------------------------------
 await page.getByRole("button", { name: /^Discards/ }).click();
 await page.getByRole("button", { name: "Move to trash folder…" }).click();
-await page.getByRole("button", { name: "Move to _reel_trash" }).click();
+await page.getByRole("button", { name: /^Move \d+ files/ }).click();
 await page.getByText(/moved to _reel_trash/).waitFor({ timeout: 5000 });
 const trashed = await page.evaluate(async () => {
   const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
@@ -310,8 +313,8 @@ await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
 await page.locator(".card").first().waitFor();
 if ((await page.locator(".card.r2").count()) !== 1) await fail("rating lost after re-open");
-if ((await page.locator(".badge.done").count()) < 3) await fail("exports lost after re-open");
-if ((await page.locator(".badge.pick").count()) !== 1) await fail("pick lost after re-open");
+if ((await page.locator(".badge.is-done").count()) < 3) await fail("exports lost after re-open");
+if ((await page.locator(".badge.is-pick").count()) !== 1) await fail("pick lost after re-open");
 ok("re-open via remembered folder restores everything");
 
 // ---- Help overlay + light theme ---------------------------------------------------
@@ -319,7 +322,7 @@ await page.keyboard.press("?");
 await page.getByRole("heading", { name: "Keyboard shortcuts" }).waitFor();
 await page.screenshot({ path: "tmp/e2e/4-help.png" });
 await page.keyboard.press("Escape");
-await page.getByRole("button", { name: "Toggle light/dark theme" }).click();
+await page.getByRole("button", { name: "Light theme" }).click();
 await page.waitForTimeout(300);
 await page.screenshot({ path: "tmp/e2e/5-light.png" });
 ok("help overlay and light theme");
