@@ -41,3 +41,17 @@ describe("FilesSource", () => {
     await expect(src.getFile("nope.jpg")).rejects.toThrow(/add it again/);
   });
 });
+
+describe("FilesSource folder picks", () => {
+  it("skips what a folder walk skips: AppleDouble files, hidden folders, the trash, NAS thumbnails", () => {
+    const src = new FilesSource();
+    const added = src.add([
+      f("IMG_1.JPG", 10, 1, "image/jpeg", "Trip/IMG_1.JPG"),
+      f("._IMG_1.JPG", 4, 1, "image/jpeg", "Trip/._IMG_1.JPG"),
+      f("a.jpg", 10, 1, "image/jpeg", "Trip/_reel_trash/a.jpg"),
+      f("t.jpg", 10, 1, "image/jpeg", "Trip/@eaDir/IMG_1.JPG/t.jpg"),
+      f("b.jpg", 10, 1, "image/jpeg", "Trip/.thumbnails/b.jpg"),
+    ]);
+    expect(added).toBe(1);
+  });
+});

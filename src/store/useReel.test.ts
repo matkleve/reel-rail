@@ -111,3 +111,13 @@ describe("place", () => {
     expect(s().reel.media.a!.place).toBeUndefined();
   });
 });
+
+describe("markExported", () => {
+  it("marks only the given items and replaces an earlier record for the same series", () => {
+    s().addSeries({ id: "s2", title: "T", mediaIds: ["a", "b", "c"], createdAt: "" });
+    s().markExported("s2", "shared", ["a", "b"]);
+    s().markExported("s2", "shared", ["a", "b"]);
+    expect(s().reel.media.a!.exportedTo).toHaveLength(1);
+    expect(s().reel.media.c!.exportedTo).toEqual([]);
+  });
+});

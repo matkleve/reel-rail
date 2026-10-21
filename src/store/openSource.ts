@@ -73,14 +73,23 @@ export async function openFiles(picked: File[]): Promise<void> {
     ui.set({ error: "That selection had no photos or videos." });
     return;
   }
-  if (!appending) return openSource(source);
+  if (!appending) {
+    // Files mode keeps everything in browser storage: ask the browser not to
+    // evict it under storage pressure (granted automatically for installed apps).
+    void navigator.storage?.persist?.().catch(() => false);
+    return openSource(source);
+  }
+  if (!added) {
+    showToast("Already here — nothing new");
+    return;
+  }
 
   ui.set({ phase: "scanning", progress: undefined });
   try {
     const reel = await scanSource(source, useReel.getState().reel, onProgress);
     useReel.getState().refresh(reel);
     ui.set({ phase: "ready" });
-    showToast(added ? `${added} added` : "Already here — nothing new");
+    showToast(`${added} added`);
   } catch (err) {
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });
   }

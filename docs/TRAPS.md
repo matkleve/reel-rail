@@ -6,6 +6,20 @@ Newest at the top. (Format from grundriss.)
 
 ---
 
+## Mouse drags in tests produce clicks; finger swipes do not
+
+**Looked right:** after a swipe, a flag swallows the click that ends on a
+card; e2e swipes (mouse drags) all green.
+
+**Was true:** browsers synthesise `click` only for taps. A finger swipe ends
+with no click, so the flag stayed armed and ate the *next* tap — on an iPad,
+swipe then tap a neighbour did nothing. Mouse drags always produce a click,
+so the test could not see it. Found by the fresh-context review.
+
+**The check:** reset per gesture (on pointerdown), and test with touch
+pointer events that have no click: `scripts/e2e-ipad.mjs` dispatches a
+`pointerType: "touch"` swipe, then taps.
+
 ## A swipe that starts on an <img> never ends
 
 **Looked right:** pointerdown/move/up listeners on the stage; tests of the

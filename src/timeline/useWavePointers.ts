@@ -32,7 +32,8 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
     onPointerDown(e: PointerEvent<HTMLElement>) {
       e.currentTarget.setPointerCapture(e.pointerId);
       pointers.current.set(e.pointerId, e.clientX);
-      if (pointers.current.size === 2) {
+      if (pointers.current.size >= 2) {
+        // (Re)start the pinch from the fingers now down — a third finger must not make the zoom jump.
         pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().waveZoom };
         setDragWin(undefined);
       } else if (pointers.current.size === 1) {
@@ -53,6 +54,7 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
     onPointerUp(e: PointerEvent<HTMLElement>) {
       pointers.current.delete(e.pointerId);
       if (pointers.current.size < 2) pinch.current = undefined;
+      else pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().waveZoom };
       if (pointers.current.size === 0) setDragWin(undefined);
     },
   };

@@ -3,7 +3,7 @@ import type { ReelFile } from "@/types";
 import { idbGet, idbSet } from "./idb";
 import { normalize } from "./reelFile";
 import type { Source, SourceFile } from "./source";
-import { mediaTypeOf } from "./walk";
+import { isSkippedPath, mediaTypeOf } from "./walk";
 
 const LIBRARY_KEY = "library";
 
@@ -58,7 +58,7 @@ export class FilesSource implements Source {
   add(picked: Iterable<File>): number {
     let added = 0;
     for (const file of picked) {
-      if (!typeOfFile(file)) continue;
+      if (!typeOfFile(file) || isSkippedPath(file.webkitRelativePath || file.name)) continue;
       const path = pathFor(file, this.files);
       if (!this.files.has(path)) added++;
       this.files.set(path, file);
@@ -82,8 +82,13 @@ export class FilesSource implements Source {
     return f;
   }
 
+  /**
+   * Strict on purpose: a failed read must not look like "no library yet", or
+   * the first autosave would replace the saved library with this session's
+   * photos only.
+   */
   async loadReel(): Promise<ReelFile> {
-    const raw = await idbGet<string>("kv", LIBRARY_KEY);
+    const raw = await idbGet<string>("kv", LIBRARY_KEY, { strict: true });
     return normalize(raw ? JSON.parse(raw) : {});
   }
 

@@ -36,10 +36,19 @@ export function useSwipe(ref: RefObject<HTMLElement | null>): Drag | undefined {
     };
 
     const down = (e: PointerEvent) => {
-      if (e.button !== 0 || start) return;
+      // A second finger: a pinch or a palm, not a swipe — drop the gesture.
+      if (start && e.pointerId !== start.pointerId) {
+        end();
+        return;
+      }
+      if (e.button !== 0 || !e.isPrimary) return;
+      // A finger swipe produces no click, so a suppression left over from the
+      // last gesture would swallow this new touch's tap. Each touch starts clean.
+      suppressClick = false;
       const id = (e.target as Element).closest<HTMLElement>("[data-id]")?.dataset.id;
       start = { x: e.clientX, y: e.clientY, t: e.timeStamp, pointerId: e.pointerId, id };
-      if (id) {
+      // Hold-to-select is a touch idiom; a mouse has ctrl/⌘-click, and a slow click must stay a click.
+      if (id && e.pointerType !== "mouse") {
         longPress = setTimeout(() => {
           useReel.getState().setCurrent(id, "toggle");
           suppressClick = true;

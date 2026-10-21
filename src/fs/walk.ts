@@ -6,6 +6,17 @@ const VIDEO_EXT = new Set(["mp4", "mov", "m4v"]);
 /** Folders reel-rail owns or that never hold the user's media. */
 const SKIP_DIRS = new Set(["_reel_trash", "node_modules", "@eaDir"]);
 
+/**
+ * Whether a relative path is outside what reel-rail looks at: hidden entries
+ * (macOS "._IMG_1234.JPG" AppleDouble files on SD cards), its own trash, NAS
+ * thumbnail folders. One rule for folder walks and for picked folders.
+ */
+export function isSkippedPath(path: string): boolean {
+  const parts = path.split("/");
+  const name = parts.pop() ?? "";
+  return name.startsWith(".") || parts.some((p) => p.startsWith(".") || SKIP_DIRS.has(p));
+}
+
 export type FoundFile = { path: string; handle: FileSystemFileHandle; type: MediaType };
 
 export function mediaTypeOf(name: string): MediaType | undefined {

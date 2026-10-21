@@ -35,7 +35,8 @@ export type ReelState = {
   patch(ids: string[], fn: (m: Media) => Media): void;
   setFilters(patch: Partial<Filters>): void;
   addSeries(series: Series): void;
-  markExported(seriesId: string, exportedPath: string): void;
+  /** Records an export of `ids` (default: the whole series). Re-exporting replaces the record. */
+  markExported(seriesId: string, exportedPath: string, ids?: string[]): void;
   setSaveState(s: SaveState): void;
 };
 
@@ -167,14 +168,14 @@ export const useReel = create<ReelState>()((set, get) => ({
     set({ reel: { ...reel, series: [...reel.series, series] } });
   },
 
-  markExported(seriesId, exportedPath) {
+  markExported(seriesId, exportedPath, ids) {
     const reel = get().reel;
     const series = reel.series.find((x) => x.id === seriesId);
     if (!series) return;
     const at = new Date().toISOString();
-    const next = patchMedia(reel, series.mediaIds, (m) => ({
+    const next = patchMedia(reel, ids ?? series.mediaIds, (m) => ({
       ...m,
-      exportedTo: [...m.exportedTo, { series: seriesId, at }],
+      exportedTo: [...m.exportedTo.filter((e) => e.series !== seriesId), { series: seriesId, at }],
     }));
     next.series = reel.series.map((x) => (x.id === seriesId ? { ...x, exportedPath } : x));
     set({ reel: next });

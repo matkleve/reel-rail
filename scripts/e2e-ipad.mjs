@@ -123,6 +123,39 @@ await (await swipe(200, 0))();
 if ((await counter()) !== "1 / 8") await fail("swipe right should go back");
 ok("swipe left / right browses");
 
+// A finger swipe fires pointer events but no click (unlike the mouse drags
+// above). The very next tap must still land — a leftover "ignore the next
+// click" flag once swallowed it.
+await page.evaluate(() => {
+  const card = document.querySelector(".card.is-current .card-face");
+  const r = card.getBoundingClientRect();
+  const at = (x) => ({ pointerId: 7, pointerType: "touch", isPrimary: true, button: 0, bubbles: true, clientX: x, clientY: r.top + 40 });
+  const x = r.left + r.width / 2;
+  card.dispatchEvent(new PointerEvent("pointerdown", at(x)));
+  for (let i = 1; i <= 6; i++) window.dispatchEvent(new PointerEvent("pointermove", at(x - i * 35)));
+  window.dispatchEvent(new PointerEvent("pointerup", at(x - 210)));
+});
+await page.waitForTimeout(500);
+const afterTouchSwipe = await counter();
+if (afterTouchSwipe === "1 / 8") await fail("a touch swipe should browse");
+// A neighbour that is actually on screen (cards further out run off the edge).
+const target = await page.evaluate(() => {
+  const vw = window.innerWidth;
+  for (const el of document.querySelectorAll(".card:not(.is-current) .card-face")) {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    if (x > 20 && x < vw - 20 && r.width > 40) return { x, y: r.top + r.height / 2 };
+  }
+  return null;
+});
+if (!target) await fail("no neighbour card on screen to tap");
+await page.touchscreen.tap(target.x, target.y);
+await page.waitForTimeout(500);
+if ((await counter()) === afterTouchSwipe) await fail("the first tap after a finger swipe was swallowed");
+ok("a tap right after a finger swipe still selects the card");
+await page.keyboard.press("Home");
+await page.waitForTimeout(400);
+
 const release = await swipe(0, -140);
 const preview = await page.locator(".rate-preview").innerText().catch(() => "");
 await page.screenshot({ path: `${OUT}/3-swipe-up.png` });
@@ -155,13 +188,15 @@ if (JSON.stringify(shared[0]?.names) !== JSON.stringify(["IMG_2001.jpeg"])) {
 ok("Pick marks, 'Share picks' hands the original to the share sheet");
 
 // ---- Long press to select, series via share -----------------------------------------------------
-const neighbour = page.locator(".card:not(.is-current)").first();
-const nb = await neighbour.boundingBox();
-await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
-await page.mouse.down();
-await page.waitForTimeout(650);
-await page.mouse.up();
-await page.waitForTimeout(300);
+// Hold with a finger (touch pointer, no click follows). A mouse hold is a plain click by design.
+await page.evaluate(() => {
+  const face = document.querySelector(".card:not(.is-current) .card-face");
+  const r = face.getBoundingClientRect();
+  const at = { pointerId: 9, pointerType: "touch", isPrimary: true, button: 0, bubbles: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 };
+  face.dispatchEvent(new PointerEvent("pointerdown", at));
+  setTimeout(() => window.dispatchEvent(new PointerEvent("pointerup", at)), 650);
+});
+await page.waitForTimeout(950);
 const selected = await page.locator(".selection-count").innerText().catch(() => "");
 if (!selected.startsWith("2")) await fail(`long-press should add to the selection, got "${selected}"`);
 ok("press and hold selects");

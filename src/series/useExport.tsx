@@ -27,7 +27,22 @@ export function useExport() {
       const m = reel.media[id];
       return m && !m.missing ? [m] : [];
     });
-    if (getSource().kind === "files") {
+    const absent = series.mediaIds.length - media.length;
+    const files = getSource().kind === "files";
+    // Never report an export that did not happen. In files mode, photos not
+    // added again this session cannot be shared — and a partial share would
+    // be numbered 01…03 for a series of 12, so refuse rather than guess.
+    if (!media.length || (files && absent)) {
+      setState({
+        kind: "error",
+        message: files
+          ? `${absent} of ${series.mediaIds.length} photos aren’t loaded right now — add them again, then share.`
+          : "None of these files are in the folder any more.",
+      });
+      return;
+    }
+    const ids = media.map((m) => m.id);
+    if (files) {
       try {
         const files = await Promise.all(
           media.map(async (m, i) => renamed(await getMediaFile(m), exportName(i, media.length, m.path))),
@@ -35,7 +50,7 @@ export function useExport() {
         const result = await shareFiles(files, series.title);
         if (result === "cancelled") return;
         const path = result === "shared" ? "shared" : "downloads";
-        markExported(series.id, path);
+        markExported(series.id, path, ids);
         setState({ kind: "done", path });
       } catch (err) {
         setState({ kind: "error", message: err instanceof Error ? err.message : String(err) });
@@ -53,7 +68,8 @@ export function useExport() {
       const path = await exportSeries(target, series.title, media, (done) =>
         setState({ kind: "running", done, total: media.length }),
       );
-      markExported(series.id, path);
+      // Only what was copied — files missing from the folder were not.
+      markExported(series.id, path, ids);
       setState({ kind: "done", path });
     } catch (err) {
       setState({ kind: "error", message: err instanceof Error ? err.message : String(err) });
