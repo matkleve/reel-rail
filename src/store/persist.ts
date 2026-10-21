@@ -56,3 +56,12 @@ export function startAutosave(): () => void {
     clearTimeout(timer);
   };
 }
+
+/**
+ * Saves right now, for steps that must be on disk before the next file
+ * operation (a trim: the record of where the original went is written
+ * before the trimmed file takes its name).
+ */
+export async function saveNow(): Promise<void> {
+  await getSource().saveReel(useReel.getState().reel);
+}

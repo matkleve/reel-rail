@@ -16,6 +16,7 @@ import { StageOverlay } from "@/ui/StageOverlay";
 import { StartScreen } from "@/ui/StartScreen";
 import { Toast } from "@/ui/Toast";
 import { useKeyboard } from "@/ui/useKeyboard";
+import { WorkflowDialog } from "@/ui/WorkflowDialog";
 
 export function App() {
   const phase = useUi((s) => s.phase);
@@ -53,6 +54,7 @@ export function App() {
       <CleanupDialog />
       <HelpDialog />
       <TrimDialog />
+      <WorkflowDialog />
     </div>
   );
 }

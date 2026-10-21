@@ -1,9 +1,9 @@
 import type { Media } from "@/types";
 
-/** Chronological order of the visible (non-missing) media; path breaks ties. */
+/** Chronological order of what is on the rail (not missing, not in "Recently deleted"); path breaks ties. */
 export function chronological(media: Record<string, Media>): string[] {
   return Object.values(media)
-    .filter((m) => !m.missing)
+    .filter((m) => !m.missing && !m.binned)
     .sort((a, b) => a.takenAt.localeCompare(b.takenAt) || a.path.localeCompare(b.path))
     .map((m) => m.id);
 }

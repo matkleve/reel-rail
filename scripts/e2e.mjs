@@ -46,6 +46,8 @@ page.on("pageerror", (e) => fail(`page error: ${e.message}`));
 
 await context.addInitScript(installFixtures);
 await context.addInitScript(() => {
+  // Discards would leave the rail 30 s after rating, mid-test; the countdown step shortens this itself.
+  if (!localStorage.getItem("reel-rail:grace-seconds")) localStorage.setItem("reel-rail:grace-seconds", "3600");
   window.showDirectoryPicker = async ({ id } = {}) => {
     const root = await navigator.storage.getDirectory();
     const name = { "reel-export": "Exports", "reel-picks": "Picks" }[id] ?? "Trip";
@@ -97,6 +99,8 @@ ok("seeded 10 photos + 1 duplicate + 1 non-media file");
 // ---- Open & scan ------------------------------------------------------------
 await page.reload();
 await page.getByRole("button", { name: "Open a folder" }).click();
+// A new folder asks once how to work on it.
+await page.getByRole("button", { name: /^Edit this folder/ }).click();
 await page.locator(".card").first().waitFor({ timeout: 15000 });
 if ((await page.locator(".card").count()) < 5) await fail("expected the carousel to show several cards");
 const counter = () => page.locator(".stage-count").innerText();
@@ -252,7 +256,7 @@ ok("exported items show the check badge");
 await page.keyboard.press("Escape");
 await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
 
-// ---- Discards: 30-day countdown, "Delete now" deletes for good ---------------------------
+// ---- Discards: countdown → out of the folder → Recently deleted → back, or gone ---------------
 const tripFiles = () =>
   page.evaluate(async () => {
     const out = [];
@@ -265,41 +269,66 @@ const tripFiles = () =>
     await walk(await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip"), "");
     return out;
   });
-const filesBefore = await tripFiles();
-await page.getByRole("button", { name: /^Discards/ }).click();
-if ((await page.locator(".cleanup-days", { hasText: "30 d" }).count()) !== 1) await fail("discard should show 30 days left");
+const discard = page.locator(".card.rm2");
+if ((await discard.count()) !== 1) await fail("expected one discard on the rail");
+if (!(await discard.locator(".card-countdown").count())) await fail("a discard should show its countdown");
+const discardedPath = (await discard.locator(".card-face").getAttribute("aria-label")).match(/^photo (\S+),/)[1];
+await page.evaluate(() => localStorage.setItem("reel-rail:grace-seconds", "1"));
+await discard.waitFor({ state: "detached", timeout: 5000 });
+await page.waitForTimeout(300);
+let onDisk = await tripFiles();
+if (onDisk.includes(discardedPath) || !onDisk.includes(`_reel_trash/${discardedPath}`))
+  await fail(`${discardedPath} should have moved to _reel_trash/: ${onDisk}`);
+ok(`countdown ran out: ${discardedPath} left the rail and the folder (→ _reel_trash/)`);
+
+await page.getByRole("button", { name: /^Deleted/ }).click();
+if ((await page.locator(".cleanup-days", { hasText: "30 d" }).count()) !== 1) await fail("should show 30 days left");
+await page.locator(".cleanup-tile").first().click();
+await page.waitForTimeout(400);
+onDisk = await tripFiles();
+if (!onDisk.includes(discardedPath) || onDisk.includes(`_reel_trash/${discardedPath}`)) await fail("bring back should move the file back");
+await page.keyboard.press("Escape");
+if (!(await page.locator(`.card-face[aria-label^="photo ${discardedPath},"]`).count())) await fail("brought-back item not on the rail");
+ok("Recently deleted: bring back moves the file back onto the rail");
+
+// Discard a plain one (normal, no badges — the re-open checks below count those), then "Delete now".
+const plainPath = async () =>
+  (await page.locator(".card.is-current .card-face").getAttribute("aria-label")).match(/^photo (\S+),/)[1];
+await page.locator(".card.r0:not(:has(.badge)) .card-face").first().click();
+const doomed = await plainPath();
+await page.keyboard.press("ArrowDown");
+await page.keyboard.press("ArrowDown");
+await page.locator(`.card-face[aria-label^="photo ${doomed},"]`).waitFor({ state: "detached", timeout: 5000 });
+await page.getByRole("button", { name: /^Deleted/ }).click();
 await page.getByRole("button", { name: "Delete now…" }).click();
 await page.getByRole("button", { name: /^Delete \d+ files/ }).click();
 await page.getByText(/^Deleted 1 file ·/).waitFor({ timeout: 5000 });
-const filesAfter = await tripFiles();
-const gone = filesBefore.filter((f) => !filesAfter.includes(f));
-if (gone.length !== 1 || !gone[0].startsWith("Porto/")) await fail(`expected one deleted file, got ${gone}`);
-if ((await page.locator(".card.rm2").count()) !== 0) await fail("deleted item should leave the carousel");
-ok(`discards: 30-day countdown shown, "Delete now" deleted ${gone[0]}`);
+onDisk = await tripFiles();
+if (onDisk.some((f) => f.endsWith(doomed))) await fail(`${doomed} should be deleted for good: ${onDisk}`);
+ok(`"Delete now" deleted ${doomed} for good`);
 
-// ---- 30 days later: an old discard is deleted when the folder opens -----------------------
-// A plain one: normal, not picked, not exported — the re-open checks below count those.
+// ---- 30 days later: what waited in Recently deleted is deleted when the folder opens -------------
 await page.locator(".card.r0:not(:has(.badge)) .card-face").first().click();
+const aged = await plainPath();
 await page.keyboard.press("ArrowDown");
 await page.keyboard.press("ArrowDown");
-await page.locator(".card.is-current.rm2").waitFor();
+await page.locator(`.card-face[aria-label^="photo ${aged},"]`).waitFor({ state: "detached", timeout: 5000 });
 await page.waitForTimeout(900); // autosave
-const aged = await page.evaluate(async () => {
+await page.evaluate(async () => {
   const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
   const handle = await trip.getFileHandle(".reel.json");
   const reel = JSON.parse(await (await handle.getFile()).text());
-  const m = Object.values(reel.media).find((x) => x.rating === -2 && !x.missing);
-  m.discardedAt = new Date(Date.now() - 31 * 864e5).toISOString();
+  for (const m of Object.values(reel.media)) if (m.binned) m.binned.until = new Date(Date.now() - 1000).toISOString();
   const w = await handle.createWritable();
   await w.write(JSON.stringify(reel));
   await w.close();
-  return m.path;
 });
 await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
-await page.getByText(/^Deleted 1 discard after 30 days/).waitFor({ timeout: 5000 });
-if ((await tripFiles()).includes(aged)) await fail(`${aged} should be deleted after 30 days`);
-ok(`30 days after discarding, ${aged} was deleted on open`);
+await page.getByText(/^Deleted 1 file after 30 days/).waitFor({ timeout: 5000 });
+if ((await tripFiles()).some((f) => f.endsWith(aged))) await fail(`${aged} should be deleted after 30 days`);
+ok(`30 days in Recently deleted: ${aged} was deleted on open`);
+await page.evaluate(() => localStorage.setItem("reel-rail:grace-seconds", "3600"));
 
 // ---- Re-open: remembered handle, state restored --------------------------------
 await page.waitForTimeout(800);
@@ -334,7 +363,7 @@ await page.getByRole("slider", { name: "Trim end" }).focus();
 await page.keyboard.press("Shift+ArrowLeft");
 await page.screenshot({ path: "tmp/e2e/6-trim.png" });
 await page.getByRole("button", { name: "Trim & replace" }).click();
-await page.getByText(/^Trimmed — the original stays/).waitFor({ timeout: 10000 });
+await page.getByText(/^Trimmed — the original is in Recently deleted/).waitFor({ timeout: 10000 });
 const trimmed = await page.evaluate(async () => {
   const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
   const size = async (dir, name) => (await (await dir.getFileHandle(name)).getFile()).size;
@@ -343,15 +372,40 @@ const trimmed = await page.evaluate(async () => {
   return {
     now: await size(trip, "clip.mp4"),
     parked: await size(await trip.getDirectoryHandle("_reel_trash"), "clip.mp4"),
-    bin: reel.bin ?? [],
-    records: Object.values(reel.media).filter((m) => m.path === "clip.mp4").length,
+    parkedRecord: Object.values(reel.media).find((m) => m.binned?.path === "_reel_trash/clip.mp4"),
+    records: Object.values(reel.media).filter((m) => m.path === "clip.mp4" && !m.binned).length,
   };
 });
 if (trimmed.parked !== clip.length) await fail(`original should be parked whole, got ${trimmed.parked}`);
 if (!(trimmed.now > 0 && trimmed.now < clip.length * 0.8)) await fail(`trimmed file should be shorter: ${trimmed.now}`);
-if (trimmed.bin.length !== 1 || trimmed.bin[0].was !== "clip.mp4") await fail(`bin entry missing: ${JSON.stringify(trimmed.bin)}`);
+if (!trimmed.parkedRecord) await fail("the original should be in Recently deleted");
 if (trimmed.records !== 1) await fail("exactly one record should point at clip.mp4");
-ok(`trim: clip.mp4 ${clip.length} → ${trimmed.now} bytes, original parked in _reel_trash for 30 days`);
+ok(`trim: clip.mp4 ${clip.length} → ${trimmed.now} bytes, original in Recently deleted for 30 days`);
+
+// ---- Leave the folder as it is, export the result ------------------------------------------------
+await page.locator(".folder-btn").click();
+await page.getByRole("button", { name: /^Editing this folder/ }).click();
+await page.getByRole("button", { name: /^Leave it as it is/ }).click();
+const keptCount = Number((await counter()).split("/")[1].trim());
+const sourceBefore = await tripFiles();
+await page.locator(".folder-btn").click();
+await page.getByRole("button", { name: "Export result…" }).click();
+await page.getByText(/^Exported \d+ to Exports\//).waitFor({ timeout: 10000 });
+const result = await page.evaluate(async () => {
+  const dir = await (await (await navigator.storage.getDirectory()).getDirectoryHandle("Exports")).getDirectoryHandle("Trip - sorted");
+  const out = [];
+  const walk = async (d, pre) => {
+    for await (const [n, h] of d.entries()) {
+      if (h.kind === "directory") await walk(h, `${pre}${n}/`);
+      else out.push(`${pre}${n}`);
+    }
+  };
+  await walk(dir, "");
+  return out;
+});
+if (result.length !== keptCount) await fail(`export should hold the ${keptCount} kept items, got ${result.length}`);
+if ((await tripFiles()).join() !== sourceBefore.join()) await fail("export must not change the source folder");
+ok(`"leave it, export": ${result.length} kept items in Exports/Trip - sorted/, source untouched`);
 
 // ---- Help overlay + light theme ---------------------------------------------------
 await page.keyboard.press("?");

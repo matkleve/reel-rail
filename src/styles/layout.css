@@ -367,3 +367,45 @@
   opacity: 0;
   transition: opacity var(--dur-1);
 }
+
+/* While the current item is a discard: its countdown, above the dock. */
+.leaving {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 4px 0 var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: var(--radius-full);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  overflow: hidden;
+  animation: toast-in var(--dur-2) var(--ease-spring);
+}
+.leaving > svg {
+  color: var(--danger);
+}
+.leaving .btn {
+  border-radius: var(--radius-full);
+}
+.leaving-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--danger);
+  transform-origin: left;
+  animation: countdown var(--grace) linear forwards;
+  animation-delay: calc(var(--elapsed) * -1);
+}
+/* The hints would sit in the same spot. */
+.app:has(.leaving) .hints {
+  opacity: 0;
+}

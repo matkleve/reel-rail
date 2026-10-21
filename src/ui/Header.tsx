@@ -3,7 +3,10 @@ import {
   Check,
   ChevronDown,
   CircleAlert,
+  FolderInput,
   FolderOpen,
+  FolderOutput,
+  FolderPen,
   Keyboard,
   Layers,
   LoaderCircle,
@@ -17,17 +20,19 @@ import {
 
 import { pickPicksFolder } from "@/fs/picksFolder";
 import { activeExtras, type RatingFilter } from "@/store/filters";
+import { runExportResult } from "@/store/exportResult";
 import { pickAndOpen } from "@/store/openSource";
 import { sharePicks } from "@/store/picks";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
-import { DISCARD, PICKS } from "@/types";
+import { PICKS } from "@/types";
 
 import { Button } from "./kit/Button";
 import { Kbd } from "./kit/Kbd";
 import { Popover } from "./kit/Popover";
 import { Segmented } from "./kit/Segmented";
 import { Logo } from "./Logo";
+import { AccountMenu } from "./AccountMenu";
 import { FilterPanel } from "./FilterPanel";
 import { LibraryMenu } from "./LibraryMenu";
 import { MoreMenu } from "./MoreMenu";
@@ -45,13 +50,11 @@ export function Header() {
   const setFilters = useReel((s) => s.setFilters);
   const seriesCount = useReel((s) => s.reel.series.length);
   const counts = useReel((s) => {
-    let discards = 0;
     let picks = 0;
-    for (const id of s.order) {
-      const m = s.reel.media[id]!;
-      if (m.rating === DISCARD) discards++;
-      if (m.exportedTo.some((e) => e.series === PICKS)) picks++;
-    }
+    for (const id of s.order) if (s.reel.media[id]!.exportedTo.some((e) => e.series === PICKS)) picks++;
+    // "Recently deleted" is off the rail, so it is counted over all records.
+    let discards = 0;
+    for (const m of Object.values(s.reel.media)) if (m.binned) discards++;
     return `${discards}:${picks}`;
   });
   const [discards, picks] = counts.split(":").map(Number) as [number, number];
@@ -119,9 +122,10 @@ export function Header() {
         <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })} title="Series">
           <span className="btn-label">Series</span>
         </Button>
-        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title="Discards">
-          <span className="btn-label">Discards</span>
+        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title="Recently deleted">
+          <span className="btn-label">Deleted</span>
         </Button>
+        <AccountMenu />
         {phone ? (
           <MoreMenu ratingOptions={RATING_OPTIONS} onTheme={() => toggleTheme(theme)} />
         ) : (
@@ -143,6 +147,7 @@ export function Header() {
 function FolderMenu() {
   const folderName = useUi((s) => s.folderName);
   const picksName = useUi((s) => s.picksFolderName);
+  const workflow = useReel((s) => s.reel.workflow);
   const close = () => document.querySelector<HTMLElement>(".popover:popover-open")?.hidePopover();
   return (
     <Popover
@@ -161,6 +166,16 @@ function FolderMenu() {
       <button type="button" className="menu-item" onClick={() => (close(), void choosePicks())}>
         <ArrowDownToLine size={15} /> Picks folder: {picksName ?? "not set"}
       </button>
+      <hr />
+      <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "workflow" }))}>
+        {workflow === "export" ? <FolderInput size={15} /> : <FolderPen size={15} />}
+        {workflow === "export" ? "Leaving the folder as it is" : "Editing this folder"}…
+      </button>
+      {workflow === "export" && (
+        <button type="button" className="menu-item" onClick={() => (close(), void runExportResult())}>
+          <FolderOutput size={15} /> Export result…
+        </button>
+      )}
       <hr />
       <button
         type="button"

@@ -28,8 +28,7 @@ export function normalize(raw: unknown, now = new Date()): ReelFile {
     m.rating ??= 0;
     // v1 had four levels; its bottom one ("unusable") is v2's "discard".
     if (version === 1 && m.rating === -1) m.rating = -2;
-    // Discards from before the 30-day rule get their full 30 days from now —
-    // never deleted on the day the rule first meets them.
+    // Discards from before the countdown get a full countdown from now.
     if (m.rating === -2 && !m.discardedAt) m.discardedAt = now.toISOString();
   }
   return {
@@ -37,7 +36,7 @@ export function normalize(raw: unknown, now = new Date()): ReelFile {
     media,
     series: r.series ?? [],
     tagPresets: r.tagPresets?.length ? r.tagPresets : [...DEFAULT_TAG_PRESETS],
-    ...(r.bin?.length ? { bin: r.bin } : {}),
+    ...(r.workflow === "edit" || r.workflow === "export" ? { workflow: r.workflow } : {}),
   };
 }
 

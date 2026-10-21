@@ -154,8 +154,9 @@ describe("export naming", () => {
     expect(exportName(4, 120, "a/b/c.jpg")).toBe("005_c.jpg");
   });
 
-  it("makes titles folder-safe without losing umlauts or dashes", () => {
-    expect(folderName("Porto – Tram & Tauben / Okt: 26")).toBe("Porto – Tram & Tauben Okt 26");
+  it("makes titles folder-safe without losing umlauts", () => {
+    // En dashes become hyphens on disk: Chromium mis-resolves names with them (docs/TRAPS.md).
+    expect(folderName("Porto – Tram & Tauben / Okt: 26")).toBe("Porto - Tram & Tauben Okt 26");
     expect(folderName("...")).toBe("Series");
     expect(folderName("Grüße")).toBe("Grüße");
   });

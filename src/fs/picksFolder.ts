@@ -1,4 +1,5 @@
 import { ensurePermission, loadHandle, saveHandle } from "./handleStore";
+import { freeName, namesIn } from "./names";
 
 /**
  * The picks folder — where Space drops a copy of the current item for further
@@ -18,21 +19,10 @@ export async function getPicksFolder(): Promise<FileSystemDirectoryHandle> {
   return pickPicksFolder();
 }
 
-async function exists(dir: FileSystemDirectoryHandle, name: string): Promise<boolean> {
-  try {
-    await dir.getFileHandle(name);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /** Copies under the original name; "name (2).ext" if that is taken. Returns the name used. */
 export async function copyInto(dir: FileSystemDirectoryHandle, file: File, name: string): Promise<string> {
-  const dot = name.lastIndexOf(".");
-  const [stem, ext] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
-  let candidate = name;
-  for (let n = 2; await exists(dir, candidate); n++) candidate = `${stem} (${n})${ext}`;
+  const names = await namesIn(dir);
+  const candidate = freeName(name, (n) => names.has(n));
   const w = await (await dir.getFileHandle(candidate, { create: true })).createWritable();
   await file.stream().pipeTo(w);
   return candidate;

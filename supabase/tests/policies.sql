@@ -1,0 +1,8 @@
+-- Policy check, run against the project after the migration (SQL editor or
+-- the Supabase MCP). Each statement must behave as its comment says.
+-- Two users A and B; as A:
+--   select * from public.subscriptions;            -- only A's row (or none)
+--   select * from public.subscriptions where user_id = '<B>';   -- 0 rows
+--   insert into public.subscriptions (user_id, status) values ('<A>', 'active');  -- denied (RLS)
+--   update public.subscriptions set status = 'active';          -- 0 rows / denied
+--   select * from public.profiles;                  -- only A's profile

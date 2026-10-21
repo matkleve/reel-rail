@@ -20,7 +20,7 @@ const MAX_PARALLEL = 3;
 export type Thumb = { url?: string; aspect?: number; failed?: boolean };
 type Entry = Thumb;
 const cache = new Map<string, Entry>();
-const pending: Pick<Media, "id" | "path" | "type">[] = [];
+const pending: Pick<Media, "id" | "path" | "type" | "binned">[] = [];
 const listeners = new Set<() => void>();
 let running = 0;
 let version = 0;
@@ -39,7 +39,7 @@ export function thumbFor(id: string): Entry | undefined {
   return cache.get(id);
 }
 
-export function requestThumb(media: Pick<Media, "id" | "path" | "type">): void {
+export function requestThumb(media: Pick<Media, "id" | "path" | "type" | "binned">): void {
   if (cache.has(media.id) || pending.some((m) => m.id === media.id)) return;
   pending.push(media);
   pump();
@@ -67,7 +67,7 @@ function pump(): void {
   }
 }
 
-async function make(media: Pick<Media, "id" | "path" | "type">): Promise<Thumb> {
+async function make(media: Pick<Media, "id" | "path" | "type" | "binned">): Promise<Thumb> {
   const file = await getMediaFile(media);
   const source = media.type === "video" ? await videoFrame(file) : await imageSource(file);
   const { blob, aspect } = await draw(source);

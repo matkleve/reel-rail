@@ -4,17 +4,17 @@ import { useMemo, useState } from "react";
 import { daysLeft } from "@/fs/deletion";
 import { formatBytes } from "@/fs/trash";
 import { MiniThumb } from "@/series/MiniThumb";
-import { deleteNow } from "@/store/deletion";
+import { deleteNow, restore } from "@/store/discards";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
-import { DISCARD, KEEP_DAYS, type Media } from "@/types";
+import { KEEP_DAYS, type Media } from "@/types";
 import { Button } from "@/ui/kit/Button";
 import { Dialog } from "@/ui/kit/Dialog";
 
 /**
- * Everything rated "discard" — reel-rail's "Recently deleted". In folder mode
- * each file is deleted for good KEEP_DAYS after it was discarded, or now on
- * a confirmed "Delete now". Tapping a tile keeps it.
+ * "Recently deleted": discards whose countdown ran out. Tap one to bring it
+ * back. In a folder edited in place the files wait in `_reel_trash/` and are
+ * deleted for good after KEEP_DAYS — or now, on a confirmed "Delete now".
  */
 export function CleanupDialog() {
   const open = useUi((s) => s.dialog === "cleanup");
@@ -22,76 +22,79 @@ export function CleanupDialog() {
 }
 
 function Cleanup({ onDone }: { onDone(): void }) {
-  const order = useReel((s) => s.order);
   const media = useReel((s) => s.reel.media);
+  const workflow = useReel((s) => s.reel.workflow);
+  const kind = useUi((s) => s.sourceKind);
   const items = useMemo(
-    () => order.flatMap((id): Media[] => (media[id]!.rating === DISCARD ? [media[id]!] : [])),
-    [order, media],
+    () =>
+      Object.values(media)
+        .filter((m) => m.binned)
+        .sort((a, b) => a.takenAt.localeCompare(b.takenAt)),
+    [media],
   );
-  const bytes = items.reduce((n, m) => n + (m.size ?? 0), 0);
+  const onDisk = items.filter((m) => m.binned?.path);
+  const bytes = onDisk.reduce((n, m) => n + (m.size ?? 0), 0);
   const [confirming, setConfirming] = useState(false);
-  // Files mode has read-only access: nothing can be deleted, so this is a checklist.
-  const canDelete = useUi((s) => s.sourceKind === "folder");
-  const [done, setDone] = useState<number>();
-  const total = items.reduce((n, m) => n + 1 + (m.altPaths?.length ?? 0), 0);
+  const [busy, setBusy] = useState(false);
 
   const run = async () => {
-    setDone(0);
+    setBusy(true);
     try {
-      const r = await deleteNow(items, setDone);
+      const r = await deleteNow(onDisk.map((m) => m.id));
       showToast(`Deleted ${r.count} ${r.count === 1 ? "file" : "files"} · ${formatBytes(r.bytes)} freed`);
       if (r.failed) showToast(`${r.failed} files could not be deleted`, "error");
       onDone();
     } catch (err) {
       showToast(`Deleting stopped: ${err instanceof Error ? err.message : err}`, "error");
-      setDone(undefined);
+      setBusy(false);
     }
   };
+
+  const note =
+    kind === "files"
+      ? "A browser can’t delete from your photo library: use this list to clear them out in the Photos app."
+      : workflow === "export"
+        ? "This folder is left as it is — these are just not part of the export."
+        : `Moved to _reel_trash/ and deleted for good after ${KEEP_DAYS} days.`;
 
   return (
     <Dialog
       open
       onClose={onDone}
-      title="Discards"
+      title="Recently deleted"
       subtitle={
-        items.length ? `${items.length} ${items.length === 1 ? "item" : "items"} · ${formatBytes(bytes)}` : undefined
+        items.length
+          ? `${items.length} ${items.length === 1 ? "item" : "items"}${onDisk.length ? ` · ${formatBytes(bytes)}` : ""}`
+          : undefined
       }
       wide
       footer={
-        items.length && !canDelete ? (
-          <span className="note">
-            A browser can’t delete from your photo library. Use this list to clear them out in the Photos app — or keep
-            them; they stay marked.
-          </span>
-        ) : items.length ? (
-          <CleanupFooter
-            count={items.length}
+        onDisk.length ? (
+          <DeleteFooter
+            count={onDisk.length}
             bytes={bytes}
-            done={done}
-            total={total}
+            busy={busy}
             confirming={confirming}
             onConfirm={setConfirming}
             onRun={() => void run()}
           />
+        ) : items.length ? (
+          <span className="note">{note}</span>
         ) : undefined
       }
     >
       {!items.length ? (
         <div className="empty-state">
           <Trash2 size={28} aria-hidden="true" />
-          <strong>Nothing marked as discard</strong>
-          <p>Swipe down or press ↓ on a weak shot, or tap the bin in the dock.</p>
+          <strong>Nothing deleted</strong>
+          <p>Swipe a shot all the way down: it shrinks, a bar runs out, and it lands here.</p>
         </div>
       ) : (
         <>
-          <p className="note">
-            {canDelete
-              ? `Discards are deleted for good ${KEEP_DAYS} days after you discarded them. Tap one to keep it after all.`
-              : "Tap one to keep it after all — it goes back to normal."}
-          </p>
+          <p className="note">{onDisk.length ? `${note} Tap one to bring it back.` : "Tap one to bring it back."}</p>
           <div className="cleanup-grid">
             {items.map((m) => (
-              <Tile key={m.id} media={m} showDays={canDelete} />
+              <Tile key={m.id} media={m} disabled={busy} />
             ))}
           </div>
         </>
@@ -100,21 +103,20 @@ function Cleanup({ onDone }: { onDone(): void }) {
   );
 }
 
-function Tile({ media: m, showDays }: { media: Media; showDays: boolean }) {
-  const days = daysLeft(m);
+function Tile({ media: m, disabled }: { media: Media; disabled: boolean }) {
+  const days = m.binned?.path ? daysLeft(m) : undefined;
   return (
     <button
       type="button"
       className="cleanup-tile"
-      title={`${m.path} — keep`}
-      onClick={() => useReel.getState().setRatings([{ id: m.id, rating: 0 }])}
+      title={`${m.path} — bring back`}
+      disabled={disabled}
+      onClick={() => void restore(m.id)}
     >
       <MiniThumb media={m} />
-      {showDays && days !== undefined && (
-        <span className="cleanup-days tabular">{days === 0 ? "today" : `${days} d`}</span>
-      )}
+      {days !== undefined && <span className="cleanup-days tabular">{days === 0 ? "today" : `${days} d`}</span>}
       <span className="cleanup-keep">
-        <ArchiveRestore size={16} /> Keep
+        <ArchiveRestore size={16} /> Bring back
       </span>
     </button>
   );
@@ -123,21 +125,15 @@ function Tile({ media: m, showDays }: { media: Media; showDays: boolean }) {
 type FooterProps = {
   count: number;
   bytes: number;
-  done?: number;
-  total: number;
+  busy: boolean;
   confirming: boolean;
   onConfirm(v: boolean): void;
   onRun(): void;
 };
 
-/** Idle → confirm → progress. Keys keep React from reusing the clicked button across states. */
-function CleanupFooter(p: FooterProps) {
-  if (p.done !== undefined)
-    return (
-      <span className="text-2 tabular">
-        Deleting {p.done} of {p.total}…
-      </span>
-    );
+/** Idle → confirm → busy. Keys keep React from reusing the clicked button across states. */
+function DeleteFooter(p: FooterProps) {
+  if (p.busy) return <span className="text-2">Deleting…</span>;
   if (p.confirming)
     return (
       <div className="footer-row" key="confirm">

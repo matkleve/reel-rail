@@ -53,6 +53,8 @@ await context.addInitScript(() => {
   // What Safari on an iPad looks like to the app.
   delete window.showDirectoryPicker;
   window.__shared = [];
+  // Discards would leave the rail 30 s after rating, mid-test; the trim step shortens this itself.
+  if (!localStorage.getItem("reel-rail:grace-seconds")) localStorage.setItem("reel-rail:grace-seconds", "3600");
   navigator.canShare = () => true;
   navigator.share = async ({ files, title }) => {
     window.__shared.push({ title, names: files.map((f) => f.name) });
@@ -214,11 +216,11 @@ ok(`series shared as ${series.names.join(", ")}`);
 await page.getByRole("button", { name: "Done" }).click();
 await page.getByRole("button", { name: "Clear selection" }).click();
 
-// ---- Discards: read-only, so a checklist ---------------------------------------------------------
-await page.getByRole("button", { name: /^Discards/ }).click();
-if (await page.getByRole("button", { name: /Move to trash/ }).count()) await fail("files mode cannot move files");
+// ---- Recently deleted: read-only, so a checklist -------------------------------------------------
+await page.getByRole("button", { name: /^Deleted/ }).click();
+if (await page.getByRole("button", { name: /Delete now/ }).count()) await fail("files mode cannot delete files");
 await page.keyboard.press("Escape");
-ok("no 'move to trash' in files mode");
+ok("no 'Delete now' in files mode");
 
 // ---- Layout: nothing overflows, landscape and portrait ---------------------------------------------
 async function noOverflow(label) {
@@ -296,11 +298,16 @@ await page.getByRole("button", { name: "Save to Photos…" }).click();
 const sharedClip = (await page.evaluate(() => window.__shared)).at(-1);
 if (sharedClip?.names?.[0] !== "clip-trimmed.mp4") await fail(`trimmed clip not shared: ${JSON.stringify(sharedClip)}`);
 await page.locator('.card.is-current .card-face[aria-label^="video clip-trimmed.mp4"]').waitFor();
-// The original sits a second away, so it stacks behind the trimmed copy — check the Discards list.
-await page.getByRole("button", { name: /^Discards/ }).click();
-if (!(await page.locator('.cleanup-tile[title="clip.mp4 — keep"]').count())) await fail("the untrimmed original should be marked discard");
+// The original is a discard: its countdown (shortened here) runs out and it lands in Recently deleted.
+await page.evaluate(() => localStorage.setItem("reel-rail:grace-seconds", "1"));
+await page.waitForTimeout(2500);
+await page.getByRole("button", { name: /^Deleted/ }).click();
+const tile = page.locator('.cleanup-tile[title="clip.mp4 — bring back"]');
+if (!(await tile.count())) await fail("the untrimmed original should be in Recently deleted");
+await tile.click();
 await page.keyboard.press("Escape");
-ok("trim: lossless copy shared as clip-trimmed.mp4, original marked discard");
+if (!(await page.locator('.card-face[aria-label^="video clip.mp4,"]').count())) await fail("bring back should put it on the rail");
+ok("trim: lossless copy shared as clip-trimmed.mp4; the original left after its countdown and came back");
 
 await browser.close();
 server.kill();

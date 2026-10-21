@@ -10,7 +10,7 @@ import type { Media, Rating } from "@/types";
  */
 
 /** Card height per rating, as a fraction of the base height. */
-export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.34, [-1]: 0.58, 0: 0.74, 1: 0.88, 2: 1 };
+export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.2, [-1]: 0.58, 0: 0.74, 1: 0.88, 2: 1 };
 /** How far a card rises above (or sinks below) the floor, as a fraction of stage height. */
 export const LIFT: Record<Rating, number> = { [-2]: -0.1, [-1]: -0.045, 0: 0, 1: 0.045, 2: 0.09 };
 

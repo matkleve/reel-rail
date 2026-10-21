@@ -156,11 +156,13 @@ export const useReel = create<ReelState>()((set, get) => ({
     const { undoStack, reel } = get();
     const last = undoStack.at(-1);
     if (!last) return;
-    const prev = new Map(last.map((u) => [u.id, u.rating]));
+    // What already left the rail comes back through "Recently deleted" (it may have moved on disk), not through Z.
+    const live = last.filter((u) => reel.media[u.id] && !reel.media[u.id]!.binned);
+    const prev = new Map(live.map((u) => [u.id, u.rating]));
     set({
       reel: patchMedia(reel, [...prev.keys()], (m) => withRating(m, prev.get(m.id)!)),
       undoStack: undoStack.slice(0, -1),
-      currentId: last[0]?.id ?? get().currentId,
+      currentId: live[0]?.id ?? get().currentId,
     });
   },
 

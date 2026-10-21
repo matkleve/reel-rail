@@ -5,12 +5,13 @@ import { scanSource } from "@/fs/scan";
 import { peekSource, setSource } from "@/fs/session";
 import type { Source } from "@/fs/source";
 
-import { purgeDue } from "./deletion";
+import { purgeDue, startSweep } from "./discards";
 import { startAutosave } from "./persist";
 import { useReel } from "./useReel";
 import { showToast, useUi } from "./useUi";
 
 let stopAutosave: (() => void) | undefined;
+let stopSweep: (() => void) | undefined;
 
 const onProgress = (progress: Parameters<Parameters<typeof scanSource>[2]>[0]) => useUi.getState().set({ progress });
 
@@ -19,6 +20,7 @@ async function openSource(source: Source): Promise<void> {
   const ui = useUi.getState();
   try {
     stopAutosave?.();
+    stopSweep?.();
     setSource(source);
     ui.set({ phase: "scanning", folderName: source.name, sourceKind: source.kind, error: undefined, progress: undefined });
 
@@ -27,12 +29,14 @@ async function openSource(source: Source): Promise<void> {
     useReel.getState().load(reel);
     // Started after load so that the merged scan is saved once, right away.
     stopAutosave = startAutosave();
+    stopSweep = startSweep();
     // A fresh object from the store's own reel (which now carries derived stackIds) — not the scan result.
     useReel.setState((s) => ({ reel: { ...s.reel } }));
     const picksFolderName = source.kind === "folder" ? (await loadHandle("picks"))?.name : undefined;
     ui.set({ phase: "ready", picksFolderName });
-    // Only a folder can delete; only right after a scan is every path verified.
-    if (source.kind === "folder") void purgeDue();
+    // A new folder is asked once how it should be worked on (in place, or export).
+    if (source.kind === "folder" && !useReel.getState().reel.workflow) ui.set({ dialog: "workflow" });
+    void purgeDue();
   } catch (err) {
     console.error(err);
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });

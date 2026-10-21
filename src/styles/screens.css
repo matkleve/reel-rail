@@ -496,3 +496,45 @@
   color: var(--accent);
   animation: spin 900ms linear infinite;
 }
+
+/* ---- Choice list (workflow) ------------------------------------------------- */
+
+.choice-list {
+  display: grid;
+  gap: var(--space-3);
+}
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-1),
+    border-color var(--dur-1);
+}
+.choice:hover {
+  background: var(--surface-press);
+}
+.choice[aria-pressed="true"] {
+  border-color: var(--select);
+  background: var(--select-soft);
+}
+.choice svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.choice > span {
+  display: grid;
+  gap: var(--space-1);
+}
+.choice > span > span {
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}

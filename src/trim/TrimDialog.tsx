@@ -27,6 +27,8 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
   // The video this dialog was opened for, fixed for its lifetime.
   const [media] = useState(current);
   const files = useUi((s) => s.sourceKind === "files");
+  const exporting = useReel((s) => s.reel.workflow === "export");
+  const mode = files ? "files" : exporting ? "export" : "edit";
   const [phase, setPhase] = useState<Phase>({ kind: "edit" });
   const { url, duration, range, playhead, playing, seek, togglePlay, changeRange, videoProps, pause } =
     usePreview(media);
@@ -35,12 +37,14 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
     pause();
     setPhase({ kind: "saving", progress: 0 });
     try {
-      const file = await saveTrim(media, range, (progress) => setPhase({ kind: "saving", progress }));
-      if (file) setPhase({ kind: "share", file });
-      else {
-        showToast(`Trimmed — the original stays in _reel_trash for ${KEEP_DAYS} days`);
-        onDone();
-      }
+      const out = await saveTrim(media, range, (progress) => setPhase({ kind: "saving", progress }));
+      if (out.kind === "share") return setPhase({ kind: "share", file: out.file });
+      showToast(
+        out.kind === "replaced"
+          ? `Trimmed — the original is in Recently deleted for ${KEEP_DAYS} days`
+          : "Trim saved — it is applied when you export the result",
+      );
+      onDone();
     } catch (err) {
       console.error(err);
       showToast(`Trimming failed: ${err instanceof Error ? err.message : err}`, "error");
@@ -71,7 +75,7 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
       footer={
         <TrimFooter
           phase={phase}
-          files={files}
+          mode={mode}
           canSave={duration > 0 && !unchanged && length >= MIN_LENGTH}
           onCancel={onDone}
           onSave={() => void save()}
@@ -110,7 +114,7 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
 
 type FooterProps = {
   phase: Phase;
-  files: boolean;
+  mode: "files" | "edit" | "export";
   canSave: boolean;
   onCancel(): void;
   onSave(): void;
@@ -118,7 +122,7 @@ type FooterProps = {
 };
 
 /** Edit → saving (progress) → share (files mode only). */
-function TrimFooter({ phase, files, canSave, onCancel, onSave, onShare }: FooterProps) {
+function TrimFooter({ phase, mode, canSave, onCancel, onSave, onShare }: FooterProps) {
   if (phase.kind === "share")
     return (
       <div className="footer-row" key="share">
@@ -141,16 +145,18 @@ function TrimFooter({ phase, files, canSave, onCancel, onSave, onShare }: Footer
   return (
     <div className="footer-row" key="edit">
       <span className="note">
-        {files
+        {mode === "files"
           ? "The cut is lossless. Your library keeps the original until you delete it in Photos."
-          : `The cut-away part is deleted. The original waits ${KEEP_DAYS} days in _reel_trash/.`}
+          : mode === "export"
+            ? "The folder stays as it is — the trim is applied when you export the result."
+            : `The cut-away part leaves the folder. The original waits ${KEEP_DAYS} days in Recently deleted.`}
       </span>
       <span className="spacer" />
       <Button variant="ghost" onClick={onCancel}>
         Cancel
       </Button>
       <Button variant="primary" icon={Scissors} onClick={onSave} disabled={!canSave}>
-        {files ? "Trim" : "Trim & replace"}
+        {mode === "edit" ? "Trim & replace" : "Trim"}
       </Button>
     </div>
   );

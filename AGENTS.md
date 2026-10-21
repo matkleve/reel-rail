@@ -18,23 +18,29 @@ Never report work as done without a green `verify`. Re-run one check alone:
 
 ## Hard rules
 
-1. **Originals are never written, moved or deleted — except in exactly
-   three places, all asked for by the user:** a discard is deleted 30 days
-   after it was discarded or on a confirmed "Delete now" (`src/fs/deletion.ts`
-   is the only code that destroys a file); a trimmed video replaces its
-   original, which waits 30 days in `_reel_trash/` (`src/store/trim.ts`).
-   Deletion only runs in folder mode, right after a scan, and never touches a
-   file the scan did not just find. Otherwise reel-rail writes only
-   `.reel.json` (+ its temp file) and copies on export / picks.
+1. **Originals change only the way the user chose for the folder.** A new
+   folder asks once: *edit it* or *leave it and export the result*
+   (`workflow` in `.reel.json`). Edited: a discard leaves the folder when its
+   ~30 s countdown runs out (moved to `_reel_trash/`), a trimmed video
+   replaces its original (which goes to `_reel_trash/` too), and what waited
+   30 days in `_reel_trash/` is deleted for good. Left as it is: nothing in
+   the folder is written, moved or deleted. Deleting for good happens only in
+   `src/store/discards.ts`, only to paths reel-rail itself created in
+   `_reel_trash/`, re-checked right before each file. Otherwise reel-rail
+   writes only `.reel.json` (+ its temp file) and copies on export / picks.
 2. **`.reel.json` is the single source of truth.** New fields are optional so
    older files keep loading; a format change bumps `version` and `normalize()`
    refuses versions it does not know rather than guessing.
-3. **No cloud, no backend, no network calls** at runtime.
+3. **Media never leaves the device.** The only network calls are to Supabase
+   for the account (sign-in, "is my subscription active?") — through
+   `src/account/` only, and only when the env vars are set
+   ([`docs/adr/0001`](docs/adr/0001-accounts-and-subscriptions-on-supabase.md)).
 4. **No new dependency without saying what it replaces and why the platform
    cannot do it.** Browser deps: react, zustand, exifr, lucide-react (icons —
    tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/inter
    (bundled typeface, so it works offline), mediabunny (lossless MP4/MOV
-   trimming — the platform has no muxer; loaded only when someone trims).
+   trimming — the platform has no muxer; loaded only when someone trims),
+   @supabase/supabase-js (accounts; loaded only when someone signs in).
    Server: @vercel/functions (only for `next()` in the middleware). That is
    the list.
 5. **Design system first:** [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
@@ -53,14 +59,17 @@ src/fs/        file access: Source (FolderSource | FilesSource), hash, metadata,
 src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, stacks, autosave
 src/carousel/  the 3D carousel: pure layout + gesture classifier (tested), cards, swipe hook
 src/timeline/  the waveform timeline: pure model (tested) + canvas
-src/cleanup/   the "Discards" view (30-day countdown, delete now)
+src/cleanup/   "Recently deleted" (bring back, delete now)
+src/account/   the Supabase adapter: sign-in, subscription (nothing else talks to Supabase)
+supabase/      migrations (schema + row-level security) and the policy checklist
 src/trim/      the video trim dialog (filmstrip, handles, preview)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
 src/ui/kit/    design-system components: Button, Tip, Kbd, Segmented, Switch, Popover, Dialog
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 scripts/       verify gate, e2e smoke test, icon renderer
 middleware.ts  Vercel password gate (REEL_PASSWORD) — server side, never shipped to the browser
-docs/          TRAPS.md (code that misleads), diary/ (what was decided)
+docs/          use-cases/ (what people want — start here), adr/ (big decisions),
+               TRAPS.md (code that misleads), diary/ (what was decided)
 ```
 
 Pure logic gets a `*.test.ts` next to it. Browser behaviour gets a step in

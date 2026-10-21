@@ -4,7 +4,7 @@ import type { ScanProgress } from "@/fs/scan";
 
 export type Toast = { id: number; text: string; kind: "info" | "error" };
 export type Phase = "start" | "scanning" | "ready" | "error";
-export type DialogKind = "createSeries" | "seriesList" | "help" | "settings" | "cleanup" | "trim" | null;
+export type DialogKind = "createSeries" | "seriesList" | "help" | "settings" | "cleanup" | "trim" | "workflow" | null;
 
 type UiState = {
   phase: Phase;

@@ -1,5 +1,6 @@
 import type { Media } from "@/types";
 
+import { freeName, namesIn } from "./names";
 import { getMediaFile } from "./session";
 
 /** Folder-safe version of a series title (keeps umlauts, drops path syntax). */
@@ -8,6 +9,8 @@ export function folderName(title: string): string {
     // Control characters are exactly what must go; the lint rule guards against accidental ones.
     // eslint-disable-next-line no-control-regex
     .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+    // Chromium mis-resolves folder names with en/em dashes (docs/TRAPS.md): plain hyphens on disk.
+    .replace(/[\u2013\u2014]/g, "-")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/^\.+/, "");
@@ -21,15 +24,10 @@ export function exportName(index: number, total: number, path: string): string {
   return `${String(index + 1).padStart(width, "0")}_${base}`;
 }
 
-async function uniqueDir(parent: FileSystemDirectoryHandle, name: string): Promise<FileSystemDirectoryHandle> {
-  for (let n = 1; ; n++) {
-    const candidate = n === 1 ? name : `${name} (${n})`;
-    try {
-      await parent.getDirectoryHandle(candidate);
-    } catch {
-      return parent.getDirectoryHandle(candidate, { create: true });
-    }
-  }
+/** A new sub-folder `name`, or `name (2)` … if taken. */
+export async function uniqueDir(parent: FileSystemDirectoryHandle, name: string): Promise<FileSystemDirectoryHandle> {
+  const names = await namesIn(parent);
+  return parent.getDirectoryHandle(freeName(name, (n) => names.has(n), true), { create: true });
 }
 
 /**

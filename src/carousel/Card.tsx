@@ -3,7 +3,9 @@ import { memo, type CSSProperties, type MouseEvent } from "react";
 
 import { TRIMMABLE } from "@/fs/trimVideo";
 import { useUi } from "@/store/useUi";
-import { PICKS, ratingClass, type Media } from "@/types";
+import { secondsLeft } from "@/fs/deletion";
+import { graceMs } from "@/store/discards";
+import { DISCARD, PICKS, ratingClass, type Media } from "@/types";
 import { Button } from "@/ui/kit/Button";
 import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
@@ -73,6 +75,7 @@ export const Card = memo(function Card(p: Props) {
           onClick={() => useUi.getState().set({ dialog: "trim" })}
         />
       )}
+      {media.rating === DISCARD && media.discardedAt && <Countdown discardedAt={media.discardedAt} />}
       {p.selected && <CircleCheck className="card-check" size={22} fill="var(--select)" color="white" aria-hidden="true" />}
       {p.stackCount && (
         <span className="card-count" aria-hidden="true">
@@ -106,3 +109,20 @@ export const Card = memo(function Card(p: Props) {
     </div>
   );
 });
+
+/**
+ * A discard's undo window: the bar runs out, then the card leaves the rail.
+ * Pure CSS from the time left at render — no timer per card.
+ */
+function Countdown({ discardedAt }: { discardedAt: string }) {
+  const grace = graceMs() / 1000;
+  const left = secondsLeft({ rating: DISCARD, discardedAt } as Media, Date.now(), graceMs());
+  return (
+    <span
+      className="card-countdown"
+      role="timer"
+      aria-label={`Leaves in ${Math.ceil(left)} s — rate it up to keep it`}
+      style={{ "--grace": `${grace}s`, "--elapsed": `${grace - left}s` } as CSSProperties}
+    />
+  );
+}

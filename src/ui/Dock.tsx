@@ -7,6 +7,7 @@ import { useUi } from "@/store/useUi";
 import { PICKS } from "@/types";
 
 import { Button } from "./kit/Button";
+import { LeavingBar } from "./LeavingBar";
 import { RatingControl } from "./RatingControl";
 import { TagGroup } from "./TagMenu";
 
@@ -24,6 +25,7 @@ export function Dock() {
 
   return (
     <div className="dock-wrap">
+      {!selected && <LeavingBar />}
       {selected > 0 && (
         <div className="dock dock-selection" role="toolbar" aria-label="Selection">
           <span className="selection-count">

@@ -123,3 +123,12 @@ folder without `.reel.json`.
 The bundled Chromium cannot play the codecs iPhones record (H.264, HEVC,
 AAC), so the e2e video fixture is VP9 + Opus in MP4. The unit test trims a
 real H.264/AAC MOV in Node, where no decoding is needed.
+
+## Chromium says some names exist that do not
+
+`dir.getDirectoryHandle("Trip – sorted")` (no `create`) *resolved* in
+Chromium's OPFS for a folder that did not exist — an en dash was enough. A
+"find a free name" loop that probes and waits for NotFound then never ends
+(it hung the result export; series titles carry en dashes too). Free names
+are chosen from a listing of the folder instead (`src/fs/names.ts`). Do not
+go back to probing.

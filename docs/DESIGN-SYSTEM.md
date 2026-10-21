@@ -95,6 +95,14 @@ Every interactive element has all five states: default, hover, active
   on) before they commit.
 - Safe-area insets pad the header and the waveform in the home-screen app.
 
+## Discards
+
+A discard is the smallest card (20 % of a favourite's height), sunk below
+the floor, with a red bar that runs out. The current one also gets the
+**leaving bar** above the dock — "Leaves in 26 s · Keep" — because on a phone
+the card itself is too small to read. Countdowns are CSS animations started
+from the time left at render: no timer per card.
+
 ## Phone (≤ 600 px)
 
 Rating on the go is the job; the photo gets the room.

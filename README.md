@@ -5,9 +5,10 @@ timeline, with the keyboard, entirely on your own computer.
 
 - **No cloud, no backend, no upload.** reel-rail reads a folder on your disk
   through the browser's File System Access API.
-- **Your originals are never changed** — except what you ask for: discards
-  are deleted after 30 days, and a trimmed video replaces its original. All
-  decisions live in one file, `.reel.json`, inside the folder.
+- **You choose what happens to the folder:** *edit it* (discards and the
+  cut-away parts of videos leave it; 30 days in "Recently deleted" first) or
+  *leave it as it is* and export the result to a new folder. All decisions
+  live in one file, `.reel.json`, inside the folder.
 - **Installable** as an app (PWA) and works offline.
 
 Best in **Chrome or Edge on a computer** (folder mode). On an **iPhone or
@@ -43,6 +44,16 @@ npm run e2e        # end-to-end test in real Chromium (needs a build)
 npm run e2e:ipad   # files mode on iPad-sized touch viewports (needs a build)
 npm run verify     # everything: typecheck, lint, tests, build, e2e
 ```
+
+### Accounts (Supabase) — prepared, not switched on
+
+Sign-in (e-mail code) and the subscription check live in `src/account/`;
+the schema with row-level security is `supabase/migrations/`. Set
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Vercel env + rebuild) and a
+"Sign in" button appears; without them the app is unchanged. In the Supabase
+dashboard, put `{{ .Token }}` into the "Magic Link" e-mail template so the
+mail carries a code. Payments are not wired yet — see
+`docs/use-cases/UC-006-pay-for-reel-rail.md`.
 
 ### Hosting (Vercel) with a password
 
@@ -114,20 +125,32 @@ files in order as `01_…`, `02_…` into a new folder named after the title.
 **Filters** (top bar): All / ≥ Good / Favorites / Hide discards, "Never exported",
 and tags. Filtered items stay in place, greyed out, and arrow keys skip them.
 
-**Discards — deleted after 30 days.** Rating something −2 starts a 30-day
-clock, like "Recently deleted" on a phone. **Discards** (top bar) shows them
-all with the days left and their total size; tap one to keep it after all
-(the clock stops). When you open the folder after the 30 days, those files
-are **deleted for good**. Don't want to wait: "Delete now…" (asks first).
-Discards on an SD card that is not plugged in are left alone.
+**Edit the folder, or leave it and export.** The first time you open a
+folder reel-rail asks how to work on it (change it later in the folder menu):
+
+- **Edit this folder** — discards and the cut-away parts of videos leave the
+  folder; it ends up holding only what you keep.
+- **Leave it as it is, export the result** — nothing in the folder changes;
+  **Export result…** (folder menu) copies everything kept, sub-folders as
+  they were and trims applied, into a new folder.
+
+**Discards — a 30-second countdown, then out.** Swipe a shot all the way down
+(or rate it −2): it shrinks to a small card and "Leaves in 30 s · Keep" runs
+above the dock. Tap Keep, swipe up or press Z to keep it. When the bar runs
+out it leaves the rail — and, when the folder is edited, the folder: it is
+moved to `_reel_trash/`. **Deleted** (top bar) is "Recently deleted": tap an
+item to bring it back (the file returns to its place). After 30 days there
+it is deleted for good; "Delete now…" does it at once (asks first).
 
 **Trim a video — C, or the scissors on the playing video.** Drag the two
 handles, play the kept part, "Trim & replace". The cut is lossless (the video
 is copied, not re-encoded — fast, and HEVC from an iPhone works too). It starts
 at the key frame at or just before the left handle, so at most a second
-earlier than you set. The trimmed file takes the original's name, rating,
-tags and series; the original waits in `_reel_trash/` and is deleted after
-30 days. MP4, MOV and M4V can be trimmed.
+earlier than you set. In an edited folder the trimmed file takes the
+original's name, rating, tags and series, and the original goes to
+"Recently deleted"; in a folder left as it is the trim is remembered and
+applied on export. A video with a track that cannot be copied (e.g. spatial
+audio) is refused rather than trimmed without it. MP4, MOV and M4V.
 
 **Place:** there is no reverse geocoding (that would need the internet). Type
 a place in the info bar (or press **P**). With a selection it applies to all
@@ -175,8 +198,7 @@ type ReelFile = {
   media: Record<string, Media>;   // keyed by Media.id
   series: Series[];
   tagPresets: string[];           // keys 1–9 (phase 2)
-  bin?: { path: string; was: string; deleteAfter: string }[];
-                                  // originals of trimmed videos in _reel_trash/
+  workflow?: "edit" | "export";   // edit this folder, or leave it and export the result
 };
 
 type Media = {
@@ -196,7 +218,10 @@ type Media = {
   mtime?: number;        // file.lastModified at the last scan
   missing?: boolean;     // file not found on the last scan (kept, not deleted)
   altPaths?: string[];   // byte-identical duplicates found at other paths
-  discardedAt?: string;  // when it was rated −2; the file is deleted 30 days later
+  discardedAt?: string;  // when it was rated −2 (start of the 30 s countdown)
+  binned?: { path?: string; until: string };
+                         // in "Recently deleted": file at path in _reel_trash/, deleted after until
+  trim?: { start: number; end: number };  // a trim to apply on export (folder left as it is)
 };
 
 type Series = {
@@ -251,8 +276,8 @@ turns folder access off by default — or switch it on under
 **What a browser cannot do on an iPhone/iPad** (it only borrows files for one
 session and cannot write to the Photos library):
 
-- **No deleting from Photos.** Discards is a checklist there — delete them in
-  the Photos app ("Recently Deleted" keeps them 30 days).
+- **No deleting from Photos.** Discards still count down and leave the rail;
+  "Deleted" is then a checklist — delete them in the Photos app.
 - **Trimming makes a copy**: "Save to Photos…" saves the trimmed video, the
   original is marked discard so the checklist reminds you to delete it.
 - **Adding videos is slow before reel-rail sees them**: after "Add", iOS
@@ -281,13 +306,15 @@ src/store/     zustand stores, filters, stacks, autosave, actions
 src/carousel/  the 3D carousel: pure layout + gestures (tested), cards, swipe, original/video
 src/timeline/  the waveform: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
-src/cleanup/   the "Discards" view (30-day countdown, delete now)
+src/cleanup/   "Recently deleted" (bring back, delete now)
+src/account/   accounts on Supabase (sign-in, subscription)
+supabase/      database migrations (schema + row-level security)
 src/trim/      video trimming (dialog, filmstrip)
 src/ui/kit/    design-system components (see docs/DESIGN-SYSTEM.md)
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 middleware.ts  password gate when hosted on Vercel
 scripts/       verify gate, e2e test, icon renderer
-docs/          TRAPS.md, diary/
+docs/          use-cases/, adr/, TRAPS.md, diary/
 ```
 
 Rules for contributors (human or agent): [`AGENTS.md`](AGENTS.md).

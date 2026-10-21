@@ -1,62 +1,69 @@
 import { media } from "@/test-utils";
-import { emptyReel, type ReelFile } from "@/types";
+import { emptyReel, type Media, type ReelFile } from "@/types";
 
-import { daysLeft, deletePaths, dueNow, withoutMedia } from "./deletion";
+import { binUntil, daysLeft, deletePath, dueForDeletion, dueToLeave, secondsLeft, withoutMedia } from "./deletion";
 import { normalize } from "./reelFile";
 
-const NOW = new Date("2026-10-21T12:00:00Z");
-const daysAgo = (n: number) => new Date(NOW.getTime() - n * 864e5).toISOString();
+const NOW = new Date("2026-10-21T12:00:00Z").getTime();
+const secsAgo = (n: number) => new Date(NOW - n * 1000).toISOString();
+const daysFromNow = (n: number) => new Date(NOW + n * 864e5).toISOString();
 
-function reelOf(...list: ReturnType<typeof media>[]): ReelFile {
+function reelOf(...list: Media[]): ReelFile {
   return { ...emptyReel(), media: Object.fromEntries(list.map((m) => [m.id, m])) };
 }
 
-describe("30-day deletion", () => {
-  it("counts down from the moment of discarding", () => {
-    expect(daysLeft(media("a", { rating: -2, discardedAt: daysAgo(0) }), NOW)).toBe(30);
-    expect(daysLeft(media("a", { rating: -2, discardedAt: daysAgo(29.5) }), NOW)).toBe(1);
-    expect(daysLeft(media("a", { rating: -2, discardedAt: daysAgo(40) }), NOW)).toBe(0);
-    expect(daysLeft(media("a", { rating: -1, discardedAt: daysAgo(40) }), NOW)).toBeUndefined();
+describe("the countdown", () => {
+  it("runs 30 s from the moment of discarding", () => {
+    expect(secondsLeft(media("a", { rating: -2, discardedAt: secsAgo(0) }), NOW)).toBe(30);
+    expect(secondsLeft(media("a", { rating: -2, discardedAt: secsAgo(12) }), NOW)).toBe(18);
+    expect(secondsLeft(media("a", { rating: -2, discardedAt: secsAgo(99) }), NOW)).toBe(0);
+    expect(secondsLeft(media("a", { rating: -1, discardedAt: secsAgo(5) }), NOW)).toBe(0);
   });
 
-  it("is due only for discards past 30 days that are on disk", () => {
+  it("sends off only discards whose time is up and that are still on the rail", () => {
     const reel = reelOf(
-      media("old", { rating: -2, discardedAt: daysAgo(31) }),
-      media("fresh", { rating: -2, discardedAt: daysAgo(3) }),
+      media("due", { rating: -2, discardedAt: secsAgo(31) }),
+      media("counting", { rating: -2, discardedAt: secsAgo(3) }),
       media("kept", { rating: 0 }),
-      media("unplugged", { rating: -2, discardedAt: daysAgo(90), missing: true }),
+      media("unplugged", { rating: -2, discardedAt: secsAgo(90), missing: true }),
+      media("gone", { rating: -2, discardedAt: secsAgo(90), binned: { until: daysFromNow(5) } }),
     );
-    expect(dueNow(reel, NOW).media.map((m) => m.id)).toEqual(["old"]);
+    expect(dueToLeave(reel, NOW).map((m) => m.id)).toEqual(["due"]);
   });
 
-  it("includes expired bin entries", () => {
-    const reel = {
-      ...emptyReel(),
-      bin: [
-        { path: "_reel_trash/a.mov", deleteAfter: daysAgo(1), was: "a.mov" },
-        { path: "_reel_trash/b.mov", deleteAfter: daysAgo(-5), was: "b.mov" },
-      ],
-    };
-    expect(dueNow(reel, NOW).bin.map((b) => b.was)).toEqual(["a.mov"]);
+  it("gives discards from before the countdown a full one", () => {
+    const reel = normalize({ version: 2, media: { a: media("a", { rating: -2 }) } }, new Date(NOW));
+    expect(secondsLeft(reel.media.a!, NOW)).toBe(30);
+  });
+});
+
+describe("Recently deleted", () => {
+  it("keeps files 30 days", () => {
+    const m = media("a", { binned: { path: "_reel_trash/a.jpg", until: binUntil(NOW) } });
+    expect(daysLeft(m, NOW)).toBe(30);
+  });
+
+  it("deletes for good only what reel-rail parked, once its time is up", () => {
+    const reel = reelOf(
+      media("expired", { binned: { path: "_reel_trash/a.jpg", until: daysFromNow(-1) } }),
+      media("waiting", { binned: { path: "_reel_trash/b.jpg", until: daysFromNow(4) } }),
+      // Hidden only (files mode / folder left as it is): there is no file of ours to delete.
+      media("hidden", { binned: { until: daysFromNow(-9) } }),
+      // An old discard that never left the folder is never deleted.
+      media("old", { rating: -2, discardedAt: secsAgo(90 * 86400) }),
+    );
+    expect(dueForDeletion(reel, NOW).map((m) => m.id)).toEqual(["expired"]);
   });
 
   it("drops deleted media from the reel and from every series", () => {
-    const reel = {
-      ...reelOf(media("a"), media("b")),
-      series: [{ id: "s", title: "S", mediaIds: ["a", "b"], createdAt: "" }],
-    };
+    const reel = { ...reelOf(media("a"), media("b")), series: [{ id: "s", title: "S", mediaIds: ["a", "b"], createdAt: "" }] };
     const next = withoutMedia(reel, ["a"]);
     expect(Object.keys(next.media)).toEqual(["b"]);
     expect(next.series[0]!.mediaIds).toEqual(["b"]);
   });
-
-  it("gives discards from before the rule their full 30 days", () => {
-    const reel = normalize({ version: 2, media: { a: media("a", { rating: -2 }) } }, NOW);
-    expect(daysLeft(reel.media.a!, NOW)).toBe(30);
-  });
 });
 
-describe("deletePaths", () => {
+describe("deletePath", () => {
   // A minimal in-memory folder: enough of FileSystemDirectoryHandle for removeEntry.
   function folder(tree: Record<string, unknown>): FileSystemDirectoryHandle {
     return {
@@ -73,11 +80,11 @@ describe("deletePaths", () => {
     } as unknown as FileSystemDirectoryHandle;
   }
 
-  it("deletes, treats already-gone as deleted, and reports the rest", async () => {
-    const tree = { trip: { "a.jpg": "x", "b.jpg": "locked" } };
-    const r = await deletePaths(folder(tree), ["trip/a.jpg", "trip/b.jpg", "trip/gone.jpg"]);
-    expect(r.deleted).toEqual(["trip/a.jpg", "trip/gone.jpg"]);
-    expect(r.failed).toEqual(["trip/b.jpg"]);
-    expect(tree.trip).toEqual({ "b.jpg": "locked" });
+  it("deletes, treats already-gone as done, and reports anything else", async () => {
+    const tree = { _reel_trash: { "a.jpg": "x", "b.jpg": "locked" } };
+    await deletePath(folder(tree), "_reel_trash/a.jpg");
+    await deletePath(folder(tree), "_reel_trash/gone.jpg");
+    await expect(deletePath(folder(tree), "_reel_trash/b.jpg")).rejects.toThrow();
+    expect(tree._reel_trash).toEqual({ "b.jpg": "locked" });
   });
 });

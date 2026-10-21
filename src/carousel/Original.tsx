@@ -52,7 +52,27 @@ export function Original({ media }: { media: Media }) {
 
   if (!url) return null;
   if (media.type === "video") {
-    return <video ref={video} className="card-original" src={url} autoPlay muted loop playsInline />;
+    const trim = media.trim;
+    // A trim not yet applied (folder left as it is) still plays as trimmed.
+    const keepInside = trim
+      ? (e: React.SyntheticEvent<HTMLVideoElement>) => {
+          const v = e.currentTarget;
+          if (v.currentTime < trim.start || v.currentTime >= trim.end) v.currentTime = trim.start;
+        }
+      : undefined;
+    return (
+      <video
+        ref={video}
+        className="card-original"
+        src={url}
+        autoPlay
+        muted
+        loop
+        playsInline
+        onTimeUpdate={keepInside}
+        onLoadedMetadata={keepInside}
+      />
+    );
   }
   // HEIC does not decode in Chrome — the embedded-preview thumbnail underneath then stays visible.
   return broken ? null : <img className="card-original" src={url} alt="" draggable={false} onError={() => setBroken(true)} />;

@@ -30,6 +30,7 @@ export function getFolder(): FolderSource {
   return s as FolderSource;
 }
 
-export function getMediaFile(media: Pick<Media, "path">): Promise<File> {
-  return getSource().getFile(media.path);
+/** A medium's file — in "Recently deleted" it waits at its trash path. */
+export function getMediaFile(media: Pick<Media, "path" | "binned">): Promise<File> {
+  return getSource().getFile(media.binned?.path ?? media.path);
 }

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { startAccount } from "./account/account";
 import { App } from "./App";
 import "@fontsource-variable/inter";
 import "./styles/tokens.css";
@@ -11,6 +12,8 @@ import "./styles/carousel.css";
 import "./styles/waveform.css";
 import "./styles/screens.css";
 import "./styles/responsive.css";
+
+startAccount();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -18,7 +18,9 @@ export const RATING_LABEL: Record<Rating, string> = {
   [-2]: "Discard",
 };
 export const DISCARD: Rating = -2;
-/** Days a discard (or a trimmed video's original) is kept before it is deleted for good. */
+/** Seconds a discard stays on the rail (with a countdown) before it goes — the undo window. */
+export const GRACE_SECONDS = 30;
+/** Days a file waits in "Recently deleted" (`_reel_trash/`) before it is deleted for good. */
 export const KEEP_DAYS = 30;
 
 /** CSS class per rating: r2, r1, r0, rm1, rm2. */
@@ -59,18 +61,27 @@ export type Media = {
   /** Other paths with byte-identical content (duplicates). */
   altPaths?: string[];
   /**
-   * When it was rated discard (ISO). Folder mode deletes the file for good
-   * KEEP_DAYS later — like a phone's "Recently deleted". Cleared when the
-   * rating goes back up.
+   * When it was rated discard (ISO). GRACE_SECONDS later it leaves the rail
+   * (and, when the folder is edited in place, the folder). Cleared when the
+   * rating goes back up in time.
    */
   discardedAt?: string;
+  /**
+   * Off the rail, in "Recently deleted". `path`: where the file waits inside
+   * `_reel_trash/` — deleted for good after `until`. No `path`: only hidden
+   * (files mode, or a folder that is left as it is).
+   */
+  binned?: { path?: string; until: string };
+  /** A trim kept as a decision, applied on export (folder left as it is). Seconds. */
+  trim?: { start: number; end: number };
 };
 
 /**
- * A file reel-rail moved out of the library into `_reel_trash/` (the
- * original of a trimmed video). Deleted for good after `deleteAfter`.
+ * How a folder is worked on — asked the first time it is opened.
+ * "edit": discards and the cut-away parts of videos leave the folder.
+ * "export": the folder stays as it is; the result is exported to a new one.
  */
-export type BinEntry = { path: string; deleteAfter: string; was: string };
+export type Workflow = "edit" | "export";
 
 export type Series = {
   id: string;
@@ -89,8 +100,7 @@ export type ReelFile = {
   media: Record<string, Media>;
   series: Series[];
   tagPresets: string[];
-  /** Files waiting in `_reel_trash/` for their final deletion. */
-  bin?: BinEntry[];
+  workflow?: Workflow;
 };
 
 export const DEFAULT_TAG_PRESETS = [

@@ -53,7 +53,8 @@ export function usePreview(media: Media) {
       const d = e.currentTarget.duration;
       if (!Number.isFinite(d)) return;
       setDuration(d);
-      setRange({ start: 0, end: d });
+      // A trim kept as a decision (folder left as it is) opens where it was left.
+      setRange(media.trim ? { start: media.trim.start, end: Math.min(d, media.trim.end) } : { start: 0, end: d });
     },
     onTimeUpdate: (e: SyntheticEvent<HTMLVideoElement>) => {
       const v = e.currentTarget;

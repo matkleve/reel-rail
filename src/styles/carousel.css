@@ -352,3 +352,31 @@
   white-space: nowrap;
   translate: -50% -50%;
 }
+
+/* A discard's undo window: a bar that runs out, then the card leaves the rail. */
+.card-countdown {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--scrim);
+  overflow: hidden;
+  pointer-events: none;
+}
+.card-countdown::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--danger);
+  transform-origin: left;
+  animation: countdown var(--grace) linear forwards;
+  animation-delay: calc(var(--elapsed) * -1);
+}
+@keyframes countdown {
+  to {
+    transform: scaleX(0);
+  }
+}
