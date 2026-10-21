@@ -59,13 +59,23 @@ The app still opens photos through the file picker today. The next piece is a
   (no copy into the web view), or key by the Photos id and match by hash
   lazily. Decide before building.
 
-## Paying inside an iPhone app
+## Paying: on the web only, never in the app
 
-Apple requires **In-App Purchase** for digital subscriptions sold inside an
-iOS app (Apple takes 15–30 %). A subscription bought on the web
-(Stripe) can be honoured in the app after sign-in; the app itself may not
-link to the web checkout in every country. Plan the price with that in mind
-(UC-006).
+Decided by Matthias (2026-10-21): **no Apple in-app purchases.** Pro is sold
+on the web (Stripe, still to be wired). App Review guideline 3.1.3(b) lets an
+app unlock what was bought elsewhere only if it is *also* sold as an in-app
+purchase; and the app must not point users to a web checkout (outside the
+US storefront; in the EU only with Apple's external-purchase-link terms and
+their commission). So:
+
+- **The native app is the Free tier.** No sign-in, no Pro, no prices, no
+  links to buy (`accountsEnabled` is false in the app). Everything that makes
+  the app worth having on an iPhone — fast import, deleting into Recently
+  Deleted, trimming — is Free anyway.
+- **Pro (rating sync) lives in the browser** — the web app on the computer,
+  and the Home Screen web app on the iPhone, where Apple takes nothing.
+- Revisit if Pro should reach the native app: then either an in-app purchase
+  after all, or an EU/US external-purchase link under Apple's current terms.
 
 ## Untested
 

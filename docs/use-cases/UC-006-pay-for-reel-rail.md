@@ -24,6 +24,9 @@ possibly someone who wants their ratings on phone and computer alike.
   must be paid for needs a server-side check like `has_pro()`.
 - **Cloud = ratings only**, never photos.
 - **Native iPhone app: prepare it** (Capacitor) — see docs/NATIVE.md.
+- **No Apple in-app purchases.** Pro is bought on the web only; the native
+  app is the Free tier and shows no account, prices or buy links (App Review
+  3.1.3(b)). Pro on the iPhone = the Home Screen web app.
 
 ## Still open
 

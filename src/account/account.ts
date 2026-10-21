@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { create } from "zustand";
 
@@ -13,7 +14,13 @@ import { create } from "zustand";
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-export const accountsEnabled = Boolean(URL && KEY);
+/**
+ * Off inside the native iPhone app: Pro is sold on the web only, never as an
+ * Apple in-app purchase, and App Review (3.1.3(b)) does not let an app unlock
+ * what is bought elsewhere without offering it as an in-app purchase too. The
+ * app is the Free tier — see docs/NATIVE.md § Paying.
+ */
+export const accountsEnabled = Boolean(URL && KEY) && !Capacitor.isNativePlatform();
 
 let client: Promise<SupabaseClient> | undefined;
 /** Loaded on first use: the SDK is only downloaded by someone who signs in. */
