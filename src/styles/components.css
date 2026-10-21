@@ -354,6 +354,8 @@
   margin: 0;
   min-width: 220px;
   max-width: min(360px, calc(100vw - 24px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-2);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);

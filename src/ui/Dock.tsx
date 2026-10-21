@@ -42,6 +42,7 @@ export function Dock() {
         <span className="divider-v" />
         {media.type === "video" && (
           <Button
+            className="dock-play"
             icon={Pause}
             label="Play / pause"
             kbd="V"
@@ -64,7 +65,7 @@ export function Dock() {
                 : "Copy to your picks folder (Space)"
           }
         >
-          {picked ? "Picked" : "Pick"}
+          <span className="dock-label">{picked ? "Picked" : "Pick"}</span>
           <kbd className="kbd kbd-key">Space</kbd>
         </Button>
       </div>

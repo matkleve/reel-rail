@@ -1,7 +1,7 @@
 /**
  * Test photos for the e2e scripts, made in the browser: canvas JPEGs with a
  * hand-written EXIF DateTimeOriginal. Installed with page.addInitScript(),
- * then available as window.__fixtures.jpeg(hue, label, "YYYY:MM:DD hh:mm:ss").
+ * then available as window.__fixtures.jpeg(hue, label, "YYYY:MM:DD hh:mm:ss", w?, h?).
  */
 export function installFixtures() {
   function exif(date) {
@@ -28,17 +28,17 @@ export function installFixtures() {
     return seg;
   }
 
-  async function jpeg(hue, label, date) {
-    const c = new OffscreenCanvas(1200, 800);
+  async function jpeg(hue, label, date, w = 1200, h = 800) {
+    const c = new OffscreenCanvas(w, h);
     const g = c.getContext("2d");
-    const grad = g.createLinearGradient(0, 0, 1200, 800);
+    const grad = g.createLinearGradient(0, 0, w, h);
     grad.addColorStop(0, `hsl(${hue} 70% 55%)`);
     grad.addColorStop(1, `hsl(${(hue + 60) % 360} 70% 25%)`);
     g.fillStyle = grad;
-    g.fillRect(0, 0, 1200, 800);
+    g.fillRect(0, 0, w, h);
     g.fillStyle = "rgba(255,255,255,.85)";
     g.font = "bold 120px sans-serif";
-    g.fillText(label, 80, 460);
+    g.fillText(label, 80, h / 2 + 60);
     const bytes = new Uint8Array(await (await c.convertToBlob({ type: "image/jpeg", quality: 0.8 })).arrayBuffer());
     const app1 = exif(date);
     const out = new Uint8Array(bytes.length + app1.length);

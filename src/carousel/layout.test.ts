@@ -1,7 +1,7 @@
 import { media } from "@/test-utils";
 import type { Media } from "@/types";
 
-import { RATING_SCALE, layoutCarousel } from "./layout";
+import { RATING_SCALE, floorFor, layoutCarousel } from "./layout";
 
 const STAGE = { w: 1600, h: 600 };
 
@@ -92,11 +92,38 @@ describe("layoutCarousel", () => {
   });
 });
 
+describe("portrait band", () => {
+  // A phone in Safari: 393 wide, the date covers the top 70 px, the dock the bottom 80.
+  const PHONE = { w: 393, h: 540, top: 70, bottom: 80 };
+  const at = (rating: Media["rating"], aspect: number) =>
+    layoutCarousel(["a"], 0, { a: media("a", { rating }) }, () => aspect, PHONE).cards[0]!;
+
+  it("keeps every level between the date and the dock", () => {
+    for (const r of [-2, -1, 0, 1, 2] as const) {
+      const c = at(r, 9 / 16);
+      expect(c.bottom - c.h).toBeGreaterThanOrEqual(PHONE.top);
+      expect(c.bottom).toBeLessThanOrEqual(PHONE.h - PHONE.bottom + 0.001);
+    }
+  });
+
+  it("gives a landscape photo most of the width", () => {
+    expect(at(2, 4 / 3).w).toBeCloseTo(393 * 0.84);
+  });
+
+  it("puts the floor line where the cards stand", () => {
+    expect(floorFor(PHONE) * PHONE.h).toBeCloseTo(at(0, 1).bottom);
+  });
+
+  it("ignores insets in landscape", () => {
+    const a = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 1600, h: 600, top: 90, bottom: 90 });
+    expect(a.cards[0]!.bottom / 600).toBeCloseTo(0.8);
+  });
+});
+
 describe("floor", () => {
-  it("rises in a portrait stage so cards are not pushed to the bottom", () => {
+  it("sits low in landscape, leaving room for the dock", () => {
     const land = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 1600, h: 600 }).cards[0]!;
-    const port = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 600, h: 1000 }).cards[0]!;
     expect(land.bottom / 600).toBeCloseTo(0.8);
-    expect(port.bottom / 1000).toBeCloseTo(0.68);
+    expect(floorFor({ w: 1600, h: 600 })).toBeCloseTo(0.8);
   });
 });

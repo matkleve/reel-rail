@@ -27,6 +27,8 @@ export function Popover({
     const anchor = document.querySelector(`[popovertarget="${id}"]`);
     if (!el || !anchor) return;
     const a = anchor.getBoundingClientRect();
+    // On a phone a long panel (filters, tags) would run off the screen: cap it and let it scroll.
+    el.style.maxHeight = `${Math.max(160, side === "below" ? window.innerHeight - a.bottom - 20 : a.top - 20)}px`;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
     const x = align === "start" ? a.left : align === "end" ? a.right - w : a.left + a.width / 2 - w / 2;

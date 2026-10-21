@@ -147,3 +147,111 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Phone (portrait iPhone and anything as narrow). Rating on the go is the
+   main job here: the photo gets the room, the chrome shrinks to one row of
+   icons on top, a dock of seven targets and a short waveform.
+--------------------------------------------------------------------------- */
+@media (max-width: 600px) {
+  :root {
+    --header-h: 48px;
+    --wave-h: 72px;
+  }
+  .header {
+    gap: var(--space-1);
+    padding-left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--space-1) + env(safe-area-inset-right, 0px));
+  }
+  .header-right {
+    gap: 0;
+  }
+  .header .btn:has(.btn-label) {
+    padding: 0 6px;
+  }
+  .header .divider-v,
+  .save-state {
+    display: none;
+  }
+  .folder-btn {
+    max-width: none;
+  }
+  .folder-btn span {
+    display: none; /* the icon says "library"; the name is in the menu's context */
+  }
+
+  .stage-meta {
+    top: var(--space-3);
+    left: var(--space-4);
+    max-width: calc(100% - 88px);
+  }
+  .stage-date {
+    font-size: var(--text-lg);
+  }
+  .stage-sub {
+    font-size: var(--text-xs);
+  }
+  /* The file name is the least useful fact on a phone — and the longest. */
+  .stage-file,
+  .dot-sep:has(+ .stage-file) {
+    display: none;
+  }
+  .stage-count {
+    top: var(--space-3);
+    right: var(--space-4);
+    font-size: var(--text-sm);
+  }
+
+  .dock-wrap {
+    bottom: var(--space-3);
+  }
+  .dock {
+    height: 54px;
+    gap: 2px;
+    padding: 0 6px;
+  }
+  .rate-btn {
+    width: 42px;
+    height: 42px;
+  }
+  .dock .divider-v {
+    margin: 0 3px;
+  }
+  /* Tapping the video plays/pauses it; tags show in the tag menu. */
+  .dock-play,
+  .dock-tags .tag,
+  .dock-tags > .text-3 {
+    display: none;
+  }
+  .pick-btn {
+    width: 42px;
+    padding: 0;
+  }
+  .dock-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .hints {
+    bottom: 76px;
+    gap: var(--space-2);
+    max-width: calc(100% - 24px);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+  .wave-label {
+    top: 4px;
+  }
+  /* Axis as icons only, no tag legend: the day labels need the width. */
+  .wave-axis {
+    gap: 0;
+    font-size: 0;
+  }
+  .wave-legend {
+    display: none;
+  }
+}

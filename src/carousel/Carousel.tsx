@@ -10,8 +10,10 @@ import { RATING_LABEL, ratingClass, type Rating } from "@/types";
 import { useSize } from "@/ui/useSize";
 
 import { Card } from "./Card";
+import { TOGGLE_PLAY } from "./events";
 import { SWIPE_MIN } from "./gesture";
 import { floorFor, layoutCarousel } from "./layout";
+import { useInsets } from "./useInsets";
 import { useSwipe } from "./useSwipe";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -49,11 +51,14 @@ export function Carousel() {
     s.currentId && sid && !s.expanded.has(sid) ? coverOf(s.stacks.members[sid]!, s.media) : s.currentId;
   const index = shownId ? ids.indexOf(shownId) : -1;
 
+  const insets = useInsets(stage, [size.w, size.h, s.currentId === undefined]);
+  const box = useMemo(() => ({ ...size, ...insets }), [size, insets]);
+
   const layout = useMemo(
-    () => layoutCarousel(ids, index, s.media, (id) => thumbFor(id)?.aspect, size),
+    () => layoutCarousel(ids, index, s.media, (id) => thumbFor(id)?.aspect, box),
     // `thumbs` is the version counter: card widths follow the real aspect ratios as they load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ids, index, s.media, size, thumbs],
+    [ids, index, s.media, box, thumbs],
   );
 
   useWheelSteps(stage);
@@ -62,7 +67,15 @@ export function Carousel() {
 
   const { setCurrent } = s;
   const onPick = useCallback(
-    (id: string, e: MouseEvent) => setCurrent(id, e.metaKey || e.ctrlKey ? "toggle" : e.shiftKey ? "extend" : "replace"),
+    (id: string, e: MouseEvent) => {
+      const plain = !e.metaKey && !e.ctrlKey && !e.shiftKey;
+      // Tapping the playing video pauses it — on a phone the dock has no room for a play button.
+      if (plain && id === useReel.getState().currentId && useReel.getState().reel.media[id]?.type === "video") {
+        window.dispatchEvent(new Event(TOGGLE_PLAY));
+        return;
+      }
+      setCurrent(id, e.metaKey || e.ctrlKey ? "toggle" : e.shiftKey ? "extend" : "replace");
+    },
     [setCurrent],
   );
 
@@ -76,7 +89,7 @@ export function Carousel() {
       }}
     >
       <div className="stage-spotlight" />
-      <div className="stage-floor" style={{ top: `${floorFor(size) * 100}%` }} />
+      <div className="stage-floor" style={{ top: `${floorFor(box) * 100}%` }} />
       <div className="stage-plane">
         {layout.seps.map((sep) => (
           <div key={sep.key} className="day-sep" style={{ transform: `translateX(${sep.x}px)` }}>

@@ -14,15 +14,33 @@ export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.34, [-1]: 0.58, 0:
 /** How far a card rises above (or sinks below) the floor, as a fraction of stage height. */
 export const LIFT: Record<Rating, number> = { [-2]: -0.1, [-1]: -0.045, 0: 0, 1: 0.045, 2: 0.09 };
 
-const BASE = 0.6; // base card height / stage height
 /**
- * Floor line / stage height. Low in landscape (room for the dock below); in a
- * portrait stage cards are width-bound and would leave a void above, so the
- * floor rises toward the middle.
+ * The stage, plus (portrait only) how much of it the date at the top and the
+ * dock at the bottom cover — measured, so cards never slide under either.
  */
-export function floorFor(stage: { w: number; h: number }): number {
-  return stage.h > stage.w ? 0.68 : 0.8;
+export type Stage = { w: number; h: number; top?: number; bottom?: number };
+
+/**
+ * The vertical band cards live in. Landscape: the whole stage, floor low
+ * (room for the dock below). Portrait (phone, iPad upright): cards are
+ * width-bound and the chrome above and below eats a big share of the height,
+ * so the band is what is left between the date and the dock, and cards fill
+ * more of it.
+ */
+function band(stage: Stage): { y: number; h: number; floor: number; base: number } {
+  if (stage.h <= stage.w) return { y: 0, h: stage.h, floor: 0.8, base: 0.6 };
+  const y = stage.top ?? 0;
+  const h = Math.max(stage.h * 0.5, stage.h - y - (stage.bottom ?? 0));
+  // A favourite's top lands at 0.88 - 0.09 - 0.76 = 3 % below the band's top.
+  return { y, h, floor: 0.88, base: 0.76 };
 }
+
+/** Floor line / stage height (for the floor's CSS). */
+export function floorFor(stage: Stage): number {
+  const b = band(stage);
+  return stage.h > 0 ? (b.y + b.h * b.floor) / stage.h : 0.8;
+}
+
 const GAP = 14;
 const DAY_GAP = 72;
 const MAX_SIDE = 24; // cards per side, upper bound
@@ -59,20 +77,22 @@ export function layoutCarousel(
   current: number,
   media: Record<string, Media>,
   aspectOf: (id: string) => number | undefined,
-  stage: { w: number; h: number },
+  stage: Stage,
 ): CarouselLayout {
   const cards: CardPlace[] = [];
   const seps: DaySep[] = [];
   if (current < 0 || current >= ids.length || stage.w <= 0) return { cards, seps };
 
-  const floor = floorFor(stage);
+  const b = band(stage);
+  // A panorama in the centre must still leave room for its neighbours — on a
+  // narrow portrait screen only a sliver of them, the photo matters more.
+  const maxW = stage.w * (stage.h > stage.w ? 0.84 : 0.7);
   const size = (id: string, d: number) => {
     const m = media[id]!;
     const aspect = Math.max(0.5, Math.min(2.2, aspectOf(id) ?? DEFAULT_ASPECT));
-    let h = stage.h * BASE * RATING_SCALE[m.rating] * falloff(d);
-    // A panorama in the centre must still leave room for its neighbours.
-    if (d === 0 && h * aspect > stage.w * 0.7) h = (stage.w * 0.7) / aspect;
-    return { w: h * aspect, h, bottom: stage.h * (floor - LIFT[m.rating]) };
+    let h = b.h * b.base * RATING_SCALE[m.rating] * falloff(d);
+    if (d === 0 && h * aspect > maxW) h = maxW / aspect;
+    return { w: h * aspect, h, bottom: b.y + b.h * (b.floor - LIFT[m.rating]) };
   };
   const place = (i: number, d: number, x: number) => {
     const { w, h, bottom } = size(ids[i]!, d);
