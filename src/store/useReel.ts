@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { emptyReel, type Media, type Rating, type ReelFile, type Series } from "@/types";
+import { DISCARD, emptyReel, type Media, type Rating, type ReelFile, type Series } from "@/types";
 
 import { DEFAULT_FILTERS, passes, type Filters } from "./filters";
 import { chronological, rangeBetween } from "./order";
@@ -52,6 +52,15 @@ export function patchMedia(reel: ReelFile, ids: string[], fn: (m: Media) => Medi
   const media = { ...reel.media };
   for (const id of ids) if (media[id]) media[id] = fn(media[id]);
   return { ...reel, media };
+}
+
+/** The one place a rating is written: a discard starts (or stops) its 30-day clock. */
+export function withRating(m: Media, rating: Rating, now = new Date()): Media {
+  if (m.rating === rating) return m;
+  const next = { ...m, rating };
+  if (rating === DISCARD) next.discardedAt = now.toISOString();
+  else delete next.discardedAt;
+  return next;
 }
 
 function derive(reel: ReelFile) {
@@ -138,7 +147,7 @@ export const useReel = create<ReelState>()((set, get) => ({
     const before = real.map((c) => ({ id: c.id, rating: reel.media[c.id]!.rating }));
     const to = new Map(real.map((c) => [c.id, c.rating]));
     set({
-      reel: patchMedia(reel, [...to.keys()], (m) => ({ ...m, rating: to.get(m.id)! })),
+      reel: patchMedia(reel, [...to.keys()], (m) => withRating(m, to.get(m.id)!)),
       undoStack: [...undoStack.slice(-199), before],
     });
   },
@@ -149,7 +158,7 @@ export const useReel = create<ReelState>()((set, get) => ({
     if (!last) return;
     const prev = new Map(last.map((u) => [u.id, u.rating]));
     set({
-      reel: patchMedia(reel, [...prev.keys()], (m) => ({ ...m, rating: prev.get(m.id)! })),
+      reel: patchMedia(reel, [...prev.keys()], (m) => withRating(m, prev.get(m.id)!)),
       undoStack: undoStack.slice(0, -1),
       currentId: last[0]?.id ?? get().currentId,
     });

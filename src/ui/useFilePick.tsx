@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from "react";
 
 import { openFiles } from "@/store/openSource";
+import { useUi } from "@/store/useUi";
 
 const ACCEPT = "image/*,video/*,.heic,.heif,.mov,.mp4,.m4v";
 
@@ -18,12 +19,15 @@ export function useFilePick(folder = false): { input: ReactNode; open(): void } 
         ref.current = el;
         // Not a React prop; set on the element.
         if (el && folder) el.webkitdirectory = true;
+        // React has no onCancel for inputs; the picker closing without a choice fires it.
+        if (el) el.oncancel = () => useUi.getState().set({ handover: false });
       }}
       type="file"
       multiple
       accept={folder ? undefined : ACCEPT}
       hidden
       onChange={(e) => {
+        useUi.getState().set({ handover: false });
         const files = [...(e.target.files ?? [])];
         // Reset so picking the very same files again still fires a change.
         e.target.value = "";
@@ -31,5 +35,12 @@ export function useFilePick(folder = false): { input: ReactNode; open(): void } 
       }}
     />
   );
-  return { input, open: () => ref.current?.click() };
+  return {
+    input,
+    open: () => {
+      // Shown behind the picker; it is what you see while iOS prepares the files, until change/cancel.
+      useUi.getState().set({ handover: true });
+      ref.current?.click();
+    },
+  };
 }

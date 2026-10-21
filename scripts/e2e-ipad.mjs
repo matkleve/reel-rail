@@ -11,7 +11,7 @@
  * Screenshots land in tmp/e2e-ipad/.
  */
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 
 import { chromium } from "playwright";
 
@@ -90,9 +90,10 @@ const files = shots.map(([name], i) => ({ name, mimeType: "image/jpeg", buffer: 
 if (await page.getByRole("button", { name: "Open a folder" }).count()) await fail("folder button on an iPad");
 const add = page.getByRole("button", { name: "Add photos & videos" });
 if (!(await add.count())) await fail("no 'Add photos & videos' on the start screen");
-if (await page.getByRole("button", { name: "Add a whole folder" }).count()) await fail("folder pick offered on touch");
+// iOS has no folder picker as such: the folder button is labelled for what it opens there.
+if (!(await page.getByRole("button", { name: "From the Files app (folder)" }).count())) await fail("no Files-app pick on touch");
 await page.screenshot({ path: `${OUT}/1-start.png` });
-ok("start screen: files mode, photos button, no folder options on touch");
+ok("start screen: files mode, photos button, Files-app folder pick");
 
 await page.locator('input[type="file"][accept]').first().setInputFiles(files);
 await page.locator(".card").first().waitFor({ timeout: 15000 });
@@ -252,13 +253,15 @@ await noOverflow("landscape 1180");
 for (const [w, h, name] of [
   [1024, 768, "landscape-1024"],
   [820, 1180, "portrait"],
+  [393, 660, "iphone-safari"],
+  [375, 667, "iphone-se"],
 ]) {
   await page.setViewportSize({ width: w, height: h });
   await page.waitForTimeout(600);
   await noOverflow(name);
   await page.screenshot({ path: `${OUT}/5-${name}.png` });
 }
-ok("no overflow at 1180×820, 1024×768 and 820×1180");
+ok("no overflow at 1180×820, 1024×768, 820×1180 and on iPhones (393×660, 375×667)");
 
 // ---- Next session: ratings come back when the same photos are added again ----------------------------
 await page.setViewportSize({ width: 1180, height: 820 });
@@ -273,6 +276,31 @@ await page.waitForTimeout(500);
 if (!(await page.locator(".card.r2").count())) await fail("the favorite should come back after re-adding");
 if (!(await page.locator(".badge.is-pick").count())) await fail("the pick should come back after re-adding");
 ok("re-adding the same photos restores ratings and picks");
+
+// ---- Trim a video: lossless copy, handed to the share sheet; the original becomes a discard ----------------
+const clip = readFileSync("scripts/fixtures/clip.mp4");
+await page.locator('input[type="file"][accept]').first().setInputFiles([{ name: "clip.mp4", mimeType: "video/mp4", buffer: clip }]);
+await page.getByText("1 added").waitFor();
+await page.keyboard.press("Home"); // a Magic Keyboard: walk to the video
+for (let i = 0; i < 12 && !(await page.locator(".card.is-current .card-trim").count()); i++) {
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(120);
+}
+await page.locator(".card.is-current .card-trim").waitFor();
+await page.waitForTimeout(500);
+await page.getByRole("button", { name: "Trim video" }).click();
+await page.getByRole("slider", { name: "Trim start" }).focus();
+await page.keyboard.press("Shift+ArrowRight");
+await page.getByRole("button", { name: "Trim", exact: true }).click();
+await page.getByRole("button", { name: "Save to Photos…" }).click();
+const sharedClip = (await page.evaluate(() => window.__shared)).at(-1);
+if (sharedClip?.names?.[0] !== "clip-trimmed.mp4") await fail(`trimmed clip not shared: ${JSON.stringify(sharedClip)}`);
+await page.locator('.card.is-current .card-face[aria-label^="video clip-trimmed.mp4"]').waitFor();
+// The original sits a second away, so it stacks behind the trimmed copy — check the Discards list.
+await page.getByRole("button", { name: /^Discards/ }).click();
+if (!(await page.locator('.cleanup-tile[title="clip.mp4 — keep"]').count())) await fail("the untrimmed original should be marked discard");
+await page.keyboard.press("Escape");
+ok("trim: lossless copy shared as clip-trimmed.mp4, original marked discard");
 
 await browser.close();
 server.kill();

@@ -2,7 +2,7 @@ import { emptyReel } from "@/types";
 import { media } from "@/test-utils";
 
 import { setPlace } from "./actions";
-import { useReel } from "./useReel";
+import { useReel, withRating } from "./useReel";
 
 function seed() {
   const list = ["a", "b", "c", "d"].map((id, i) =>
@@ -119,5 +119,14 @@ describe("markExported", () => {
     s().markExported("s2", "shared", ["a", "b"]);
     expect(s().reel.media.a!.exportedTo).toHaveLength(1);
     expect(s().reel.media.c!.exportedTo).toEqual([]);
+  });
+});
+
+describe("discard clock", () => {
+  it("starts when a medium becomes a discard and stops when it goes back up", () => {
+    const m = withRating(media("a"), -2, new Date("2026-10-21T00:00:00Z"));
+    expect(m.discardedAt).toBe("2026-10-21T00:00:00.000Z");
+    expect(withRating(m, -2).discardedAt).toBe(m.discardedAt); // re-rating to the same level keeps the clock
+    expect(withRating(m, -1).discardedAt).toBeUndefined();
   });
 });

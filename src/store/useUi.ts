@@ -4,7 +4,7 @@ import type { ScanProgress } from "@/fs/scan";
 
 export type Toast = { id: number; text: string; kind: "info" | "error" };
 export type Phase = "start" | "scanning" | "ready" | "error";
-export type DialogKind = "createSeries" | "seriesList" | "help" | "settings" | "cleanup" | null;
+export type DialogKind = "createSeries" | "seriesList" | "help" | "settings" | "cleanup" | "trim" | null;
 
 type UiState = {
   phase: Phase;
@@ -24,6 +24,8 @@ type UiState = {
   /** Name of the Space-key picks folder, once known. */
   picksFolderName?: string;
   toast?: Toast;
+  /** The system picker is open or handing files over (iOS copies videos out of Photos first). */
+  handover: boolean;
   set(patch: Partial<Omit<UiState, "set">>): void;
 };
 
@@ -42,6 +44,7 @@ export const useUi = create<UiState>()((set) => ({
   tagEditing: false,
   theme: initialTheme(),
   waveZoom: 1,
+  handover: false,
   set: (patch) => set(patch),
 }));
 

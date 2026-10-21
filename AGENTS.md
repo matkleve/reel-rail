@@ -18,9 +18,14 @@ Never report work as done without a green `verify`. Re-run one check alone:
 
 ## Hard rules
 
-1. **Originals are never written, moved or deleted** — except the explicit,
-   user-confirmed move into `_reel_trash/`. reel-rail writes only `.reel.json`
-   (+ its temp file) into the source folder, and copies on export.
+1. **Originals are never written, moved or deleted — except in exactly
+   three places, all asked for by the user:** a discard is deleted 30 days
+   after it was discarded or on a confirmed "Delete now" (`src/fs/deletion.ts`
+   is the only code that destroys a file); a trimmed video replaces its
+   original, which waits 30 days in `_reel_trash/` (`src/store/trim.ts`).
+   Deletion only runs in folder mode, right after a scan, and never touches a
+   file the scan did not just find. Otherwise reel-rail writes only
+   `.reel.json` (+ its temp file) and copies on export / picks.
 2. **`.reel.json` is the single source of truth.** New fields are optional so
    older files keep loading; a format change bumps `version` and `normalize()`
    refuses versions it does not know rather than guessing.
@@ -28,8 +33,10 @@ Never report work as done without a green `verify`. Re-run one check alone:
 4. **No new dependency without saying what it replaces and why the platform
    cannot do it.** Browser deps: react, zustand, exifr, lucide-react (icons —
    tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/inter
-   (bundled typeface, so it works offline). Server: @vercel/functions (only for
-   `next()` in the middleware). That is the list.
+   (bundled typeface, so it works offline), mediabunny (lossless MP4/MOV
+   trimming — the platform has no muxer; loaded only when someone trims).
+   Server: @vercel/functions (only for `next()` in the middleware). That is
+   the list.
 5. **Design system first:** [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
    No raw colors, radii, shadows or durations in components or CSS rules —
    tokens in `src/styles/tokens.css` only. Buttons, tooltips, popovers and
@@ -46,7 +53,8 @@ src/fs/        file access: Source (FolderSource | FilesSource), hash, metadata,
 src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, stacks, autosave
 src/carousel/  the 3D carousel: pure layout + gesture classifier (tested), cards, swipe hook
 src/timeline/  the waveform timeline: pure model (tested) + canvas
-src/cleanup/   the "Unusable" view (move to _reel_trash)
+src/cleanup/   the "Discards" view (30-day countdown, delete now)
+src/trim/      the video trim dialog (filmstrip, handles, preview)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
 src/ui/kit/    design-system components: Button, Tip, Kbd, Segmented, Switch, Popover, Dialog
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard

@@ -14,7 +14,8 @@ type Movable = FileSystemFileHandle & { move?: (dir: FileSystemDirectoryHandle, 
 
 /**
  * Moves files into `_reel_trash/<same relative path>` inside the source
- * folder — out of the way, never deleted. The scanner skips that folder.
+ * folder — out of the library, deleted for good only when their bin entry
+ * expires (see deletion.ts). The scanner skips that folder.
  *
  * Uses `FileSystemHandle.move()` where Chrome has it. Otherwise copy, check
  * the copy's size, and only then remove the original entry — so a failure
@@ -32,20 +33,35 @@ export async function moveToTrash(
     const from = await dirAt(root, parts, false);
     const to = await dirAt(root, [TRASH_DIR, ...parts], true);
     const handle = (await from.getFileHandle(name)) as Movable;
+    // Trimming the same video twice parks two originals under one name: never overwrite.
+    const target = await freeName(to, name);
 
     if (typeof handle.move === "function") {
-      await handle.move(to, name);
+      await handle.move(to, target);
     } else {
       const file = await handle.getFile();
-      const copy = await to.getFileHandle(name, { create: true });
+      const copy = await to.getFileHandle(target, { create: true });
       await file.stream().pipeTo(await copy.createWritable());
       if ((await copy.getFile()).size !== file.size) throw new Error(`copy of ${m.path} is incomplete`);
       await from.removeEntry(name);
     }
-    moved.push({ id: m.id, path: [TRASH_DIR, ...parts, name].join("/") });
+    moved.push({ id: m.id, path: [TRASH_DIR, ...parts, target].join("/") });
     onProgress(i + 1);
   }
   return moved;
+}
+
+async function freeName(dir: FileSystemDirectoryHandle, name: string): Promise<string> {
+  const dot = name.lastIndexOf(".");
+  const [stem, ext] = dot > 0 ? [name.slice(0, dot), name.slice(dot)] : [name, ""];
+  for (let n = 1; ; n++) {
+    const candidate = n === 1 ? name : `${stem} (${n})${ext}`;
+    try {
+      await dir.getFileHandle(candidate);
+    } catch {
+      return candidate;
+    }
+  }
 }
 
 export function formatBytes(bytes: number): string {

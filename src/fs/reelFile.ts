@@ -17,7 +17,7 @@ async function readJson(dir: FileSystemDirectoryHandle, name: string): Promise<R
  * version 1 is migrated. A version this code does not know is refused rather
  * than guessed at — saving it back would destroy whatever it means.
  */
-export function normalize(raw: unknown): ReelFile {
+export function normalize(raw: unknown, now = new Date()): ReelFile {
   const r = (raw ?? {}) as Omit<Partial<ReelFile>, "version"> & { version?: number };
   const version = r.version ?? 2;
   if (version !== 1 && version !== 2) throw new Error(`Unsupported .reel.json version ${r.version}`);
@@ -28,12 +28,16 @@ export function normalize(raw: unknown): ReelFile {
     m.rating ??= 0;
     // v1 had four levels; its bottom one ("unusable") is v2's "discard".
     if (version === 1 && m.rating === -1) m.rating = -2;
+    // Discards from before the 30-day rule get their full 30 days from now —
+    // never deleted on the day the rule first meets them.
+    if (m.rating === -2 && !m.discardedAt) m.discardedAt = now.toISOString();
   }
   return {
     version: 2,
     media,
     series: r.series ?? [],
     tagPresets: r.tagPresets?.length ? r.tagPresets : [...DEFAULT_TAG_PRESETS],
+    ...(r.bin?.length ? { bin: r.bin } : {}),
   };
 }
 

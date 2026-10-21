@@ -75,18 +75,6 @@ export function rejectStackRest(): void {
   s.setRatings(members.filter((id) => id !== cover).map((id) => ({ id, rating: DISCARD })));
 }
 
-/** After moving files into the trash folder: new path, and off the rail. */
-export function markTrashed(moves: { id: string; path: string }[]): void {
-  const s = get();
-  const to = new Map(moves.map((m) => [m.id, m.path]));
-  const reel = { ...s.reel, media: { ...s.reel.media } };
-  for (const [id, path] of to) {
-    const m = reel.media[id];
-    if (m) reel.media[id] = { ...m, path, missing: true };
-  }
-  s.refresh(reel);
-}
-
 /** Clicking a level in the dock: set the rating of the current item / selection (one undo step). */
 export function rateTo(rating: Rating): void {
   const s = get();

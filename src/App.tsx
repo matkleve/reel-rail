@@ -6,7 +6,9 @@ import { CreateSeriesDialog } from "@/series/CreateSeriesDialog";
 import { SeriesListDialog } from "@/series/SeriesListDialog";
 import { useUi } from "@/store/useUi";
 import { Waveform } from "@/timeline/Waveform";
+import { TrimDialog } from "@/trim/TrimDialog";
 import { Dock } from "@/ui/Dock";
+import { Handover } from "@/ui/Handover";
 import { Header } from "@/ui/Header";
 import { HelpDialog } from "@/ui/HelpDialog";
 import { SettingsDialog } from "@/ui/SettingsDialog";
@@ -26,7 +28,13 @@ export function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  if (phase !== "ready") return <StartScreen />;
+  if (phase !== "ready")
+    return (
+      <>
+        <StartScreen />
+        <Handover />
+      </>
+    );
 
   return (
     <div className="app">
@@ -38,11 +46,13 @@ export function App() {
       </main>
       <Waveform />
       <Toast />
+      <Handover />
       <CreateSeriesDialog />
       <SeriesListDialog />
       <SettingsDialog />
       <CleanupDialog />
       <HelpDialog />
+      <TrimDialog />
     </div>
   );
 }

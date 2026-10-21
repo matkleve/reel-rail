@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { ImageOff } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -37,7 +37,6 @@ export function Carousel() {
       filters: x.filters,
       media: x.reel.media,
       presets: x.reel.tagPresets,
-      setCurrent: x.setCurrent,
     })),
   );
   const stage = useRef<HTMLDivElement>(null);
@@ -65,19 +64,6 @@ export function Carousel() {
   const drag = useSwipe(stage);
   const current = shownId ? s.media[shownId] : undefined;
 
-  const { setCurrent } = s;
-  const onPick = useCallback(
-    (id: string, e: MouseEvent) => {
-      const plain = !e.metaKey && !e.ctrlKey && !e.shiftKey;
-      // Tapping the playing video pauses it — on a phone the dock has no room for a play button.
-      if (plain && id === useReel.getState().currentId && useReel.getState().reel.media[id]?.type === "video") {
-        window.dispatchEvent(new Event(TOGGLE_PLAY));
-        return;
-      }
-      setCurrent(id, e.metaKey || e.ctrlKey ? "toggle" : e.shiftKey ? "extend" : "replace");
-    },
-    [setCurrent],
-  );
 
   return (
     <div
@@ -109,7 +95,7 @@ export function Carousel() {
               dimmed={!passes(m, s.filters)}
               stackCount={stackId && !s.expanded.has(stackId) ? s.stacks.members[stackId]!.length : undefined}
               presets={s.presets}
-              onPick={onPick}
+              onPick={pickCard}
             />
           );
         })}
@@ -123,6 +109,17 @@ export function Carousel() {
       )}
     </div>
   );
+}
+
+/** A click/tap on a card. Tapping the playing video pauses it — on a phone the dock has no room for a play button. */
+function pickCard(id: string, e: MouseEvent): void {
+  const s = useReel.getState();
+  const plain = !e.metaKey && !e.ctrlKey && !e.shiftKey;
+  if (plain && id === s.currentId && s.reel.media[id]?.type === "video") {
+    window.dispatchEvent(new Event(TOGGLE_PLAY));
+    return;
+  }
+  s.setCurrent(id, e.metaKey || e.ctrlKey ? "toggle" : e.shiftKey ? "extend" : "replace");
 }
 
 /** Wheel and two-finger swipes flip through the carousel, one card per notch. */

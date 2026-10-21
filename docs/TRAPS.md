@@ -99,3 +99,27 @@ single write.
 `createImageBitmap` and `<img>` both fail on HEIC in Chrome. The thumbnailer
 falls back to the JPEG preview iPhones embed (`exifr.thumbnail`); the preview
 keeps showing that thumbnail. Low resolution there is expected, not a bug.
+
+## A tilted 3D plane can win the hit test over the card on it
+
+The carousel's `.stage-plane` is `rotateX(4deg)` with `preserve-3d`, and the
+cards sit in it at the same depth. Where the tilt makes the depths nearly
+equal — the upper part of a card — Chrome picked the (invisible, full-size)
+plane as the click target, so taps on the top of a card, and the trim button
+there, did nothing. The plane is `pointer-events: none`, cards `auto`. Do
+not give the plane pointer events back; a tap on empty floor still reaches
+`.stage`, which is what the swipe hook listens on.
+
+## mediabunny stamps "now" as the video's creation time
+
+A trimmed MOV/MP4 gets `mvhd` creation time = the moment of trimming, and
+`mvhd` is where reel-rail (and Photos) read "taken at". `trimVideo.ts`
+patches the time back (original + cut start) in the moov box as it streams
+past. Without it a trimmed video jumps to today on the next scan of a
+folder without `.reel.json`.
+
+## The Playwright Chromium has no H.264/AAC
+
+The bundled Chromium cannot play the codecs iPhones record (H.264, HEVC,
+AAC), so the e2e video fixture is VP9 + Opus in MP4. The unit test trims a
+real H.264/AAC MOV in Node, where no decoding is needed.

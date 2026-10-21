@@ -41,6 +41,14 @@
   transform: rotateX(4deg) translateX(var(--drag-x, 0px));
   transform-origin: 50% 80%;
   transition: transform 260ms var(--ease-out);
+  /* The plane shares its 3D depth with the cards on it; where the tilt makes
+     the two nearly equal (the upper part of a card), hit-testing could pick
+     the empty plane and swallow the tap. Only the cards take pointer events;
+     a tap on empty floor still reaches .stage (swipes). */
+  pointer-events: none;
+}
+.stage-plane .card {
+  pointer-events: auto;
 }
 .stage.is-dragging .stage-plane {
   transition: none;

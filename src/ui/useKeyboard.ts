@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 import { TOGGLE_MUTE, TOGGLE_PLAY } from "@/carousel/events";
+import { TRIMMABLE } from "@/fs/trimVideo";
 import { rejectStackRest, toggleStack, toggleTag } from "@/store/actions";
 import { togglePick } from "@/store/picks";
 import { useReel } from "@/store/useReel";
@@ -34,6 +35,10 @@ const KEYS: Record<string, Handler> = {
   x: () => rejectStackRest(),
   v: () => window.dispatchEvent(new Event(TOGGLE_PLAY)),
   m: () => window.dispatchEvent(new Event(TOGGLE_MUTE)),
+  c: () => {
+    const m = reel().currentId ? reel().reel.media[reel().currentId!] : undefined;
+    if (m?.type === "video" && TRIMMABLE.test(m.path)) ui().set({ dialog: "trim" });
+  },
   s: () => {
     if (reel().selection.size) ui().set({ dialog: "createSeries" });
   },

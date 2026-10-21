@@ -1,16 +1,21 @@
 import { ArchiveRestore, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { TRASH_DIR, formatBytes, moveToTrash } from "@/fs/trash";
+import { daysLeft } from "@/fs/deletion";
+import { formatBytes } from "@/fs/trash";
 import { MiniThumb } from "@/series/MiniThumb";
-import { markTrashed } from "@/store/actions";
+import { deleteNow } from "@/store/deletion";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
-import { DISCARD, type Media } from "@/types";
+import { DISCARD, KEEP_DAYS, type Media } from "@/types";
 import { Button } from "@/ui/kit/Button";
 import { Dialog } from "@/ui/kit/Dialog";
 
-/** Everything rated "discard", as a grid with its total size, and one button to move it out of the way. */
+/**
+ * Everything rated "discard" — reel-rail's "Recently deleted". In folder mode
+ * each file is deleted for good KEEP_DAYS after it was discarded, or now on
+ * a confirmed "Delete now". Tapping a tile keeps it.
+ */
 export function CleanupDialog() {
   const open = useUi((s) => s.dialog === "cleanup");
   return open ? <Cleanup onDone={() => useUi.getState().set({ dialog: null })} /> : null;
@@ -25,19 +30,20 @@ function Cleanup({ onDone }: { onDone(): void }) {
   );
   const bytes = items.reduce((n, m) => n + (m.size ?? 0), 0);
   const [confirming, setConfirming] = useState(false);
-  // Files mode has read-only access: nothing can be moved, so this is a checklist.
-  const canMove = useUi((s) => s.sourceKind === "folder");
+  // Files mode has read-only access: nothing can be deleted, so this is a checklist.
+  const canDelete = useUi((s) => s.sourceKind === "folder");
   const [done, setDone] = useState<number>();
+  const total = items.reduce((n, m) => n + 1 + (m.altPaths?.length ?? 0), 0);
 
   const run = async () => {
     setDone(0);
     try {
-      const moved = await moveToTrash(items, setDone);
-      markTrashed(moved);
-      showToast(`${moved.length} files moved to ${TRASH_DIR}`);
+      const r = await deleteNow(items, setDone);
+      showToast(`Deleted ${r.count} ${r.count === 1 ? "file" : "files"} · ${formatBytes(r.bytes)} freed`);
+      if (r.failed) showToast(`${r.failed} files could not be deleted`, "error");
       onDone();
     } catch (err) {
-      showToast(`Moving stopped: ${err instanceof Error ? err.message : err}`, "error");
+      showToast(`Deleting stopped: ${err instanceof Error ? err.message : err}`, "error");
       setDone(undefined);
     }
   };
@@ -47,12 +53,14 @@ function Cleanup({ onDone }: { onDone(): void }) {
       open
       onClose={onDone}
       title="Discards"
-      subtitle={items.length ? `${items.length} items · ${formatBytes(bytes)}` : undefined}
+      subtitle={
+        items.length ? `${items.length} ${items.length === 1 ? "item" : "items"} · ${formatBytes(bytes)}` : undefined
+      }
       wide
       footer={
-        items.length && !canMove ? (
+        items.length && !canDelete ? (
           <span className="note">
-            reel-rail can’t delete from your photo library. Use this list to clear them out in the Photos app — or keep
+            A browser can’t delete from your photo library. Use this list to clear them out in the Photos app — or keep
             them; they stay marked.
           </span>
         ) : items.length ? (
@@ -60,6 +68,7 @@ function Cleanup({ onDone }: { onDone(): void }) {
             count={items.length}
             bytes={bytes}
             done={done}
+            total={total}
             confirming={confirming}
             onConfirm={setConfirming}
             onRun={() => void run()}
@@ -71,25 +80,18 @@ function Cleanup({ onDone }: { onDone(): void }) {
         <div className="empty-state">
           <Trash2 size={28} aria-hidden="true" />
           <strong>Nothing marked as discard</strong>
-          <p>Press ↓ twice on a normal shot, or click the bin in the dock.</p>
+          <p>Swipe down or press ↓ on a weak shot, or tap the bin in the dock.</p>
         </div>
       ) : (
         <>
-          <p className="note">Click a shot to keep it after all — it goes back to normal.</p>
+          <p className="note">
+            {canDelete
+              ? `Discards are deleted for good ${KEEP_DAYS} days after you discarded them. Tap one to keep it after all.`
+              : "Tap one to keep it after all — it goes back to normal."}
+          </p>
           <div className="cleanup-grid">
             {items.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className="cleanup-tile"
-                title={`${m.path} — keep`}
-                onClick={() => useReel.getState().setRatings([{ id: m.id, rating: 0 }])}
-              >
-                <MiniThumb media={m} />
-                <span className="cleanup-keep">
-                  <ArchiveRestore size={16} /> Keep
-                </span>
-              </button>
+              <Tile key={m.id} media={m} showDays={canDelete} />
             ))}
           </div>
         </>
@@ -98,10 +100,31 @@ function Cleanup({ onDone }: { onDone(): void }) {
   );
 }
 
+function Tile({ media: m, showDays }: { media: Media; showDays: boolean }) {
+  const days = daysLeft(m);
+  return (
+    <button
+      type="button"
+      className="cleanup-tile"
+      title={`${m.path} — keep`}
+      onClick={() => useReel.getState().setRatings([{ id: m.id, rating: 0 }])}
+    >
+      <MiniThumb media={m} />
+      {showDays && days !== undefined && (
+        <span className="cleanup-days tabular">{days === 0 ? "today" : `${days} d`}</span>
+      )}
+      <span className="cleanup-keep">
+        <ArchiveRestore size={16} /> Keep
+      </span>
+    </button>
+  );
+}
+
 type FooterProps = {
   count: number;
   bytes: number;
   done?: number;
+  total: number;
   confirming: boolean;
   onConfirm(v: boolean): void;
   onRun(): void;
@@ -112,30 +135,30 @@ function CleanupFooter(p: FooterProps) {
   if (p.done !== undefined)
     return (
       <span className="text-2 tabular">
-        Moving {p.done} of {p.count}…
+        Deleting {p.done} of {p.total}…
       </span>
     );
   if (p.confirming)
     return (
       <div className="footer-row" key="confirm">
         <span className="text-2">
-          Move {p.count} files ({formatBytes(p.bytes)}) to <code>{TRASH_DIR}/</code>?
+          Delete {p.count} files ({formatBytes(p.bytes)}) for good? This can’t be undone.
         </span>
         <span className="spacer" />
         <Button variant="ghost" onClick={() => p.onConfirm(false)}>
           Cancel
         </Button>
         <Button variant="danger" icon={Trash2} onClick={p.onRun} autoFocus>
-          Move {p.count} files
+          Delete {p.count} files
         </Button>
       </div>
     );
   return (
     <div className="footer-row" key="idle">
-      <span className="note">Nothing is deleted. Move a file back and it returns with its rating.</span>
+      <span className="note">Don’t want to wait {KEEP_DAYS} days?</span>
       <span className="spacer" />
       <Button variant="primary" icon={Trash2} onClick={() => p.onConfirm(true)}>
-        Move to trash folder…
+        Delete now…
       </Button>
     </div>
   );

@@ -1,6 +1,6 @@
 import { ChevronDown, FolderOpen, Images, Keyboard, Settings } from "lucide-react";
 
-import { canPickFolder } from "@/fs/support";
+import { canPickFolder, isTouch } from "@/fs/support";
 import { useUi } from "@/store/useUi";
 
 import { Kbd } from "./kit/Kbd";
@@ -33,7 +33,7 @@ export function LibraryMenu() {
         </button>
         {canPickFolder() && (
           <button type="button" className="menu-item" onClick={() => (close(), folder.open())}>
-            <FolderOpen size={15} /> Add a folder…
+            <FolderOpen size={15} /> {isTouch() ? "From the Files app (folder)…" : "Add a folder…"}
           </button>
         )}
         <hr />

@@ -112,36 +112,18 @@ export function Header() {
             <span className="btn-label">Share picks</span>
           </Button>
         ) : (
-          <Button
-            icon={ArrowDownToLine}
-            count={picks}
-            onClick={() => void choosePicks()}
-            title="Where Space copies to"
-          >
+          <Button icon={ArrowDownToLine} count={picks} onClick={() => void choosePicks()} title="Where Space copies to">
             <span className="btn-label">Picks</span>
           </Button>
         )}
-        <Button
-          icon={Layers}
-          count={seriesCount}
-          onClick={() => set({ dialog: "seriesList" })}
-          title="Series"
-        >
+        <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })} title="Series">
           <span className="btn-label">Series</span>
         </Button>
-        <Button
-          icon={Trash2}
-          count={discards}
-          onClick={() => set({ dialog: "cleanup" })}
-          title="Discards"
-        >
+        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title="Discards">
           <span className="btn-label">Discards</span>
         </Button>
         {phone ? (
-          <MoreMenu
-            ratingOptions={RATING_OPTIONS}
-            onTheme={() => toggleTheme(theme)}
-          />
+          <MoreMenu ratingOptions={RATING_OPTIONS} onTheme={() => toggleTheme(theme)} />
         ) : (
           <>
             <span className="divider-v" />
@@ -150,12 +132,7 @@ export function Header() {
               label={theme === "dark" ? "Light theme" : "Dark theme"}
               onClick={() => toggleTheme(theme)}
             />
-            <Button
-              icon={Keyboard}
-              label="Keyboard shortcuts"
-              kbd="?"
-              onClick={() => set({ dialog: "help" })}
-            />
+            <Button icon={Keyboard} label="Keyboard shortcuts" kbd="?" onClick={() => set({ dialog: "help" })} />
           </>
         )}
       </div>
@@ -166,8 +143,7 @@ export function Header() {
 function FolderMenu() {
   const folderName = useUi((s) => s.folderName);
   const picksName = useUi((s) => s.picksFolderName);
-  const close = () =>
-    document.querySelector<HTMLElement>(".popover:popover-open")?.hidePopover();
+  const close = () => document.querySelector<HTMLElement>(".popover:popover-open")?.hidePopover();
   return (
     <Popover
       align="start"
@@ -179,18 +155,10 @@ function FolderMenu() {
         </button>
       )}
     >
-      <button
-        type="button"
-        className="menu-item"
-        onClick={() => (close(), void pickAndOpen())}
-      >
+      <button type="button" className="menu-item" onClick={() => (close(), void pickAndOpen())}>
         <FolderOpen size={15} /> Open another folder…
       </button>
-      <button
-        type="button"
-        className="menu-item"
-        onClick={() => (close(), void choosePicks())}
-      >
+      <button type="button" className="menu-item" onClick={() => (close(), void choosePicks())}>
         <ArrowDownToLine size={15} /> Picks folder: {picksName ?? "not set"}
       </button>
       <hr />
@@ -201,11 +169,7 @@ function FolderMenu() {
       >
         <Settings size={15} /> Tag presets…
       </button>
-      <button
-        type="button"
-        className="menu-item"
-        onClick={() => (close(), useUi.getState().set({ dialog: "help" }))}
-      >
+      <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "help" }))}>
         <Keyboard size={15} /> Keyboard shortcuts <Kbd>?</Kbd>
       </button>
     </Popover>
@@ -216,17 +180,9 @@ function SaveState() {
   const state = useReel((s) => s.saveState);
   if (state === "idle") return null;
   const [Icon, text] =
-    state === "saving"
-      ? [LoaderCircle, "Saving"]
-      : state === "error"
-        ? [CircleAlert, "Not saved"]
-        : [Check, "Saved"];
+    state === "saving" ? [LoaderCircle, "Saving"] : state === "error" ? [CircleAlert, "Not saved"] : [Check, "Saved"];
   return (
-    <span
-      className={`save-state is-${state}`}
-      aria-live="polite"
-      title={`.reel.json — ${text}`}
-    >
+    <span className={`save-state is-${state}`} aria-live="polite" title={`.reel.json — ${text}`}>
       <Icon size={13} aria-hidden="true" />
       {text}
     </span>

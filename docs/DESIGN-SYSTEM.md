@@ -95,6 +95,21 @@ Every interactive element has all five states: default, hover, active
   on) before they commit.
 - Safe-area insets pad the header and the waveform in the home-screen app.
 
+## Phone (≤ 600 px)
+
+Rating on the go is the job; the photo gets the room.
+
+- Header: logo, library menu (icon), then Share/Picks, Series, Discards and
+  **⋯**. The rating filter, the filter panel and the theme live in ⋯, whose
+  button shows the number of active filters.
+- Dock: seven 42 px targets — five levels, tags, Pick (icon only). A video
+  is paused by tapping it; the scissors sit on the playing video.
+- Portrait carousel: cards live in the band between the date and the dock,
+  **measured** (`src/carousel/useInsets.ts`), not guessed; the centre card may
+  take 84 % of the width.
+- Waveform 72 px, axis as icons, no tag legend. The file name is hidden.
+- Popovers cap their height to the screen and scroll.
+
 ## Rules
 
 - No raw colour, radius, shadow or duration in a component or CSS rule:

@@ -18,7 +18,13 @@ export function isTouch(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 }
 
-/** Desktop Safari/Firefox/Brave can hand over a whole folder (read-only); iOS cannot. */
+/**
+ * A whole folder through `<input webkitdirectory>` (read-only). Desktop
+ * Safari/Firefox/Brave do it. iOS has the attribute; how far it goes depends
+ * on the iOS version (WebKit bug 271705 — newer ones open the Files app on
+ * folders, older ones let you multi-select files there), so it is offered
+ * as "from the Files app" on touch rather than promised as a folder pick.
+ */
 export function canPickFolder(): boolean {
-  return !isTouch() && "webkitdirectory" in HTMLInputElement.prototype;
+  return "webkitdirectory" in HTMLInputElement.prototype;
 }

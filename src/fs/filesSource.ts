@@ -66,6 +66,13 @@ export class FilesSource implements Source {
     return added;
   }
 
+  /** Adds one file made in this session (a trimmed video) and returns its path. */
+  put(file: File): string {
+    const path = pathFor(file, this.files);
+    this.files.set(path, file);
+    return path;
+  }
+
   get size(): number {
     return this.files.size;
   }

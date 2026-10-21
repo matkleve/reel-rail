@@ -5,6 +5,7 @@ import { scanSource } from "@/fs/scan";
 import { peekSource, setSource } from "@/fs/session";
 import type { Source } from "@/fs/source";
 
+import { purgeDue } from "./deletion";
 import { startAutosave } from "./persist";
 import { useReel } from "./useReel";
 import { showToast, useUi } from "./useUi";
@@ -30,6 +31,8 @@ async function openSource(source: Source): Promise<void> {
     useReel.setState((s) => ({ reel: { ...s.reel } }));
     const picksFolderName = source.kind === "folder" ? (await loadHandle("picks"))?.name : undefined;
     ui.set({ phase: "ready", picksFolderName });
+    // Only a folder can delete; only right after a scan is every path verified.
+    if (source.kind === "folder") void purgeDue();
   } catch (err) {
     console.error(err);
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });

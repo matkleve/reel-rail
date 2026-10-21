@@ -52,8 +52,7 @@ export function MoreMenu({
       <FilterPanel />
       <hr />
       <button type="button" className="menu-item" onClick={onTheme}>
-        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}{" "}
-        {theme === "dark" ? "Light theme" : "Dark theme"}
+        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />} {theme === "dark" ? "Light theme" : "Dark theme"}
       </button>
     </Popover>
   );

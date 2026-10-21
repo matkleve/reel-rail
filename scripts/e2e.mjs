@@ -11,7 +11,7 @@
  * Screenshots land in tmp/e2e/.
  */
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 
 import { chromium } from "playwright";
 
@@ -252,31 +252,106 @@ ok("exported items show the check badge");
 await page.keyboard.press("Escape");
 await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
 
-// ---- Clean up: discards → _reel_trash ------------------------------------------------
+// ---- Discards: 30-day countdown, "Delete now" deletes for good ---------------------------
+const tripFiles = () =>
+  page.evaluate(async () => {
+    const out = [];
+    const walk = async (dir, pre) => {
+      for await (const [n, h] of dir.entries()) {
+        if (h.kind === "directory") await walk(h, `${pre}${n}/`);
+        else out.push(`${pre}${n}`);
+      }
+    };
+    await walk(await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip"), "");
+    return out;
+  });
+const filesBefore = await tripFiles();
 await page.getByRole("button", { name: /^Discards/ }).click();
-await page.getByRole("button", { name: "Move to trash folder…" }).click();
-await page.getByRole("button", { name: /^Move \d+ files/ }).click();
-await page.getByText(/moved to _reel_trash/).waitFor({ timeout: 5000 });
-const trashed = await page.evaluate(async () => {
+if ((await page.locator(".cleanup-days", { hasText: "30 d" }).count()) !== 1) await fail("discard should show 30 days left");
+await page.getByRole("button", { name: "Delete now…" }).click();
+await page.getByRole("button", { name: /^Delete \d+ files/ }).click();
+await page.getByText(/^Deleted 1 file ·/).waitFor({ timeout: 5000 });
+const filesAfter = await tripFiles();
+const gone = filesBefore.filter((f) => !filesAfter.includes(f));
+if (gone.length !== 1 || !gone[0].startsWith("Porto/")) await fail(`expected one deleted file, got ${gone}`);
+if ((await page.locator(".card.rm2").count()) !== 0) await fail("deleted item should leave the carousel");
+ok(`discards: 30-day countdown shown, "Delete now" deleted ${gone[0]}`);
+
+// ---- 30 days later: an old discard is deleted when the folder opens -----------------------
+// A plain one: normal, not picked, not exported — the re-open checks below count those.
+await page.locator(".card.r0:not(:has(.badge)) .card-face").first().click();
+await page.keyboard.press("ArrowDown");
+await page.keyboard.press("ArrowDown");
+await page.locator(".card.is-current.rm2").waitFor();
+await page.waitForTimeout(900); // autosave
+const aged = await page.evaluate(async () => {
   const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
-  const t = await (await (await trip.getDirectoryHandle("_reel_trash")).getDirectoryHandle("Porto")).getDirectoryHandle("100APPLE");
-  const out = [];
-  for await (const n of t.keys()) out.push(n);
-  return out;
+  const handle = await trip.getFileHandle(".reel.json");
+  const reel = JSON.parse(await (await handle.getFile()).text());
+  const m = Object.values(reel.media).find((x) => x.rating === -2 && !x.missing);
+  m.discardedAt = new Date(Date.now() - 31 * 864e5).toISOString();
+  const w = await handle.createWritable();
+  await w.write(JSON.stringify(reel));
+  await w.close();
+  return m.path;
 });
-if (trashed.length !== 1) await fail(`expected one file in _reel_trash, got ${trashed}`);
-if ((await page.locator(".card.rm2").count()) !== 0) await fail("trashed item should leave the carousel");
-ok(`clean up: ${trashed[0]} moved into _reel_trash/, nothing deleted`);
+await page.reload();
+await page.getByRole("button", { name: /Continue with/ }).click();
+await page.getByText(/^Deleted 1 discard after 30 days/).waitFor({ timeout: 5000 });
+if ((await tripFiles()).includes(aged)) await fail(`${aged} should be deleted after 30 days`);
+ok(`30 days after discarding, ${aged} was deleted on open`);
 
 // ---- Re-open: remembered handle, state restored --------------------------------
 await page.waitForTimeout(800);
 await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
 await page.locator(".card").first().waitFor();
+if ((await page.locator(".card.rm2").count()) !== 0) await fail("no discard should be left");
 if ((await page.locator(".card.r2").count()) !== 1) await fail("rating lost after re-open");
 if ((await page.locator(".badge.is-done").count()) < 3) await fail("exports lost after re-open");
 if ((await page.locator(".badge.is-pick").count()) !== 1) await fail("pick lost after re-open");
 ok("re-open via remembered folder restores everything");
+
+// ---- Trim a video: the trimmed file replaces it, the original waits in _reel_trash -----------
+const clip = readFileSync("scripts/fixtures/clip.mp4");
+await page.evaluate(async (b64) => {
+  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
+  const w = await (await trip.getFileHandle("clip.mp4", { create: true })).createWritable();
+  await w.write(bytes);
+  await w.close();
+}, clip.toString("base64"));
+await page.reload();
+await page.getByRole("button", { name: /Continue with/ }).click();
+await page.locator('.card-face[aria-label^="video clip.mp4"]').click();
+await page.locator(".card.is-current .card-trim").waitFor();
+await page.waitForTimeout(500); // the card glides to the centre first
+await page.getByRole("button", { name: "Trim video" }).click();
+await page.getByRole("heading", { name: "Trim video" }).waitFor();
+await page.getByRole("slider", { name: "Trim start" }).focus();
+await page.keyboard.press("Shift+ArrowRight");
+await page.getByRole("slider", { name: "Trim end" }).focus();
+await page.keyboard.press("Shift+ArrowLeft");
+await page.screenshot({ path: "tmp/e2e/6-trim.png" });
+await page.getByRole("button", { name: "Trim & replace" }).click();
+await page.getByText(/^Trimmed — the original stays/).waitFor({ timeout: 10000 });
+const trimmed = await page.evaluate(async () => {
+  const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
+  const size = async (dir, name) => (await (await dir.getFileHandle(name)).getFile()).size;
+  await new Promise((r) => setTimeout(r, 900)); // autosave
+  const reel = JSON.parse(await (await (await trip.getFileHandle(".reel.json")).getFile()).text());
+  return {
+    now: await size(trip, "clip.mp4"),
+    parked: await size(await trip.getDirectoryHandle("_reel_trash"), "clip.mp4"),
+    bin: reel.bin ?? [],
+    records: Object.values(reel.media).filter((m) => m.path === "clip.mp4").length,
+  };
+});
+if (trimmed.parked !== clip.length) await fail(`original should be parked whole, got ${trimmed.parked}`);
+if (!(trimmed.now > 0 && trimmed.now < clip.length * 0.8)) await fail(`trimmed file should be shorter: ${trimmed.now}`);
+if (trimmed.bin.length !== 1 || trimmed.bin[0].was !== "clip.mp4") await fail(`bin entry missing: ${JSON.stringify(trimmed.bin)}`);
+if (trimmed.records !== 1) await fail("exactly one record should point at clip.mp4");
+ok(`trim: clip.mp4 ${clip.length} → ${trimmed.now} bytes, original parked in _reel_trash for 30 days`);
 
 // ---- Help overlay + light theme ---------------------------------------------------
 await page.keyboard.press("?");

@@ -40,7 +40,7 @@ export function FilesStart() {
         </Button>
         {canPickFolder() && (
           <Button variant="ghost" size="lg" icon={FolderOpen} onClick={folder.open}>
-            Add a whole folder
+            {isTouch() ? "From the Files app (folder)" : "Add a whole folder"}
           </Button>
         )}
       </div>

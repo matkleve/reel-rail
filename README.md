@@ -5,12 +5,13 @@ timeline, with the keyboard, entirely on your own computer.
 
 - **No cloud, no backend, no upload.** reel-rail reads a folder on your disk
   through the browser's File System Access API.
-- **Your originals are never changed.** All decisions live in one file,
-  `.reel.json`, inside the folder.
+- **Your originals are never changed** — except what you ask for: discards
+  are deleted after 30 days, and a trimmed video replaces its original. All
+  decisions live in one file, `.reel.json`, inside the folder.
 - **Installable** as an app (PWA) and works offline.
 
-Best in **Chrome or Edge on a computer** (folder mode). On an **iPad**, in
-Safari, Firefox or Brave it runs in [files mode](#ipad-safari-firefox-brave--files-mode).
+Best in **Chrome or Edge on a computer** (folder mode). On an **iPhone or
+iPad**, in Safari, Firefox or Brave it runs in [files mode](#iphone-ipad-safari-firefox-brave--files-mode).
 
 ---
 
@@ -113,10 +114,20 @@ files in order as `01_…`, `02_…` into a new folder named after the title.
 **Filters** (top bar): All / ≥ Good / Favorites / Hide discards, "Never exported",
 and tags. Filtered items stay in place, greyed out, and arrow keys skip them.
 
-**Discards** (top bar) shows everything rated −2 as a grid with its total
-size. Click a tile to keep it. "Move to trash folder" moves the files into
-`_reel_trash/` inside your folder. Nothing is deleted, and moving a file back
-brings it back with its rating.
+**Discards — deleted after 30 days.** Rating something −2 starts a 30-day
+clock, like "Recently deleted" on a phone. **Discards** (top bar) shows them
+all with the days left and their total size; tap one to keep it after all
+(the clock stops). When you open the folder after the 30 days, those files
+are **deleted for good**. Don't want to wait: "Delete now…" (asks first).
+Discards on an SD card that is not plugged in are left alone.
+
+**Trim a video — C, or the scissors on the playing video.** Drag the two
+handles, play the kept part, "Trim & replace". The cut is lossless (the video
+is copied, not re-encoded — fast, and HEVC from an iPhone works too). It starts
+at the key frame at or just before the left handle, so at most a second
+earlier than you set. The trimmed file takes the original's name, rating,
+tags and series; the original waits in `_reel_trash/` and is deleted after
+30 days. MP4, MOV and M4V can be trimmed.
 
 **Place:** there is no reverse geocoding (that would need the internet). Type
 a place in the info bar (or press **P**). With a selection it applies to all
@@ -133,6 +144,7 @@ Press **?** in the app for this list.
 | ↑ / ↓ | Better / worse (five levels) |
 | Space | Pick: copy to the picks folder (again: take it back) |
 | V / M | Video play/pause / sound on/off |
+| C | Trim the video |
 | Shift + ← / → | Extend selection |
 | Ctrl/⌘ + click, Shift + click | Add single item / range to selection |
 | Esc | Clear selection |
@@ -163,6 +175,8 @@ type ReelFile = {
   media: Record<string, Media>;   // keyed by Media.id
   series: Series[];
   tagPresets: string[];           // keys 1–9 (phase 2)
+  bin?: { path: string; was: string; deleteAfter: string }[];
+                                  // originals of trimmed videos in _reel_trash/
 };
 
 type Media = {
@@ -182,6 +196,7 @@ type Media = {
   mtime?: number;        // file.lastModified at the last scan
   missing?: boolean;     // file not found on the last scan (kept, not deleted)
   altPaths?: string[];   // byte-identical duplicates found at other paths
+  discardedAt?: string;  // when it was rated −2; the file is deleted 30 days later
 };
 
 type Series = {
@@ -205,23 +220,27 @@ type Series = {
 
 ---
 
-## iPad, Safari, Firefox, Brave — files mode
+## iPhone, iPad, Safari, Firefox, Brave — files mode
 
 Folder mode (above) needs Chrome or Edge on a computer. **Everywhere else
-reel-rail switches to files mode by itself:** iPad and iPhone (every browser
+reel-rail switches to files mode by itself:** iPhone and iPad (every browser
 there is Safari underneath), Safari on the Mac, Firefox, and Brave (which
-turns folder access off by default).
+turns folder access off by default — or switch it on under
+`brave://flags/#file-system-access-api`).
 
-**On the iPad:**
+**On the iPhone or iPad:**
 
 1. Open **https://reel-rail.vercel.app** in Safari, log in, then Share →
    **Add to Home Screen**. From then on it opens full-screen like an app (log
    in once more inside the app — home-screen apps keep their own cookies).
 2. Tap **Add photos & videos** → Photo Library (or Choose File for the Files
    app, an SD-card reader or a USB-C drive). Select an album → Select all.
+   **From the Files app (folder)** opens the Files app for a folder (newer
+   iOS) or lets you select many files there (older iOS).
 3. **Swipe** left/right to browse, **swipe up/down** to rate (a label shows
-   the level you will land on), **press and hold** a photo to select it. The
-   dock buttons do the same by tap; a Magic Keyboard runs all shortcuts.
+   the level you will land on), **press and hold** a photo to select it. Tap
+   a playing video to pause it; the scissors trim it. On a phone the filters
+   and the theme are in the **⋯** menu.
 4. **Pick** the keepers, then **Share picks** in the header: the share sheet
    offers Save to Photos, Save to Files, AirDrop, Instagram…
    A series is shared the same way, numbered `01_…`, `02_…`.
@@ -229,17 +248,28 @@ turns folder access off by default).
    add the same photos again and everything comes back (matched by content
    hash) — the start screen says how many rated items it remembers.
 
-**What is different from folder mode:** the browser only lends files for one
-session and cannot write to them, so there is no `.reel.json` next to the
-photos, no picks *folder* (share instead), and "Discards" is a checklist —
-delete those in the Photos app. On desktop Safari/Firefox/Brave you can also
-add a whole folder (read-only). Try files mode in Chrome with
-`?mode=files` in the address.
+**What a browser cannot do on an iPhone/iPad** (it only borrows files for one
+session and cannot write to the Photos library):
+
+- **No deleting from Photos.** Discards is a checklist there — delete them in
+  the Photos app ("Recently Deleted" keeps them 30 days).
+- **Trimming makes a copy**: "Save to Photos…" saves the trimmed video, the
+  original is marked discard so the checklist reminds you to delete it.
+- **Adding videos is slow before reel-rail sees them**: after "Add", iOS
+  copies every video out of the Photos library (and may convert it) before
+  the browser gets anything. reel-rail shows "Waiting for your photos…"
+  meanwhile; it reads only 2 MB per file itself. Adding in batches, or
+  picking from the Files app, is quicker.
+
+All three need a native app (Photos access without copying, deleting into
+"Recently Deleted"). The web app can be wrapped as one (Capacitor) — that
+needs a Mac with Xcode and an Apple developer account.
 
 Caveats: the Photos picker may convert HEIC to JPEG ("Options → Most
 Compatible"), and then a photo's hash differs from the original on the Mac;
 picking from **Files** passes originals through unchanged. Switch
-"Location" on in the picker's options to keep GPS.
+"Location" on in the picker's options to keep GPS. Try files mode in Chrome
+with `?mode=files` in the address.
 
 ---
 
@@ -251,7 +281,8 @@ src/store/     zustand stores, filters, stacks, autosave, actions
 src/carousel/  the 3D carousel: pure layout + gestures (tested), cards, swipe, original/video
 src/timeline/  the waveform: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
-src/cleanup/   the "Discards" view
+src/cleanup/   the "Discards" view (30-day countdown, delete now)
+src/trim/      video trimming (dialog, filmstrip)
 src/ui/kit/    design-system components (see docs/DESIGN-SYSTEM.md)
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 middleware.ts  password gate when hosted on Vercel

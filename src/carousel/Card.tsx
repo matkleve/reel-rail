@@ -1,7 +1,10 @@
-import { ArrowDownToLine, Check, CircleCheck, Layers, Play, Star } from "lucide-react";
+import { ArrowDownToLine, Check, CircleCheck, Layers, Play, Scissors, Star } from "lucide-react";
 import { memo, type CSSProperties, type MouseEvent } from "react";
 
+import { TRIMMABLE } from "@/fs/trimVideo";
+import { useUi } from "@/store/useUi";
 import { PICKS, ratingClass, type Media } from "@/types";
+import { Button } from "@/ui/kit/Button";
 import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
 
@@ -59,6 +62,17 @@ export const Card = memo(function Card(p: Props) {
         )}
       </button>
 
+      {p.current && media.type === "video" && TRIMMABLE.test(media.path) && (
+        <Button
+          className="card-trim"
+          icon={Scissors}
+          label="Trim video"
+          kbd="C"
+          size="sm"
+          variant="secondary"
+          onClick={() => useUi.getState().set({ dialog: "trim" })}
+        />
+      )}
       {p.selected && <CircleCheck className="card-check" size={22} fill="var(--select)" color="white" aria-hidden="true" />}
       {p.stackCount && (
         <span className="card-count" aria-hidden="true">

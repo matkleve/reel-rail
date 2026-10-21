@@ -35,6 +35,7 @@ export const SHORTCUT_GROUPS: { title: string; items: [string[], string][] }[] =
       [["T"], "Tag menu"],
       [["P"], "Edit the place"],
       [["V", "M"], "Video: play/pause, sound"],
+      [["C"], "Video: trim"],
       [["?"], "This overlay"],
     ],
   },

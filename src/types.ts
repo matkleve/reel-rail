@@ -18,6 +18,8 @@ export const RATING_LABEL: Record<Rating, string> = {
   [-2]: "Discard",
 };
 export const DISCARD: Rating = -2;
+/** Days a discard (or a trimmed video's original) is kept before it is deleted for good. */
+export const KEEP_DAYS = 30;
 
 /** CSS class per rating: r2, r1, r0, rm1, rm2. */
 export function ratingClass(r: Rating): string {
@@ -56,7 +58,19 @@ export type Media = {
   missing?: boolean;
   /** Other paths with byte-identical content (duplicates). */
   altPaths?: string[];
+  /**
+   * When it was rated discard (ISO). Folder mode deletes the file for good
+   * KEEP_DAYS later — like a phone's "Recently deleted". Cleared when the
+   * rating goes back up.
+   */
+  discardedAt?: string;
 };
+
+/**
+ * A file reel-rail moved out of the library into `_reel_trash/` (the
+ * original of a trimmed video). Deleted for good after `deleteAfter`.
+ */
+export type BinEntry = { path: string; deleteAfter: string; was: string };
 
 export type Series = {
   id: string;
@@ -75,6 +89,8 @@ export type ReelFile = {
   media: Record<string, Media>;
   series: Series[];
   tagPresets: string[];
+  /** Files waiting in `_reel_trash/` for their final deletion. */
+  bin?: BinEntry[];
 };
 
 export const DEFAULT_TAG_PRESETS = [
