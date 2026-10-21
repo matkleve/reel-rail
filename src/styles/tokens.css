@@ -32,9 +32,27 @@
   --color-star: #ffd34d;
   --color-success: #6fd6a2;
   --color-danger: #ff8f86;
+  --color-danger-ink: #1a0f0e;
+  --color-pick: #6fd6a2;
 
-  --color-rail: #3a3f4a;
   --color-scrim: rgb(0 0 0 / 0.55);
+  --color-wave: #4a505d;
+  /* The carousel floor: a soft glow that fades into the canvas. */
+  --color-floor: #1a1d24;
+  --color-glow: rgb(255 181 71 / 0.07);
+  --reflection: rgb(255 255 255 / 0.13);
+
+  /* Tag chips: nine hues, legible with --color-tag-ink on top. */
+  --color-tag-ink: #101114;
+  --tag-0: #f6a05a;
+  --tag-1: #f3d36b;
+  --tag-2: #8fd694;
+  --tag-3: #c9b8a4;
+  --tag-4: #8ec5ff;
+  --tag-5: #ff9b8a;
+  --tag-6: #f7a8d8;
+  --tag-7: #7fd8c8;
+  --tag-8: #b8a6ff;
 
   --radius-thumb: 6px;
   --radius-card: 12px;
@@ -47,7 +65,7 @@
      their size and settle, which is what makes rating feel physical. */
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-spring: 180ms;
+  --dur-spring: 220ms;
   --dur-fast: 150ms;
 
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -76,9 +94,25 @@
   --color-star: #d99a00;
   --color-success: #1c6b45;
   --color-danger: #b3261e;
+  --color-danger-ink: #ffffff;
+  --color-pick: #1c6b45;
 
-  --color-rail: #c9c6bf;
   --color-scrim: rgb(23 24 28 / 0.4);
+  --color-wave: #b9b5ad;
+  --color-floor: #e6e3dc;
+  --color-glow: rgb(194 106 0 / 0.08);
+  --reflection: rgb(0 0 0 / 0.1);
+
+  --color-tag-ink: #101114;
+  --tag-0: #f2b27c;
+  --tag-1: #efd57f;
+  --tag-2: #a5dca8;
+  --tag-3: #d8cbbb;
+  --tag-4: #a9d2ff;
+  --tag-5: #ffb2a6;
+  --tag-6: #f6bde0;
+  --tag-7: #9be0d3;
+  --tag-8: #cbbdff;
 
   --shadow-raised: 0 8px 24px rgb(23 24 28 / 0.14), 0 2px 4px rgb(23 24 28 / 0.06);
   --shadow-thumb: 0 2px 6px rgb(23 24 28 / 0.18);

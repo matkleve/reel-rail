@@ -1,0 +1,270 @@
+/* ---------------------------------------------------------------------------
+   The stage. Cards stand side by side on a floor; the whole row is tilted
+   back a little and side cards turn toward the middle — that plus the
+   reflection is the "3D surface". Positions come from carousel/layout.ts.
+--------------------------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  perspective: 1600px;
+  perspective-origin: 50% 35%;
+  background: radial-gradient(ellipse 60% 55% at 50% 62%, var(--color-glow), transparent 70%);
+}
+
+.stage-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 80%;
+  bottom: 0;
+  background: linear-gradient(to bottom, var(--color-floor), transparent);
+  border-top: 1px solid var(--color-line);
+}
+
+.stage-plane {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(5deg);
+  transform-origin: 50% 80%;
+}
+
+.stage-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Cards ----------------------------------------------------------------- */
+
+.card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 100%;
+  transition:
+    transform var(--dur-spring) var(--ease-spring),
+    width var(--dur-spring) var(--ease-spring),
+    height var(--dur-spring) var(--ease-spring),
+    opacity var(--dur-spring) var(--ease-out-soft),
+    filter var(--dur-spring) var(--ease-out-soft);
+  animation: card-in var(--dur-spring) var(--ease-out-soft);
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.card-face {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-thumb);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-thumb);
+  cursor: pointer;
+  -webkit-box-reflect: below 3px linear-gradient(transparent 74%, var(--reflection));
+}
+.card-thumb,
+.card-original,
+.card-ph {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+.card-original {
+  background: #000;
+}
+.card.is-current .card-original {
+  object-fit: contain;
+}
+
+.card.rm1 {
+  opacity: 0.45;
+}
+.card.rm1 .card-face {
+  -webkit-box-reflect: unset;
+}
+.card.is-dimmed {
+  opacity: 0.15;
+  filter: grayscale(1);
+}
+.card.is-selected .card-face {
+  outline: 3px solid var(--color-select);
+  outline-offset: 3px;
+}
+.card.is-selected .card-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-select-soft);
+}
+.card.is-current .card-face {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
+  box-shadow: var(--shadow-raised);
+}
+.card.is-current.rm1 {
+  opacity: 0.8;
+}
+
+.card-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: var(--color-scrim);
+  color: #fff;
+}
+
+/* A burst: a second card peeking out behind, plus a counter. */
+.card-stack {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-line-strong);
+  translate: 7px -7px;
+  z-index: -1;
+}
+.card-count {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: var(--radius-pill);
+  background: var(--color-scrim);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+}
+
+.card-badges {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+.badge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-thumb);
+}
+.badge.star {
+  color: var(--color-star);
+}
+.badge.pick {
+  background: var(--color-pick);
+  color: var(--color-surface);
+}
+.badge.done {
+  color: var(--color-success);
+}
+
+.card-tags {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -24px;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ---- Day separators --------------------------------------------------------- */
+
+.day-sep {
+  position: absolute;
+  left: 0;
+  top: 12%;
+  height: 68%;
+  border-left: 1px dashed var(--color-line-strong);
+  pointer-events: none;
+}
+.day-sep span {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  translate: -50% -100%;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Waveform timeline -------------------------------------------------------- */
+
+.wave {
+  position: relative;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-surface);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  overflow: hidden;
+}
+.wave-canvas {
+  display: block;
+}
+.wave-day {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-line-strong);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.wave-label {
+  position: absolute;
+  top: 4px;
+  padding-left: 5px;
+  font-size: 11px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.wave-cursor {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent);
+  pointer-events: none;
+}
+.wave-zoom {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  font-size: 11px;
+  pointer-events: none;
+}

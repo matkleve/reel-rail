@@ -1,4 +1,4 @@
-import { useThumb } from "@/timeline/useThumb";
+import { useThumb } from "@/ui/useThumb";
 import type { Media } from "@/types";
 
 export function MiniThumb({ media }: { media: Media }) {

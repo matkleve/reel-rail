@@ -10,7 +10,13 @@
 export type Rating = -1 | 0 | 1 | 2;
 export type MediaType = "photo" | "video";
 
-export type ExportRecord = { series: string; at: string };
+/**
+ * `series` is a Series id, or PICKS for the Space-key picks folder.
+ * `path` is where the copy went ("<folder>/<file>"), so it can be taken back.
+ */
+export type ExportRecord = { series: string; at: string; path?: string };
+
+export const PICKS = "picks";
 
 export type Media = {
   /** SHA-256 over (first 1 MB + last 1 MB + size), hex. Stable across renames. */

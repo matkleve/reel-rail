@@ -6,7 +6,6 @@
 
 const DB = "reel-rail";
 const STORE = "handles";
-const KEY = "root";
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -26,13 +25,16 @@ async function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRe
   });
 }
 
-export async function saveRootHandle(handle: FileSystemDirectoryHandle): Promise<void> {
-  await tx("readwrite", (s) => s.put(handle, KEY));
+/** "root" = the opened source folder, "picks" = the Space-key target folder. */
+export type HandleKey = "root" | "picks";
+
+export async function saveHandle(key: HandleKey, handle: FileSystemDirectoryHandle): Promise<void> {
+  await tx("readwrite", (s) => s.put(handle, key));
 }
 
-export async function loadRootHandle(): Promise<FileSystemDirectoryHandle | undefined> {
+export async function loadHandle(key: HandleKey): Promise<FileSystemDirectoryHandle | undefined> {
   try {
-    return (await tx("readonly", (s) => s.get(KEY))) as FileSystemDirectoryHandle | undefined;
+    return (await tx("readonly", (s) => s.get(key))) as FileSystemDirectoryHandle | undefined;
   } catch {
     return undefined;
   }

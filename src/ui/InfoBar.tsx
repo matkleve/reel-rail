@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
+import { setPlace } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import { StarIcon } from "@/ui/icons";
+
+import { TagEditor } from "./TagEditor";
 
 const WHEN = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
 const RATING_LABEL = { [-1]: "Unusable", 0: "Neutral", 1: "Like", 2: "Top" } as const;
@@ -25,6 +28,7 @@ export function InfoBar() {
         </span>
         <span>{WHEN.format(new Date(media.takenAt))}</span>
         <PlaceField key={media.id} value={media.place ?? ""} />
+        <TagEditor media={media} />
         <span className="muted path" title={media.path}>
           {media.path}
         </span>
@@ -61,7 +65,7 @@ function PlaceField({ value }: { value: string }) {
 
   const commit = () => {
     const s = useReel.getState();
-    if (draft.trim() !== value) s.setPlace(targetIds(s), draft);
+    if (draft.trim() !== value) setPlace(targetIds(s), draft);
   };
 
   return (

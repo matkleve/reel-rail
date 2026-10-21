@@ -26,10 +26,12 @@ Never report work as done without a green `verify`. Re-run one check alone:
    refuses versions it does not know rather than guessing.
 3. **No cloud, no backend, no network calls** at runtime.
 4. **No new dependency without saying what it replaces and why the platform
-   cannot do it.** Current runtime deps: react, zustand, exifr. That is the list.
+   cannot do it.** Browser deps: react, zustand, exifr. Server: @vercel/functions
+   (only for `next()` in the middleware). That is the list.
 5. **No raw colors, radii or shadows in components or CSS rules** — tokens in
    `src/styles/tokens.css` only (dark is the default theme).
-6. **Stay fast at 2,000+ media.** The timeline is virtualised; anything that
+6. **Stay fast at 2,000+ media.** The carousel only mounts the cards around the
+   current one and the waveform is one canvas; anything that
    renders per-medium must be O(visible), and per-change work at most O(n).
 7. **Files ≤ 300 lines** (lint-enforced). Split by responsibility, not to dodge the rule.
 
@@ -37,11 +39,14 @@ Never report work as done without a green `verify`. Re-run one check alone:
 
 ```
 src/fs/        file access: walk, hash, EXIF/video metadata, .reel.json, thumbnails, export
-src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, autosave
-src/timeline/  the rail: pure layout (tested), virtualised view, items, markers
+src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, stacks, autosave
+src/carousel/  the 3D carousel: pure layout (tested) + cards
+src/timeline/  the waveform timeline: pure model (tested) + canvas
+src/cleanup/   the "Unusable" view (move to _reel_trash)
 src/series/    title suggestion/dice (pure, tested), create/list dialogs, export hook
 src/ui/        screens, preview, info bar, top bar, keyboard, dialogs
 scripts/       verify gate, e2e smoke test, icon renderer
+middleware.ts  Vercel password gate (REEL_PASSWORD) — server side, never shipped to the browser
 docs/          TRAPS.md (code that misleads), diary/ (what was decided)
 ```
 

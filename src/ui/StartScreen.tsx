@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { loadRootHandle } from "@/fs/handleStore";
+import { loadHandle } from "@/fs/handleStore";
 import { hasFileSystemAccess } from "@/fs/support";
 import { openFolder, pickAndOpen } from "@/store/openFolder";
 import { useUi } from "@/store/useUi";
@@ -11,7 +11,7 @@ export function StartScreen() {
   const [remembered, setRemembered] = useState<FileSystemDirectoryHandle>();
 
   useEffect(() => {
-    if (hasFileSystemAccess()) void loadRootHandle().then(setRemembered);
+    if (hasFileSystemAccess()) void loadHandle("root").then(setRemembered);
   }, []);
 
   if (!hasFileSystemAccess()) {

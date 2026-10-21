@@ -12,14 +12,23 @@ import { getMediaFile } from "./session";
  * screen a second ago.
  */
 
-const SIZE = 320;
+// Larger than a classic 320 px thumb: side cards in the carousel are big.
+const SIZE = 480;
 const MAX_PARALLEL = 3;
 
-type Entry = { url?: string; failed?: boolean };
+/** `aspect` = width / height, known once the thumbnail exists — the carousel sizes cards by it. */
+export type Thumb = { url?: string; aspect?: number; failed?: boolean };
+type Entry = Thumb;
 const cache = new Map<string, Entry>();
-const pending: Media[] = [];
+const pending: Pick<Media, "id" | "path" | "type">[] = [];
 const listeners = new Set<() => void>();
 let running = 0;
+let version = 0;
+
+/** Bumps whenever any thumbnail lands — for views that lay out by aspect ratio. */
+export function thumbsVersion(): number {
+  return version;
+}
 
 export function subscribeThumbs(fn: () => void): () => void {
   listeners.add(fn);
@@ -30,7 +39,7 @@ export function thumbFor(id: string): Entry | undefined {
   return cache.get(id);
 }
 
-export function requestThumb(media: Media): void {
+export function requestThumb(media: Pick<Media, "id" | "path" | "type">): void {
   if (cache.has(media.id) || pending.some((m) => m.id === media.id)) return;
   pending.push(media);
   pump();
@@ -47,22 +56,23 @@ function pump(): void {
     const media = pending.pop()!;
     running++;
     make(media)
-      .then((url) => cache.set(media.id, { url }))
+      .then((thumb) => cache.set(media.id, thumb))
       .catch(() => cache.set(media.id, { failed: true }))
       .finally(() => {
         running--;
+        version++;
         listeners.forEach((fn) => fn());
         pump();
       });
   }
 }
 
-async function make(media: Media): Promise<string> {
+async function make(media: Pick<Media, "id" | "path" | "type">): Promise<Thumb> {
   const file = await getMediaFile(media);
   const source = media.type === "video" ? await videoFrame(file) : await imageSource(file);
-  const blob = await draw(source);
+  const { blob, aspect } = await draw(source);
   if ("close" in source) source.close();
-  return URL.createObjectURL(blob);
+  return { url: URL.createObjectURL(blob), aspect };
 }
 
 async function imageSource(file: File): Promise<ImageBitmap> {
@@ -93,7 +103,7 @@ function videoFrame(file: File): Promise<HTMLVideoElement & { close(): void }> {
   });
 }
 
-function draw(src: ImageBitmap | HTMLVideoElement): Promise<Blob> {
+function draw(src: ImageBitmap | HTMLVideoElement): Promise<{ blob: Blob; aspect: number }> {
   const w = "videoWidth" in src ? src.videoWidth : src.width;
   const h = "videoHeight" in src ? src.videoHeight : src.height;
   const scale = Math.min(1, SIZE / Math.max(w, h));
@@ -101,7 +111,8 @@ function draw(src: ImageBitmap | HTMLVideoElement): Promise<Blob> {
   canvas.width = Math.max(1, Math.round(w * scale));
   canvas.height = Math.max(1, Math.round(h * scale));
   canvas.getContext("2d")!.drawImage(src, 0, 0, canvas.width, canvas.height);
+  const aspect = canvas.width / canvas.height;
   return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob"))), "image/jpeg", 0.8),
+    canvas.toBlob((b) => (b ? resolve({ blob: b, aspect }) : reject(new Error("toBlob"))), "image/jpeg", 0.82),
   );
 }

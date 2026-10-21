@@ -1,4 +1,4 @@
-import { ensurePermission, saveRootHandle } from "@/fs/handleStore";
+import { ensurePermission, loadHandle, saveHandle } from "@/fs/handleStore";
 import { loadReel } from "@/fs/reelFile";
 import { scanFolder } from "@/fs/scan";
 import { setRoot } from "@/fs/session";
@@ -22,7 +22,7 @@ export async function openFolder(handle: FileSystemDirectoryHandle): Promise<voi
     }
     stopAutosave?.();
     setRoot(handle);
-    await saveRootHandle(handle);
+    await saveHandle("root", handle);
     ui.set({ phase: "scanning", folderName: handle.name, error: undefined, progress: undefined });
 
     const prev = await loadReel(handle);
@@ -30,8 +30,9 @@ export async function openFolder(handle: FileSystemDirectoryHandle): Promise<voi
     useReel.getState().load(reel);
     // Started after load so that the merged scan is saved once, right away.
     stopAutosave = startAutosave();
-    useReel.setState({ reel: { ...reel } });
-    ui.set({ phase: "ready" });
+    // A fresh object from the store's own reel (which now carries derived stackIds) — not the scan result.
+    useReel.setState((s) => ({ reel: { ...s.reel } }));
+    ui.set({ phase: "ready", picksFolderName: (await loadHandle("picks"))?.name });
   } catch (err) {
     console.error(err);
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });

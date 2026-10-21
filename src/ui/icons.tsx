@@ -33,3 +33,16 @@ export const DiceIcon = ({ size = 18, className }: P) => (
     <circle cx="8" cy="16" r="1.6" fill="currentColor" />
   </svg>
 );
+
+export const PickIcon = ({ size = 14, className }: P) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <path
+      d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 19.5h14"
+      stroke="currentColor"
+      strokeWidth="2.6"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

@@ -20,8 +20,10 @@ const URL = `http://localhost:${PORT}/`;
 mkdirSync("tmp/e2e", { recursive: true });
 
 const server = spawn("npx", ["vite", "preview", "--port", String(PORT), "--strictPort"], { stdio: "ignore" });
-const fail = (msg) => {
+let page;
+const fail = async (msg) => {
   console.error(`✗ ${msg}`);
+  await page?.screenshot({ path: "tmp/e2e/failure.png" }).catch(() => {});
   server.kill();
   process.exit(1);
 };
@@ -37,13 +39,14 @@ for (let i = 0; i < 50; i++) {
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
-const page = await context.newPage();
+page = await context.newPage();
 page.on("pageerror", (e) => fail(`page error: ${e.message}`));
 
 await context.addInitScript(() => {
   window.showDirectoryPicker = async ({ id } = {}) => {
     const root = await navigator.storage.getDirectory();
-    return root.getDirectoryHandle(id === "reel-export" ? "Exports" : "Trip", { create: true });
+    const name = { "reel-export": "Exports", "reel-picks": "Picks" }[id] ?? "Trip";
+    return root.getDirectoryHandle(name, { create: true });
   };
 });
 
@@ -133,34 +136,95 @@ ok("seeded 10 photos + 1 duplicate + 1 non-media file");
 // ---- Open & scan ------------------------------------------------------------
 await page.reload();
 await page.getByRole("button", { name: "Open folder" }).click();
-await page.locator(".tl-item").first().waitFor({ timeout: 15000 });
-const count = await page.locator(".tl-item").count();
-if (count !== 10) fail(`expected 10 items on the rail (duplicate collapsed), got ${count}`);
+await page.locator(".card").first().waitFor({ timeout: 15000 });
+if ((await page.locator(".card").count()) < 5) await fail("expected the carousel to show several cards");
+if ((await page.getByText("1 / 10").count()) !== 1) await fail("expected 10 items (duplicate merged, txt ignored)");
 ok("scan: 10 items, duplicate collapsed, txt ignored");
-
-if ((await page.locator(".tl-day").count()) !== 2) fail("expected 2 day markers");
-if ((await page.locator(".tl-gap").count()) < 1) fail("expected a gap marker for the 5 h pause");
-ok("day markers and pause gap rendered");
+if ((await page.locator(".card-count").first().innerText()) !== "2") await fail("burst counter should read 2");
+await page.keyboard.press("End");
+await page.waitForTimeout(400);
+if ((await page.locator(".day-sep").count()) < 1) await fail("expected a day separator in the carousel");
+await page.keyboard.press("Home");
+if ((await page.locator(".wave-label").count()) !== 2) await fail("expected 2 day labels on the waveform");
+ok("day separator, waveform with day labels, burst counter");
 await page.waitForTimeout(800);
 await page.screenshot({ path: "tmp/e2e/1-opened.png" });
 
+// ---- Burst: open it, X rejects all but the best ----------------------------------------
+await page.keyboard.press("Enter");
+await page.waitForTimeout(300);
+if ((await page.locator(".card-count").count()) !== 0) await fail("Enter should open the burst");
+await page.keyboard.press("ArrowUp");
+await page.keyboard.press("x");
+await page.waitForTimeout(300);
+if ((await page.locator(".card.rm1").count()) !== 1) await fail("X should mark the other burst member unusable");
+await page.keyboard.press("z");
+await page.keyboard.press("z");
+await page.keyboard.press("Enter");
+ok("burst: Enter opens, X rejects the rest, Z undoes");
+
 // ---- Rate --------------------------------------------------------------------
-const size = async (i) => (await page.locator(".tl-item").nth(i).boundingBox()).width;
-const before = await size(0);
+const center = () => page.locator(".card.is-current").boundingBox();
+await page.waitForTimeout(500);
+const before = await center();
 await page.keyboard.press("ArrowUp");
 await page.keyboard.press("ArrowUp");
-await page.waitForTimeout(400);
-if (!((await size(0)) > before + 40)) fail("rating up did not grow the item");
+await page.waitForTimeout(500);
+const after = await center();
+if (!(after.height > before.height * 1.2 && after.y < before.y)) await fail("rating up should make the card bigger and higher");
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowDown");
+await page.waitForTimeout(500);
+const low = await center();
+if (!(low.height < before.height * 0.7)) await fail("rating down should shrink the card");
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowUp");
 await page.keyboard.press("z");
 await page.waitForTimeout(400);
-if ((await page.locator(".tl-item.r2").count()) !== 1) fail("expected exactly one top item");
-if ((await page.locator(".tl-item.rm1").count()) !== 1) fail("expected exactly one unusable item");
-if ((await page.locator(".tl-item.r1").count()) !== 0) fail("undo did not revert the last rating");
-ok("rating ↑/↓ resizes items, Z undoes");
+if ((await page.locator(".card.r2").count()) !== 1) await fail("expected exactly one top card");
+if ((await page.locator(".card.rm1").count()) !== 1) await fail("expected exactly one unusable card");
+if ((await page.locator(".card.r1").count()) !== 0) await fail("undo did not revert the last rating");
+ok("rating ↑/↓ grows+lifts / shrinks+lowers cards, Z undoes");
+await page.screenshot({ path: "tmp/e2e/2-rated.png" });
+
+// ---- Tags ------------------------------------------------------------------------
+await page.keyboard.press("Home");
+await page.keyboard.press("1");
+await page.keyboard.press("t");
+await page.keyboard.type("Tram");
+await page.keyboard.press("Enter");
+await page.keyboard.press("Escape");
+await page.waitForTimeout(300);
+const chips = await page.locator(".card.is-current .card-tags .tag-chip").allInnerTexts();
+if (chips.join(",") !== "Food,Tram") await fail(`tag chips under the top card: ${chips}`);
+ok("tags: preset key 1 + free tag via T, chips under liked cards");
+
+// ---- Picks (Space) -------------------------------------------------------------------
+await page.keyboard.press(" ");
+await page.getByText(/Copied to Picks/).waitFor({ timeout: 5000 });
+const picks = async () =>
+  page.evaluate(async () => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle("Picks");
+    const out = [];
+    for await (const n of dir.keys()) out.push(n);
+    return out;
+  });
+if ((await picks()).join() !== "IMG_1000.JPG") await fail(`picks folder: ${await picks()}`);
+if ((await page.locator(".card.is-current .badge.pick").count()) !== 1) await fail("picked card should show the pick badge");
+await page.keyboard.press(" ");
+await page.getByText(/Removed from Picks/).waitFor({ timeout: 5000 });
+if ((await picks()).length !== 0) await fail("second Space should take the copy back");
+await page.keyboard.press(" ");
+await page.getByText(/Copied to Picks/).waitFor({ timeout: 5000 });
+ok("Space copies into the picks folder, again takes it back");
+
+// ---- Waveform jump ----------------------------------------------------------------------
+const wave = await page.locator(".wave").boundingBox();
+await page.mouse.click(wave.x + wave.width - 3, wave.y + wave.height / 2);
+await page.waitForTimeout(300);
+if (!(await page.getByText("10 / 10").count())) await fail("clicking the waveform's right end should jump to the last item");
+await page.keyboard.press("Home");
+ok("waveform click jumps in time");
 
 // ---- Place, then save --------------------------------------------------------
 await page.keyboard.press("p");
@@ -172,15 +236,16 @@ const saved = await page.evaluate(async () => {
   return JSON.parse(await (await (await trip.getFileHandle(".reel.json")).getFile()).text());
 });
 const ratings = Object.values(saved.media).map((m) => m.rating).sort();
-if (JSON.stringify(ratings) !== JSON.stringify([-1, 0, 0, 0, 0, 0, 0, 0, 0, 2])) fail(`saved ratings ${ratings}`);
-if (!Object.values(saved.media).some((m) => m.place === "Porto")) fail("place not saved");
-if (!Object.values(saved.media).some((m) => m.altPaths?.length)) fail("duplicate not recorded in altPaths");
-if (!Object.values(saved.media).every((m) => m.takenAt.startsWith("2026-10-1"))) fail("EXIF dates not read");
+if (JSON.stringify(ratings) !== JSON.stringify([-1, 0, 0, 0, 0, 0, 0, 0, 0, 2])) await fail(`saved ratings ${ratings}`);
+if (!Object.values(saved.media).some((m) => m.stackId)) await fail("burst stackId not saved");
+if (!Object.values(saved.media).some((m) => m.place === "Porto")) await fail("place not saved");
+if (!Object.values(saved.media).some((m) => m.altPaths?.length)) await fail("duplicate not recorded in altPaths");
+if (!Object.values(saved.media).every((m) => m.takenAt.startsWith("2026-10-1"))) await fail("EXIF dates not read");
 ok(".reel.json saved (ratings, place, altPaths, EXIF dates)");
 
 // ---- Filter -------------------------------------------------------------------
 await page.getByRole("radio", { name: "Top" }).click();
-if ((await page.locator(".tl-item.is-dimmed").count()) !== 9) fail("Top filter should dim 9 items");
+if ((await page.locator(".card.is-dimmed").count()) < 4) await fail("Top filter should dim the other cards");
 await page.getByRole("radio", { name: "All" }).click();
 ok("filter dims instead of hiding");
 
@@ -189,11 +254,11 @@ await page.keyboard.press("Home");
 for (let i = 0; i < 3; i++) await page.keyboard.press("Shift+ArrowRight");
 await page.keyboard.press("s");
 const title = await page.getByLabel("Series title").inputValue();
-if (!title.startsWith("Porto")) fail(`title suggestion "${title}" should start with the place`);
+if (!title.startsWith("Porto")) await fail(`title suggestion "${title}" should start with the place`);
 ok(`title suggestion: "${title}"`);
 await page.getByRole("button", { name: "Roll a funny title" }).click();
 ok(`dice: "${await page.getByLabel("Series title").inputValue()}"`);
-await page.screenshot({ path: "tmp/e2e/2-series.png" });
+await page.screenshot({ path: "tmp/e2e/3-series.png" });
 await page.getByRole("button", { name: "Create & export…" }).click();
 await page.getByText("Exported to").waitFor({ timeout: 10000 });
 const exported = await page.evaluate(async () => {
@@ -212,19 +277,35 @@ if (files.length !== 4 || !files[0].startsWith("01_") || !files[3].startsWith("0
 ok(`export: ${Object.keys(exported)[0]}/ → ${files.join(", ")}`);
 await page.getByRole("button", { name: "Done" }).click();
 await page.waitForTimeout(400);
-// 4 exported, but the unusable one is 16 px and deliberately carries no dot.
-if ((await page.locator(".tl-exported").count()) !== 3) fail("exported items should show the check dot");
-ok("exported items show the check dot");
+if ((await page.locator(".badge.done").count()) < 3) await fail("exported items should show the check badge");
+ok("exported items show the check badge");
 await page.keyboard.press("Escape");
-await page.screenshot({ path: "tmp/e2e/3-after-export.png" });
+await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
+
+// ---- Clean up: unusable → _reel_trash ------------------------------------------------
+await page.getByRole("button", { name: /^Unusable/ }).click();
+await page.getByRole("button", { name: "Move to trash folder…" }).click();
+await page.getByRole("button", { name: "Move to _reel_trash" }).click();
+await page.getByText(/moved to _reel_trash/).waitFor({ timeout: 5000 });
+const trashed = await page.evaluate(async () => {
+  const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
+  const t = await (await (await trip.getDirectoryHandle("_reel_trash")).getDirectoryHandle("Porto")).getDirectoryHandle("100APPLE");
+  const out = [];
+  for await (const n of t.keys()) out.push(n);
+  return out;
+});
+if (trashed.length !== 1) await fail(`expected one file in _reel_trash, got ${trashed}`);
+if ((await page.locator(".card.rm1").count()) !== 0) await fail("trashed item should leave the carousel");
+ok(`clean up: ${trashed[0]} moved into _reel_trash/, nothing deleted`);
 
 // ---- Re-open: remembered handle, state restored --------------------------------
 await page.waitForTimeout(800);
 await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
-await page.locator(".tl-item").first().waitFor();
-if ((await page.locator(".tl-item.r2").count()) !== 1) fail("rating lost after re-open");
-if ((await page.locator(".tl-exported").count()) !== 3) fail("exports lost after re-open");
+await page.locator(".card").first().waitFor();
+if ((await page.locator(".card.r2").count()) !== 1) await fail("rating lost after re-open");
+if ((await page.locator(".badge.done").count()) < 3) await fail("exports lost after re-open");
+if ((await page.locator(".badge.pick").count()) !== 1) await fail("pick lost after re-open");
 ok("re-open via remembered folder restores everything");
 
 // ---- Help overlay + light theme ---------------------------------------------------

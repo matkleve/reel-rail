@@ -14,5 +14,5 @@
     "types": ["vitest/globals", "vite/client", "wicg-file-system-access"],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "tests", "vite.config.ts"]
+  "include": ["src", "tests", "vite.config.ts", "middleware.ts"]
 }

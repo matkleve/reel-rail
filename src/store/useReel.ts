@@ -4,27 +4,35 @@ import { emptyReel, type Media, type Rating, type ReelFile, type Series } from "
 
 import { DEFAULT_FILTERS, passes, type Filters } from "./filters";
 import { chronological, rangeBetween } from "./order";
+import { applyStackIds, computeStacks, isShown, visibleOrder, type Stacks } from "./stacks";
 
 export type SaveState = "idle" | "saving" | "saved" | "error";
-type UndoStep = { id: string; rating: Rating }[];
+export type RatingChange = { id: string; rating: Rating };
 
 export type ReelState = {
   reel: ReelFile;
+  /** All present media, chronological. */
   order: string[];
+  stacks: Stacks;
+  expanded: ReadonlySet<string>;
   currentId?: string;
   selection: ReadonlySet<string>;
   anchorId?: string;
   filters: Filters;
-  undoStack: UndoStep[];
+  undoStack: RatingChange[][];
   saveState: SaveState;
 
   load(reel: ReelFile): void;
+  /** Recomputes order and stacks after media appeared or vanished. */
+  refresh(reel: ReelFile): void;
   setCurrent(id: string, mode?: "replace" | "toggle" | "extend"): void;
   step(dir: 1 | -1, extend?: boolean): void;
   clearSelection(): void;
   rate(delta: 1 | -1): void;
+  /** The one way ratings change — every change is one undo step. */
+  setRatings(changes: RatingChange[]): void;
   undo(): void;
-  setPlace(ids: string[], place: string): void;
+  patch(ids: string[], fn: (m: Media) => Media): void;
   setFilters(patch: Partial<Filters>): void;
   addSeries(series: Series): void;
   markExported(seriesId: string, exportedPath: string): void;
@@ -39,10 +47,16 @@ export function targetIds(s: Pick<ReelState, "selection" | "currentId">): string
   return s.currentId ? [s.currentId] : [];
 }
 
-function patchMedia(reel: ReelFile, ids: string[], fn: (m: Media) => Media): ReelFile {
+export function patchMedia(reel: ReelFile, ids: string[], fn: (m: Media) => Media): ReelFile {
   const media = { ...reel.media };
   for (const id of ids) if (media[id]) media[id] = fn(media[id]);
   return { ...reel, media };
+}
+
+function derive(reel: ReelFile) {
+  const order = chronological(reel.media);
+  const stacks = computeStacks(order, reel.media);
+  return { order, stacks, reel: { ...reel, media: applyStackIds(reel.media, stacks) } };
 }
 
 // A zustand store is one object literal of actions; splitting it to satisfy a
@@ -51,14 +65,25 @@ function patchMedia(reel: ReelFile, ids: string[], fn: (m: Media) => Media): Ree
 export const useReel = create<ReelState>()((set, get) => ({
   reel: emptyReel(),
   order: [],
+  stacks: { stackOf: {}, members: {} },
+  expanded: new Set(),
   selection: new Set(),
   filters: DEFAULT_FILTERS,
   undoStack: [],
   saveState: "idle",
 
   load(reel) {
-    const order = chronological(reel.media);
-    set({ reel, order, currentId: order[0], selection: new Set(), anchorId: undefined, undoStack: [] });
+    const d = derive(reel);
+    const first = visibleOrder(d.order, d.stacks, new Set(), d.reel.media)[0];
+    set({ ...d, expanded: new Set(), currentId: first, selection: new Set(), anchorId: undefined, undoStack: [] });
+  },
+
+  refresh(reel) {
+    const d = derive(reel);
+    const { currentId } = get();
+    const keep = currentId && d.reel.media[currentId] && !d.reel.media[currentId]!.missing;
+    const selection = new Set([...get().selection].filter((id) => d.order.includes(id)));
+    set({ ...d, selection, currentId: keep ? currentId : d.order[0] });
   },
 
   setCurrent(id, mode = "replace") {
@@ -73,18 +98,20 @@ export const useReel = create<ReelState>()((set, get) => ({
       set({ currentId: id, selection, anchorId: id });
     } else if (mode === "extend") {
       const anchor = s.anchorId ?? s.currentId ?? id;
-      set({ currentId: id, anchorId: anchor, selection: new Set(rangeBetween(s.order, anchor, id)) });
+      // Range over what is on the rail: a collapsed burst contributes its cover only.
+      const shown = visibleOrder(s.order, s.stacks, s.expanded, s.reel.media);
+      set({ currentId: id, anchorId: anchor, selection: new Set(rangeBetween(shown, anchor, id)) });
     } else {
       set({ currentId: id, selection: new Set(), anchorId: undefined });
     }
   },
 
   step(dir, extend = false) {
-    const { order, currentId, reel, filters } = get();
+    const { order, currentId, reel, filters, stacks, expanded } = get();
     let i = currentId ? order.indexOf(currentId) : -1;
     for (i += dir; i >= 0 && i < order.length; i += dir) {
-      const m = reel.media[order[i]!];
-      if (m && passes(m, filters)) break;
+      const id = order[i]!;
+      if (passes(reel.media[id]!, filters) && isShown(id, stacks, expanded, reel.media)) break;
     }
     const id = order[i];
     if (id) get().setCurrent(id, extend ? "extend" : "replace");
@@ -96,13 +123,22 @@ export const useReel = create<ReelState>()((set, get) => ({
 
   rate(delta) {
     const s = get();
-    const ids = targetIds(s).filter((id) => s.reel.media[id]);
-    if (!ids.length) return;
-    const before: UndoStep = ids.map((id) => ({ id, rating: s.reel.media[id]!.rating }));
-    if (before.every((b) => clampRating(b.rating + delta) === b.rating)) return;
+    const changes = targetIds(s).flatMap((id) => {
+      const m = s.reel.media[id];
+      return m ? [{ id, rating: clampRating(m.rating + delta) }] : [];
+    });
+    s.setRatings(changes);
+  },
+
+  setRatings(changes) {
+    const { reel, undoStack } = get();
+    const real = changes.filter((c) => reel.media[c.id] && reel.media[c.id]!.rating !== c.rating);
+    if (!real.length) return;
+    const before = real.map((c) => ({ id: c.id, rating: reel.media[c.id]!.rating }));
+    const to = new Map(real.map((c) => [c.id, c.rating]));
     set({
-      reel: patchMedia(s.reel, ids, (m) => ({ ...m, rating: clampRating(m.rating + delta) })),
-      undoStack: [...s.undoStack.slice(-199), before],
+      reel: patchMedia(reel, [...to.keys()], (m) => ({ ...m, rating: to.get(m.id)! })),
+      undoStack: [...undoStack.slice(-199), before],
     });
   },
 
@@ -118,16 +154,8 @@ export const useReel = create<ReelState>()((set, get) => ({
     });
   },
 
-  setPlace(ids, place) {
-    const value = place.trim();
-    set({
-      reel: patchMedia(get().reel, ids, (m) => {
-        const next = { ...m };
-        if (value) next.place = value;
-        else delete next.place;
-        return next;
-      }),
-    });
+  patch(ids, fn) {
+    set({ reel: patchMedia(get().reel, ids, fn) });
   },
 
   setFilters(patch) {

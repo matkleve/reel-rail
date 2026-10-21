@@ -91,6 +91,11 @@ kbd {
   border-color: currentColor;
   color: inherit;
 }
+.btn-danger {
+  background: var(--color-danger);
+  color: var(--color-danger-ink);
+  font-weight: 600;
+}
 .btn-ghost:hover:not(:disabled) {
   background: var(--color-surface-raised);
   border-color: var(--color-line);
@@ -209,7 +214,7 @@ kbd {
 .app {
   height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto minmax(190px, 33vh);
+  grid-template-rows: auto minmax(0, 1fr) auto 96px;
 }
 
 .topbar {
@@ -232,27 +237,6 @@ kbd {
 }
 .save-state.error {
   color: var(--color-danger);
-}
-
-.preview {
-  position: relative;
-  min-height: 0;
-  overflow: hidden;
-}
-.preview-thumb,
-.preview-media {
-  position: absolute;
-  inset: 12px;
-  width: calc(100% - 24px);
-  height: calc(100% - 24px);
-  object-fit: contain;
-}
-.preview-thumb {
-  filter: blur(6px);
-}
-.preview.is-unusable .preview-media,
-.preview.is-unusable .preview-thumb {
-  opacity: 0.4;
 }
 
 .infobar {
@@ -379,4 +363,158 @@ kbd {
 .shortcuts td:first-child {
   width: 1%;
   white-space: nowrap;
+}
+
+/* ---- Tags, popover, settings, cleanup, toast ---------------------------- */
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  color: var(--color-tag-ink);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-chip button {
+  padding: 0 0 0 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.tag-chip button:hover {
+  opacity: 1;
+}
+.tag-editor {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.tag-input {
+  height: 24px;
+  width: 130px;
+  padding: 0 8px;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 12px;
+}
+
+.popover {
+  margin: 0;
+  inset: auto;
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  translate: -50% 0;
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-raised);
+}
+.tag-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 50vh;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tag-option:hover {
+  background: var(--color-surface-raised);
+}
+.tag-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin-top: 12px;
+}
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.preset-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cleanup-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+.cleanup-tile {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-thumb);
+}
+.cleanup-tile .mini-thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  opacity: 0.7;
+}
+.cleanup-tile:hover .mini-thumb {
+  opacity: 1;
+  outline: 2px solid var(--color-success);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 112px;
+  translate: -50% 0;
+  z-index: 1000;
+  max-width: calc(100vw - 32px);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-line);
+  box-shadow: var(--shadow-raised);
+  animation: toast-in var(--dur-spring) var(--ease-spring);
+}
+.toast.error {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: -50% 12px;
+  }
 }

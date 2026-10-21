@@ -6,6 +6,20 @@ Newest at the top. (Format from grundriss.)
 
 ---
 
+## Re-setting state from a local variable silently drops derived fields
+
+**Looked right:** `openFolder` called `load(reel)` (which derives burst
+`stackId`s into the media) and then `setState({ reel: { ...reel } })` to kick
+off the first save.
+
+**Was true:** `reel` was the *scan result*, not the store's reel. The second
+call overwrote the derived `stackId`s, and the first save wrote a file without
+them. Everything on screen still looked right because stacks are recomputed in
+memory.
+
+**The check:** derive from the store (`setState((s) => …s.reel)`), and assert
+the *saved file* in e2e, not just the screen (`burst stackId not saved`).
+
 ## A button that changes type during its own click submits the form
 
 **Looked right:** "Create & export…" is `type="button"`, so clicking it cannot

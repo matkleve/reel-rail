@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 
-import { cancelThumb, requestThumb, subscribeThumbs, thumbFor } from "@/fs/thumbnails";
+import { cancelThumb, requestThumb, subscribeThumbs, thumbFor, type Thumb } from "@/fs/thumbnails";
 import type { Media } from "@/types";
 
 /** Thumbnail URL for a mounted item. Unmounting cancels queued work. */
-export function useThumb(media: Media): { url?: string; failed?: boolean } {
+export function useThumb(media: Media): Thumb {
   const entry = useSyncExternalStore(subscribeThumbs, () => thumbFor(media.id));
   useEffect(() => {
     requestThumb(media);

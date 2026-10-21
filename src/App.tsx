@@ -1,13 +1,16 @@
 import { useEffect } from "react";
 
+import { Carousel } from "@/carousel/Carousel";
+import { CleanupDialog } from "@/cleanup/CleanupDialog";
 import { CreateSeriesDialog } from "@/series/CreateSeriesDialog";
 import { SeriesListDialog } from "@/series/SeriesListDialog";
 import { useUi } from "@/store/useUi";
-import { Timeline } from "@/timeline/Timeline";
+import { Waveform } from "@/timeline/Waveform";
 import { HelpDialog } from "@/ui/HelpDialog";
 import { InfoBar } from "@/ui/InfoBar";
-import { Preview } from "@/ui/Preview";
+import { SettingsDialog } from "@/ui/SettingsDialog";
 import { StartScreen } from "@/ui/StartScreen";
+import { Toast } from "@/ui/Toast";
 import { TopBar } from "@/ui/TopBar";
 import { useKeyboard } from "@/ui/useKeyboard";
 
@@ -25,11 +28,14 @@ export function App() {
   return (
     <div className="app">
       <TopBar />
-      <Preview />
+      <Carousel />
       <InfoBar />
-      <Timeline />
+      <Waveform />
+      <Toast />
       <CreateSeriesDialog />
       <SeriesListDialog />
+      <SettingsDialog />
+      <CleanupDialog />
       <HelpDialog />
     </div>
   );

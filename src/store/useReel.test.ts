@@ -1,6 +1,7 @@
 import { emptyReel } from "@/types";
 import { media } from "@/test-utils";
 
+import { setPlace } from "./actions";
 import { useReel } from "./useReel";
 
 function seed() {
@@ -8,7 +9,7 @@ function seed() {
     media(id, { takenAt: new Date(Date.UTC(2026, 9, 14, 10, i)).toISOString() }),
   );
   useReel.getState().load({ ...emptyReel(), media: Object.fromEntries(list.map((m) => [m.id, m])) });
-  useReel.getState().setFilters({ rating: "all", neverExported: false });
+  useReel.getState().setFilters({ rating: "all", neverExported: false, tags: [] });
 }
 
 const s = () => useReel.getState();
@@ -103,9 +104,9 @@ describe("series", () => {
 
 describe("place", () => {
   it("sets and clears", () => {
-    s().setPlace(["a", "b"], "  Porto ");
+    setPlace(["a", "b"], "  Porto ");
     expect(s().reel.media.b!.place).toBe("Porto");
-    s().setPlace(["a"], "");
+    setPlace(["a"], "");
     expect(s().reel.media.a!.place).toBeUndefined();
   });
 });
