@@ -1,3 +1,5 @@
+import { DISCARD } from "@/types";
+
 import { coverOf } from "./stacks";
 import { targetIds, useReel } from "./useReel";
 
@@ -63,14 +65,14 @@ export function toggleStack(): void {
   }
 }
 
-/** X in an open burst: everything except the cover becomes unusable (one undo step). */
+/** X in an open burst: everything except the cover becomes a discard (one undo step). */
 export function rejectStackRest(): void {
   const s = get();
   const sid = s.currentId ? s.stacks.stackOf[s.currentId] : undefined;
   if (!sid || !s.expanded.has(sid)) return;
   const members = s.stacks.members[sid]!;
   const cover = coverOf(members, s.reel.media);
-  s.setRatings(members.filter((id) => id !== cover).map((id) => ({ id, rating: -1 as const })));
+  s.setRatings(members.filter((id) => id !== cover).map((id) => ({ id, rating: DISCARD })));
 }
 
 /** After moving files into the trash folder: new path, and off the rail. */

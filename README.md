@@ -60,19 +60,28 @@ tilted, reflective floor; the current one is big in the middle and plays
 
 | Rating | What happens |
 | --- | --- |
-| 2 top | biggest, rises highest, star badge |
-| 1 like | bigger, rises a little, tags show as chips below |
-| 0 neutral | stands on the floor |
-| −1 unusable | shrinks, fades and slides down below the floor |
+| 2 Favorite | biggest, rises highest, star badge |
+| 1 Good | bigger, rises a little, tags show as chips below |
+| 0 Normal | stands on the floor |
+| −1 Not great | smaller, slides a little down |
+| −2 Discard | small, faded, sunk below the floor |
 
 Arrow keys, the mouse wheel or a two-finger swipe flip through the carousel.
 Day changes show as a dashed separator with the date.
 
-**The waveform** at the bottom is the whole trip as a "sound wave": it is
-thick where you took many photos and thin where you took few. Liked shots are
-coloured, top shots get a dot above the bar. Click or drag on it to jump
-there; the mouse wheel / pinch zooms from the whole trip down to half an hour.
-(Nights and long pauses are shortened so the busy parts get the room.)
+**The waveform** at the bottom is the whole trip as glowing waves:
+
+- **Thickness** = how many photos/videos you took at that moment.
+- **Height** = how good they are: the wave rises above the middle line where
+  the shots are good and dips below it where they are weak. A thin bright
+  line traces the overall quality.
+- **Colour** = tag: every tag has its own wave in its own colour (legend
+  bottom right); untagged media form a neutral blue glow.
+- Every photo is a small spark at its own rating height.
+
+Click or drag on it to jump there; the mouse wheel / pinch zooms from the
+whole trip down to half an hour. (Nights and long pauses are shortened so the
+busy parts get the room.)
 
 **Picks — Space.** Press Space to copy the current item (or the selection)
 into your **picks folder**, e.g. a "to post" or "Downloads" folder. You
@@ -87,17 +96,17 @@ chosen tags.
 
 **Bursts.** Shots less than 3 seconds apart are stacked into one card with a
 counter. Enter opens the stack; the best-rated shot is its cover; X marks all
-the others as unusable.
+the others as discards.
 
 **Series.** Select items (Shift + ←/→, Ctrl/⌘ + click), press **S**. The
 suggested title is built from place + most common tag + month ("Porto – Tram –
 Oct 26"); the dice button rolls a silly alternative. **Export…** copies the
 files in order as `01_…`, `02_…` into a new folder named after the title.
 
-**Filters** (top bar): All / ≥ Like / Top / Hide unusable, "Never exported",
+**Filters** (top bar): All / ≥ Good / Favorites / Hide discards, "Never exported",
 and tags. Filtered items stay in place, greyed out, and arrow keys skip them.
 
-**Unusable** (top bar) shows everything rated −1 as a grid with its total
+**Discards** (top bar) shows everything rated −2 as a grid with its total
 size. Click a tile to keep it. "Move to trash folder" moves the files into
 `_reel_trash/` inside your folder. Nothing is deleted, and moving a file back
 brings it back with its rating.
@@ -114,7 +123,7 @@ Press **?** in the app for this list.
 | Key | Action |
 | --- | --- |
 | ← / → | Previous / next (skips filtered ones) |
-| ↑ / ↓ | Rating +1 / −1 |
+| ↑ / ↓ | Better / worse (five levels) |
 | Space | Pick: copy to the picks folder (again: take it back) |
 | V / M | Video play/pause / sound on/off |
 | Shift + ← / → | Extend selection |
@@ -125,7 +134,7 @@ Press **?** in the app for this list.
 | T | Free tag |
 | P | Edit place |
 | Enter | Open / close a burst |
-| X | In an open burst: all but the best → unusable |
+| X | In an open burst: all but the best → discard |
 | S | Create series from selection |
 | + / − / 0 | Zoom the waveform in / out / whole trip |
 | Home / End | First / last |
@@ -143,7 +152,7 @@ either way).
 
 ```ts
 type ReelFile = {
-  version: 1;
+  version: 2;                     // v1 files are migrated: −1 "unusable" → −2
   media: Record<string, Media>;   // keyed by Media.id
   series: Series[];
   tagPresets: string[];           // keys 1–9 (phase 2)
@@ -156,7 +165,7 @@ type Media = {
   takenAt: string;       // ISO time: EXIF (photos) / mvhd atom (videos) / file date
   gps?: { lat: number; lng: number };
   place?: string;        // free text
-  rating: -1 | 0 | 1 | 2;
+  rating: -2 | -1 | 0 | 1 | 2;  // discard, not great, normal, good, favorite
   tags: string[];
   stackId?: string;      // burst group (phase 2)
   exportedTo: { series: string; at: string; path?: string }[];
@@ -238,7 +247,7 @@ src/store/     zustand stores, filters, stacks, autosave, actions
 src/carousel/  the 3D carousel: pure layout (tested), cards, original/video
 src/timeline/  the waveform: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
-src/cleanup/   the "Unusable" view
+src/cleanup/   the "Discards" view
 src/ui/        start screen, info bar, top bar, tags, keyboard, dialogs
 middleware.ts  password gate when hosted on Vercel
 scripts/       verify gate, e2e test, icon renderer

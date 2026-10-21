@@ -2,16 +2,16 @@ import { pickPicksFolder } from "@/fs/picksFolder";
 import type { RatingFilter } from "@/store/filters";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
-import { PICKS } from "@/types";
+import { DISCARD, PICKS } from "@/types";
 
 import { PickIcon } from "./icons";
 import { TagFilter } from "./TagFilter";
 
 const RATING_OPTIONS: { value: RatingFilter; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "like", label: "≥ Like" },
-  { value: "top", label: "Top" },
-  { value: "hideUnusable", label: "Hide unusable" },
+  { value: "good", label: "≥ Good" },
+  { value: "favorite", label: "Favorites" },
+  { value: "hideDiscards", label: "Hide discards" },
 ];
 
 const SAVE_LABEL = { idle: "", saving: "Saving…", saved: "Saved", error: "Save failed" } as const;
@@ -22,7 +22,7 @@ export function TopBar() {
   const setFilters = useReel((s) => s.setFilters);
   const seriesCount = useReel((s) => s.reel.series.length);
   const saveState = useReel((s) => s.saveState);
-  const unusable = useReel((s) => s.order.reduce((n, id) => n + (s.reel.media[id]!.rating < 0 ? 1 : 0), 0));
+  const discards = useReel((s) => s.order.reduce((n, id) => n + (s.reel.media[id]!.rating === DISCARD ? 1 : 0), 0));
   const { folderName, theme, set } = useUi();
 
   const toggleTheme = () => {
@@ -70,7 +70,7 @@ export function TopBar() {
         {SAVE_LABEL[saveState]}
       </span>
       <button className="btn btn-ghost" onClick={() => set({ dialog: "cleanup" })}>
-        Unusable{unusable ? ` (${unusable})` : ""}
+        Discards{discards ? ` (${discards})` : ""}
       </button>
       <button className="btn btn-ghost" onClick={() => set({ dialog: "seriesList" })}>
         Series{seriesCount ? ` (${seriesCount})` : ""}

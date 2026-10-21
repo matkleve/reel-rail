@@ -18,19 +18,20 @@ const rating = (id: string) => s().reel.media[id]!.rating;
 beforeEach(seed);
 
 describe("rating", () => {
-  it("clamps between unusable and top", () => {
+  it("clamps between discard and favorite (five levels)", () => {
     s().rate(1);
     s().rate(1);
     s().rate(1);
     expect(rating("a")).toBe(2);
-    for (let i = 0; i < 5; i++) s().rate(-1);
-    expect(rating("a")).toBe(-1);
+    for (let i = 0; i < 6; i++) s().rate(-1);
+    expect(rating("a")).toBe(-2);
   });
 
   it("does not push an undo step for a no-op at the limit", () => {
     s().rate(-1);
     s().rate(-1);
-    expect(s().undoStack).toHaveLength(1);
+    s().rate(-1);
+    expect(s().undoStack).toHaveLength(2);
   });
 
   it("undoes the last rating change (Z)", () => {
@@ -81,7 +82,7 @@ describe("navigation and selection", () => {
     s().setCurrent("c");
     s().rate(1);
     s().setCurrent("a");
-    s().setFilters({ rating: "like" });
+    s().setFilters({ rating: "good" });
     s().step(1);
     expect(s().currentId).toBe("c");
   });

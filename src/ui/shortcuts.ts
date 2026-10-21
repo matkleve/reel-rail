@@ -1,8 +1,8 @@
 /** Single source for the help overlay; README mirrors it. */
 export const SHORTCUTS: [string, string][] = [
   ["← / →", "Previous / next (skips filtered ones) — or wheel / swipe on the photos"],
-  ["↑", "Rating +1: bigger and higher (max: top)"],
-  ["↓", "Rating −1: smaller, slides down (min: unusable)"],
+  ["↑", "Better: bigger and higher (Discard → Not great → Normal → Good → Favorite)"],
+  ["↓", "Worse: smaller, slides down"],
   ["Space", "Pick: copy to your picks folder (again: take it back)"],
   ["V / M", "Video: play/pause / sound on/off"],
   ["Shift + ← / →", "Extend selection"],
@@ -14,7 +14,7 @@ export const SHORTCUTS: [string, string][] = [
   ["T", "Type a free tag"],
   ["P", "Edit place (applies to selection)"],
   ["Enter", "Open / close a burst"],
-  ["X", "In an open burst: mark all but the best as unusable"],
+  ["X", "In an open burst: mark all but the best as discard"],
   ["S", "Create series from selection"],
   ["+ / − / 0", "Zoom the timeline in / out / whole trip (or wheel on it)"],
   ["Home / End", "First / last"],

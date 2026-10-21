@@ -39,7 +39,7 @@ export type ReelState = {
   setSaveState(s: SaveState): void;
 };
 
-const clampRating = (r: number): Rating => Math.max(-1, Math.min(2, r)) as Rating;
+const clampRating = (r: number): Rating => Math.max(-2, Math.min(2, r)) as Rating;
 
 /** Ids an action applies to: the selection if there is one, else the current item. */
 export function targetIds(s: Pick<ReelState, "selection" | "currentId">): string[] {

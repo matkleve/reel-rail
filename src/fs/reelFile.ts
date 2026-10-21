@@ -12,18 +12,25 @@ async function readJson(dir: FileSystemDirectoryHandle, name: string): Promise<R
   }
 }
 
-/** Tolerates hand-edited or older files: missing collections become empty. */
+/**
+ * Tolerates hand-edited or older files: missing collections become empty,
+ * version 1 is migrated. A version this code does not know is refused rather
+ * than guessed at — saving it back would destroy whatever it means.
+ */
 export function normalize(raw: unknown): ReelFile {
-  const r = (raw ?? {}) as Partial<ReelFile>;
-  if (r.version !== undefined && r.version !== 1) throw new Error(`Unsupported .reel.json version ${r.version}`);
+  const r = (raw ?? {}) as Omit<Partial<ReelFile>, "version"> & { version?: number };
+  const version = r.version ?? 2;
+  if (version !== 1 && version !== 2) throw new Error(`Unsupported .reel.json version ${r.version}`);
   const media = r.media ?? {};
   for (const m of Object.values(media)) {
     m.tags ??= [];
     m.exportedTo ??= [];
     m.rating ??= 0;
+    // v1 had four levels; its bottom one ("unusable") is v2's "discard".
+    if (version === 1 && m.rating === -1) m.rating = -2;
   }
   return {
-    version: 1,
+    version: 2,
     media,
     series: r.series ?? [],
     tagPresets: r.tagPresets?.length ? r.tagPresets : [...DEFAULT_TAG_PRESETS],

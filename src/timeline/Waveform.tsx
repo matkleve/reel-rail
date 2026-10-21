@@ -5,8 +5,10 @@ import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import { useSize } from "@/ui/useSize";
 
-import { BAR, BAR_GAP, drawWave } from "./drawWave";
-import { binWave, buildWave, maxZoom, nearest, windowAt, type Window } from "./waveform";
+import { tagColor } from "@/ui/tagColor";
+
+import { BIN_PX, drawWave, resolveColor } from "./drawWave";
+import { NEUTRAL, buildWave, maxZoom, nearest, waveLayers, windowAt, type Window } from "./waveform";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const LABEL_SPACING = 84;
@@ -20,6 +22,7 @@ export function Waveform() {
   const { order, media, currentId } = useReel(
     useShallow((s) => ({ order: s.order, media: s.reel.media, currentId: s.currentId })),
   );
+  const presets = useReel((s) => s.reel.tagPresets);
   const zoom = useUi((s) => s.waveZoom);
   const theme = useUi((s) => s.theme);
   const box = useRef<HTMLDivElement>(null);
@@ -33,12 +36,16 @@ export function Waveform() {
   // the pointer on every jump and run away.
   const [dragWin, setDragWin] = useState<Window>();
   const win = dragWin ?? windowAt(model, zoom, focus);
-  const nBins = Math.max(1, Math.floor(size.w / (BAR + BAR_GAP)));
-  const bins = useMemo(() => binWave(model, media, win, nBins), [model, media, win.start, win.span, nBins]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nBins = Math.max(1, Math.floor(size.w / BIN_PX));
+  const waves = useMemo(() => waveLayers(model, media, win, nBins), [model, media, win.start, win.span, nBins]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (canvas.current && size.w) drawWave(canvas.current, bins, size.w, size.h);
-  }, [bins, size, theme]);
+    const el = canvas.current;
+    if (!el || !size.w) return;
+    const colorOf = (tag: string) =>
+      tag === NEUTRAL ? resolveColor(el, "var(--color-wave)") : resolveColor(el, tagColor(tag, presets));
+    drawWave(el, waves, colorOf, size.w, size.h);
+  }, [waves, size, theme, presets]);
 
   useWheelZoom(box, maxZoom(model));
 
@@ -89,7 +96,26 @@ export function Waveform() {
       ))}
       {index >= 0 && <span className="wave-cursor" style={{ left: toX(focus) }} />}
       {zoom > 1.01 && <span className="wave-zoom muted">{formatSpan(win.span)}</span>}
+      <Legend tags={waves.layers.map((l) => l.tag).filter((t) => t !== NEUTRAL)} presets={presets} />
     </div>
+  );
+}
+
+/** Which colour is which tag, and which way is up. */
+function Legend({ tags, presets }: { tags: string[]; presets: string[] }) {
+  return (
+    <>
+      <span className="wave-axis up">Favorite</span>
+      <span className="wave-axis down">Discard</span>
+      <span className="wave-legend">
+        {tags.map((t) => (
+          <span key={t}>
+            <i style={{ background: tagColor(t, presets) }} />
+            {t}
+          </span>
+        ))}
+      </span>
+    </>
   );
 }
 

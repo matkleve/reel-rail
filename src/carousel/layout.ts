@@ -4,15 +4,15 @@ import type { Media, Rating } from "@/types";
  * Where every card of the carousel goes. Pure — screen-space numbers only; the
  * 3D look (tilt, card rotation, floor) is CSS on top of this.
  *
- * The rating is position AND size: top shots grow and rise, unusable ones
- * shrink and slide below the floor line. The current card is in the middle;
+ * The rating is position AND size: favorites grow and rise, weak shots
+ * shrink and slide down, discards sink below the floor line. The current card is in the middle;
  * neighbours fall off in size with distance, sitting directly side by side.
  */
 
 /** Card height per rating, as a fraction of the base height. */
-export const RATING_SCALE: Record<Rating, number> = { [-1]: 0.38, 0: 0.74, 1: 0.88, 2: 1 };
+export const RATING_SCALE: Record<Rating, number> = { [-2]: 0.34, [-1]: 0.58, 0: 0.74, 1: 0.88, 2: 1 };
 /** How far a card rises above (or sinks below) the floor, as a fraction of stage height. */
-export const LIFT: Record<Rating, number> = { [-1]: -0.14, 0: 0, 1: 0.045, 2: 0.09 };
+export const LIFT: Record<Rating, number> = { [-2]: -0.15, [-1]: -0.06, 0: 0, 1: 0.045, 2: 0.09 };
 
 const BASE = 0.58; // base card height / stage height
 const FLOOR = 0.8; // floor line / stage height

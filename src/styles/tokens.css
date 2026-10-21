@@ -36,7 +36,8 @@
   --color-pick: #6fd6a2;
 
   --color-scrim: rgb(0 0 0 / 0.55);
-  --color-wave: #4a505d;
+  --color-wave: #7fa8d8;
+  --color-wave-bg: #050608;
   /* The carousel floor: a soft glow that fades into the canvas. */
   --color-floor: #1a1d24;
   --color-glow: rgb(255 181 71 / 0.07);
@@ -98,7 +99,8 @@
   --color-pick: #1c6b45;
 
   --color-scrim: rgb(23 24 28 / 0.4);
-  --color-wave: #b9b5ad;
+  --color-wave: #8a96a8;
+  --color-wave-bg: #fbfaf8;
   --color-floor: #e6e3dc;
   --color-glow: rgb(194 106 0 / 0.08);
   --reflection: rgb(0 0 0 / 0.1);

@@ -1,7 +1,7 @@
 import { media } from "@/test-utils";
 import type { Media } from "@/types";
 
-import { MAX_PAUSE_H, NIGHT_H, binWave, buildWave, maxZoom, nearest, windowAt } from "./waveform";
+import { MAX_PAUSE_H, NEUTRAL, NIGHT_H, buildWave, maxZoom, nearest, waveLayers, windowAt } from "./waveform";
 
 function model(list: Media[]) {
   const map = Object.fromEntries(list.map((m) => [m.id, m]));
@@ -42,19 +42,43 @@ describe("windowAt", () => {
   });
 });
 
-describe("binWave", () => {
-  it("counts media per bin and marks liked and top moments", () => {
-    const { wave, map } = model([
-      media("a", { takenAt: "2026-10-14T08:00:00", rating: 2 }),
-      media("b", { takenAt: "2026-10-14T08:01:00", rating: 1 }),
-      media("c", { takenAt: "2026-10-14T08:02:00" }),
-      media("d", { takenAt: "2026-10-14T12:00:00" }),
-    ]);
-    const bins = binWave(wave, map, { start: 0, span: wave.total }, 4);
-    expect(bins.count).toEqual([3, 0, 0, 1]);
-    expect(bins.liked).toEqual([2, 0, 0, 0]);
-    expect(bins.top).toEqual([true, false, false, false]);
-    expect(bins.max).toBe(3);
+describe("waveLayers", () => {
+  const list = [
+    media("a", { takenAt: "2026-10-14T08:00:00", rating: 2, tags: ["Food"] }),
+    media("b", { takenAt: "2026-10-14T08:01:00", rating: 2, tags: ["Food"] }),
+    media("c", { takenAt: "2026-10-14T08:02:00", rating: -2 }),
+    media("d", { takenAt: "2026-10-14T12:00:00", rating: 0, tags: ["Sunset", "Food"] }),
+  ];
+
+  it("makes one wave per tag plus a neutral one, neutral drawn first", () => {
+    const { wave, map } = model(list);
+    const w = waveLayers(wave, map, { start: 0, span: wave.total }, 40);
+    expect(w.layers.map((l) => l.tag)).toEqual([NEUTRAL, "Food", "Sunset"]);
+    expect(w.layers.find((l) => l.tag === "Food")!.total).toBe(3);
+  });
+
+  it("floats a wave above the middle where its media are good, below where they are bad", () => {
+    const { wave, map } = model(list);
+    const w = waveLayers(wave, map, { start: 0, span: wave.total }, 40);
+    const food = w.layers.find((l) => l.tag === "Food")!;
+    const neutral = w.layers.find((l) => l.tag === NEUTRAL)!;
+    expect(food.mean[0]).toBeCloseTo(2);
+    expect(neutral.mean[0]).toBeCloseTo(-2);
+    expect(w.spine[0]).toBeGreaterThan(0);
+  });
+
+  it("puts one dot per medium at its relative time", () => {
+    const { wave, map } = model(list);
+    const w = waveLayers(wave, map, { start: 0, span: wave.total }, 40);
+    expect(w.dots.map((d) => d.rating)).toEqual([2, 2, -2, 0]);
+    expect(w.dots[3]!.at).toBe(1);
+  });
+
+  it("folds tags beyond the colour budget into the neutral wave", () => {
+    const { wave, map } = model(list);
+    const w = waveLayers(wave, map, { start: 0, span: wave.total }, 40, 1);
+    expect(w.layers.map((l) => l.tag)).toEqual([NEUTRAL, "Food"]);
+    expect(w.dots.every((d) => d.tag === NEUTRAL || d.tag === "Food")).toBe(true);
   });
 });
 

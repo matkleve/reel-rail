@@ -3,12 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import { setPlace } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
+import { RATING_LABEL, ratingClass } from "@/types";
 import { StarIcon } from "@/ui/icons";
 
 import { TagEditor } from "./TagEditor";
 
 const WHEN = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" });
-const RATING_LABEL = { [-1]: "Unusable", 0: "Neutral", 1: "Like", 2: "Top" } as const;
 
 /** Facts about the current medium, the editable place, and the selection's actions. */
 export function InfoBar() {
@@ -34,7 +34,7 @@ export function InfoBar() {
         </span>
       </div>
       <div className="info-right">
-        <span className={`rating-pill r${media.rating < 0 ? "m1" : media.rating}`}>
+        <span className={`rating-pill ${ratingClass(media.rating)}`}>
           {media.rating === 2 && <StarIcon size={12} />} {RATING_LABEL[media.rating]}
         </span>
         {selected > 0 && (

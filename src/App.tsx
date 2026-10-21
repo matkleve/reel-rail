@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 import { Carousel } from "@/carousel/Carousel";
 import { CleanupDialog } from "@/cleanup/CleanupDialog";
@@ -19,7 +19,9 @@ export function App() {
   const theme = useUi((s) => s.theme);
   useKeyboard();
 
-  useEffect(() => {
+  // Layout effect: it must land before children's effects run — the waveform
+  // canvas reads the theme's colour tokens in its own effect.
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 

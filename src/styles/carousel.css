@@ -90,9 +90,12 @@
 }
 
 .card.rm1 {
-  opacity: 0.45;
+  opacity: 0.8;
 }
-.card.rm1 .card-face {
+.card.rm2 {
+  opacity: 0.4;
+}
+.card.rm2 .card-face {
   -webkit-box-reflect: unset;
 }
 .card.is-dimmed {
@@ -115,8 +118,9 @@
   outline-offset: 4px;
   box-shadow: var(--shadow-raised);
 }
-.card.is-current.rm1 {
-  opacity: 0.8;
+.card.is-current.rm1,
+.card.is-current.rm2 {
+  opacity: 0.85;
 }
 
 .card-play {
@@ -224,7 +228,7 @@
 .wave {
   position: relative;
   border-top: 1px solid var(--color-line);
-  background: var(--color-surface);
+  background: var(--color-wave-bg);
   cursor: pointer;
   touch-action: none;
   user-select: none;
@@ -263,8 +267,45 @@
 }
 .wave-zoom {
   position: absolute;
-  right: 8px;
+  left: 50%;
   bottom: 4px;
+  translate: -50% 0;
   font-size: 11px;
   pointer-events: none;
+}
+.wave-axis {
+  position: absolute;
+  left: 6px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.wave-axis.up {
+  top: 22px;
+}
+.wave-axis.down {
+  bottom: 4px;
+}
+.wave-legend {
+  position: absolute;
+  right: 8px;
+  bottom: 4px;
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--color-muted);
+  pointer-events: none;
+}
+.wave-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.wave-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }

@@ -6,6 +6,18 @@ Newest at the top. (Format from grundriss.)
 
 ---
 
+## A canvas reads colour tokens before the theme attribute is set
+
+**Looked right:** the waveform redraws when `theme` changes, reading its
+colours from CSS custom properties.
+
+**Was true:** React runs child effects before parent effects. The App set
+`data-theme` in a `useEffect`, so the waveform (a child) redrew with the *old*
+theme's tokens — a white line on the light theme.
+
+**The check:** set `data-theme` in a `useLayoutEffect` (runs before all
+passive effects); look at a light-theme screenshot, not just the dark one.
+
 ## Re-setting state from a local variable silently drops derived fields
 
 **Looked right:** `openFolder` called `load(reel)` (which derives burst

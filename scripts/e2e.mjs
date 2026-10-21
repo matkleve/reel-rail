@@ -157,7 +157,7 @@ if ((await page.locator(".card-count").count()) !== 0) await fail("Enter should 
 await page.keyboard.press("ArrowUp");
 await page.keyboard.press("x");
 await page.waitForTimeout(300);
-if ((await page.locator(".card.rm1").count()) !== 1) await fail("X should mark the other burst member unusable");
+if ((await page.locator(".card.rm2").count()) !== 1) await fail("X should mark the other burst member as discard");
 await page.keyboard.press("z");
 await page.keyboard.press("z");
 await page.keyboard.press("Enter");
@@ -175,16 +175,21 @@ if (!(after.height > before.height * 1.2 && after.y < before.y)) await fail("rat
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowDown");
 await page.waitForTimeout(500);
+const meh = await center();
+await page.keyboard.press("ArrowDown");
+await page.waitForTimeout(500);
 const low = await center();
-if (!(low.height < before.height * 0.7)) await fail("rating down should shrink the card");
+if (!(meh.height < before.height && low.height < meh.height * 0.7 && low.y + low.height > meh.y + meh.height)) {
+  await fail("each step down should shrink the card and let it sink");
+}
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowUp");
 await page.keyboard.press("z");
 await page.waitForTimeout(400);
-if ((await page.locator(".card.r2").count()) !== 1) await fail("expected exactly one top card");
-if ((await page.locator(".card.rm1").count()) !== 1) await fail("expected exactly one unusable card");
+if ((await page.locator(".card.r2").count()) !== 1) await fail("expected exactly one favorite card");
+if ((await page.locator(".card.rm2").count()) !== 1) await fail("expected exactly one discard card");
 if ((await page.locator(".card.r1").count()) !== 0) await fail("undo did not revert the last rating");
-ok("rating ↑/↓ grows+lifts / shrinks+lowers cards, Z undoes");
+ok("five levels: ↑/↓ grow+lift / shrink+sink cards, Z undoes");
 await page.screenshot({ path: "tmp/e2e/2-rated.png" });
 
 // ---- Tags ------------------------------------------------------------------------
@@ -236,7 +241,8 @@ const saved = await page.evaluate(async () => {
   return JSON.parse(await (await (await trip.getFileHandle(".reel.json")).getFile()).text());
 });
 const ratings = Object.values(saved.media).map((m) => m.rating).sort();
-if (JSON.stringify(ratings) !== JSON.stringify([-1, 0, 0, 0, 0, 0, 0, 0, 0, 2])) await fail(`saved ratings ${ratings}`);
+if (JSON.stringify(ratings) !== JSON.stringify([-2, 0, 0, 0, 0, 0, 0, 0, 0, 2])) await fail(`saved ratings ${ratings}`);
+if (saved.version !== 2) await fail("expected .reel.json version 2");
 if (!Object.values(saved.media).some((m) => m.stackId)) await fail("burst stackId not saved");
 if (!Object.values(saved.media).some((m) => m.place === "Porto")) await fail("place not saved");
 if (!Object.values(saved.media).some((m) => m.altPaths?.length)) await fail("duplicate not recorded in altPaths");
@@ -244,7 +250,7 @@ if (!Object.values(saved.media).every((m) => m.takenAt.startsWith("2026-10-1")))
 ok(".reel.json saved (ratings, place, altPaths, EXIF dates)");
 
 // ---- Filter -------------------------------------------------------------------
-await page.getByRole("radio", { name: "Top" }).click();
+await page.getByRole("radio", { name: "Favorites" }).click();
 if ((await page.locator(".card.is-dimmed").count()) < 4) await fail("Top filter should dim the other cards");
 await page.getByRole("radio", { name: "All" }).click();
 ok("filter dims instead of hiding");
@@ -282,8 +288,8 @@ ok("exported items show the check badge");
 await page.keyboard.press("Escape");
 await page.screenshot({ path: "tmp/e2e/4-after-export.png" });
 
-// ---- Clean up: unusable → _reel_trash ------------------------------------------------
-await page.getByRole("button", { name: /^Unusable/ }).click();
+// ---- Clean up: discards → _reel_trash ------------------------------------------------
+await page.getByRole("button", { name: /^Discards/ }).click();
 await page.getByRole("button", { name: "Move to trash folder…" }).click();
 await page.getByRole("button", { name: "Move to _reel_trash" }).click();
 await page.getByText(/moved to _reel_trash/).waitFor({ timeout: 5000 });
@@ -295,7 +301,7 @@ const trashed = await page.evaluate(async () => {
   return out;
 });
 if (trashed.length !== 1) await fail(`expected one file in _reel_trash, got ${trashed}`);
-if ((await page.locator(".card.rm1").count()) !== 0) await fail("trashed item should leave the carousel");
+if ((await page.locator(".card.rm2").count()) !== 0) await fail("trashed item should leave the carousel");
 ok(`clean up: ${trashed[0]} moved into _reel_trash/, nothing deleted`);
 
 // ---- Re-open: remembered handle, state restored --------------------------------

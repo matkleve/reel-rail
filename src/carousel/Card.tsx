@@ -1,6 +1,6 @@
 import { memo, type MouseEvent } from "react";
 
-import { PICKS, type Media } from "@/types";
+import { PICKS, ratingClass, type Media } from "@/types";
 import { CheckIcon, PickIcon, PlayIcon, StarIcon } from "@/ui/icons";
 import { tagColor } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
@@ -27,7 +27,7 @@ export const Card = memo(function Card(p: Props) {
   const exported = media.exportedTo.some((e) => e.series !== PICKS);
   const cls = [
     "card",
-    `r${media.rating < 0 ? "m1" : media.rating}`,
+    ratingClass(media.rating),
     p.current && "is-current",
     p.selected && "is-selected",
     p.dimmed && "is-dimmed",
@@ -65,7 +65,7 @@ export const Card = memo(function Card(p: Props) {
       {p.stackCount && <span className="card-count">{p.stackCount}</span>}
       <span className="card-badges">
         {media.rating === 2 && (
-          <span className="badge star" title="Top">
+          <span className="badge star" title="Favorite">
             <StarIcon size={14} />
           </span>
         )}

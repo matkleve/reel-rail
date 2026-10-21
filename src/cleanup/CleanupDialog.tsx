@@ -4,16 +4,16 @@ import { TRASH_DIR, formatBytes, moveToTrash } from "@/fs/trash";
 import { markTrashed } from "@/store/actions";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
-import type { Media } from "@/types";
+import { DISCARD, type Media } from "@/types";
 import { Dialog } from "@/ui/Dialog";
 import { MiniThumb } from "@/series/MiniThumb";
 
-/** Everything rated unusable, as a grid, with its total size — and one button to move it out of the way. */
+/** Everything rated "discard", as a grid, with its total size — and one button to move it out of the way. */
 export function CleanupDialog() {
   const open = useUi((s) => s.dialog === "cleanup");
   const close = () => useUi.getState().set({ dialog: null });
   return (
-    <Dialog open={open} onClose={close} title="Unusable" wide>
+    <Dialog open={open} onClose={close} title="Discards" wide>
       {open && <CleanupBody onDone={close} />}
     </Dialog>
   );
@@ -23,7 +23,7 @@ function CleanupBody({ onDone }: { onDone(): void }) {
   const order = useReel((s) => s.order);
   const media = useReel((s) => s.reel.media);
   const items = useMemo(
-    () => order.flatMap((id): Media[] => (media[id]!.rating < 0 ? [media[id]!] : [])),
+    () => order.flatMap((id): Media[] => (media[id]!.rating === DISCARD ? [media[id]!] : [])),
     [order, media],
   );
   const bytes = items.reduce((n, m) => n + (m.size ?? 0), 0);
@@ -43,7 +43,7 @@ function CleanupBody({ onDone }: { onDone(): void }) {
     }
   };
 
-  if (!items.length) return <p className="muted">Nothing rated unusable. Press ↓ on a neutral item to mark one.</p>;
+  if (!items.length) return <p className="muted">Nothing marked as discard. Press ↓ twice on a normal item to mark one.</p>;
 
   return (
     <>

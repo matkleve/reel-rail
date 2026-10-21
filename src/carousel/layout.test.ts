@@ -41,8 +41,16 @@ describe("layoutCarousel", () => {
     }
   });
 
-  it("top shots are bigger and higher, unusable ones smaller and lower", () => {
-    const ratings = [-1, 0, 2] as const;
+  it("each of the five levels is bigger and higher than the one below", () => {
+    const placed = ([-2, -1, 0, 1, 2] as const).map((r) => run([media("a", { rating: r })]).cards[0]!);
+    for (let i = 1; i < placed.length; i++) {
+      expect(placed[i]!.h).toBeGreaterThan(placed[i - 1]!.h);
+      expect(placed[i]!.bottom).toBeLessThan(placed[i - 1]!.bottom);
+    }
+  });
+
+  it("favorites are bigger and higher, discards smaller and lower", () => {
+    const ratings = [-2, 0, 2] as const;
     const placed = ratings.map((r) => run([media("a", { rating: r })]).cards[0]!);
     const [unusable, neutral, top] = placed as [typeof placed[0], typeof placed[0], typeof placed[0]];
     expect(top.h / neutral.h).toBeCloseTo(RATING_SCALE[2] / RATING_SCALE[0]);

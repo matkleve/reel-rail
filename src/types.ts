@@ -7,7 +7,22 @@
  * always still parses (see README § .reel.json).
  */
 
-export type Rating = -1 | 0 | 1 | 2;
+/** Five levels: 2 favorite, 1 good, 0 normal, −1 not great, −2 discard. */
+export type Rating = -2 | -1 | 0 | 1 | 2;
+
+export const RATING_LABEL: Record<Rating, string> = {
+  [2]: "Favorite",
+  [1]: "Good",
+  [0]: "Normal",
+  [-1]: "Not great",
+  [-2]: "Discard",
+};
+export const DISCARD: Rating = -2;
+
+/** CSS class per rating: r2, r1, r0, rm1, rm2. */
+export function ratingClass(r: Rating): string {
+  return r < 0 ? `rm${-r}` : `r${r}`;
+}
 export type MediaType = "photo" | "video";
 
 /**
@@ -51,8 +66,12 @@ export type Series = {
   exportedPath?: string;
 };
 
+/**
+ * Version 2 introduced the five-level rating. Version 1 files are migrated on
+ * load (their −1 "unusable" becomes −2 "discard").
+ */
 export type ReelFile = {
-  version: 1;
+  version: 2;
   media: Record<string, Media>;
   series: Series[];
   tagPresets: string[];
@@ -71,5 +90,5 @@ export const DEFAULT_TAG_PRESETS = [
 ];
 
 export function emptyReel(): ReelFile {
-  return { version: 1, media: {}, series: [], tagPresets: [...DEFAULT_TAG_PRESETS] };
+  return { version: 2, media: {}, series: [], tagPresets: [...DEFAULT_TAG_PRESETS] };
 }

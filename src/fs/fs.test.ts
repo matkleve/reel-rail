@@ -84,7 +84,25 @@ describe("normalize", () => {
   });
 
   it("refuses an unknown version rather than guessing", () => {
-    expect(() => normalize({ version: 2 })).toThrow(/version 2/);
+    expect(() => normalize({ version: 3 })).toThrow(/version 3/);
+  });
+
+  it("migrates v1: its 'unusable' (−1) becomes 'discard' (−2), the rest stays", () => {
+    const r = normalize({
+      version: 1,
+      media: {
+        a: { id: "a", path: "a.jpg", type: "photo", takenAt: "", rating: -1 },
+        b: { id: "b", path: "b.jpg", type: "photo", takenAt: "", rating: 1 },
+      },
+    });
+    expect(r.version).toBe(2);
+    expect(r.media.a!.rating).toBe(-2);
+    expect(r.media.b!.rating).toBe(1);
+  });
+
+  it("keeps v2's 'not great' (−1) as it is", () => {
+    const r = normalize({ version: 2, media: { a: { id: "a", path: "a.jpg", type: "photo", takenAt: "", rating: -1 } } });
+    expect(r.media.a!.rating).toBe(-1);
   });
 });
 
