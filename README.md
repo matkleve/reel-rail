@@ -45,15 +45,18 @@ npm run e2e:ipad   # files mode on iPad-sized touch viewports (needs a build)
 npm run verify     # everything: typecheck, lint, tests, build, e2e
 ```
 
-### Accounts (Supabase) — prepared, not switched on
+### Accounts and rating sync (Supabase)
 
-Sign-in (e-mail code) and the subscription check live in `src/account/`;
-the schema with row-level security is `supabase/migrations/`. Set
-`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Vercel env + rebuild) and a
-"Sign in" button appears; without them the app is unchanged. In the Supabase
-dashboard, put `{{ .Token }}` into the "Magic Link" e-mail template so the
-mail carries a code. Payments are not wired yet — see
-`docs/use-cases/UC-006-pay-for-reel-rail.md`.
+Sign-in (e-mail code or link) and the plan live in `src/account/`; the
+schema with row-level security is `supabase/migrations/` (policy check:
+`supabase/tests/policies.sql`). **Pro** keeps ratings, tags and places in
+sync between devices, matched by content hash — photos are never uploaded.
+A discard rated on the phone counts down on the computer too and leaves an
+edited folder there (through "Recently deleted").
+
+The Vercel project has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+(public by design; RLS protects the data). Without them the app runs with
+no account UI. Payments are not wired yet (UC-006): Pro is granted by hand.
 
 ### Hosting (Vercel) with a password
 

@@ -1,6 +1,6 @@
 # 0001. Accounts and subscriptions on Supabase; media stays on the device
 
-- **Status:** Accepted (project creation pending — see Consequences)
+- **Status:** Accepted — project `reel-rail` (iafmfgvfjpaxuetvbsbk, eu-central-1) live since 2026-10-21
 - **Date:** 2026-10-21
 
 ## Context
@@ -42,7 +42,9 @@ not exist.
   feature is used.
 - Payments are not wired: they need a provider account (Stripe) and prices.
   `subscriptions` is shaped for a Stripe webhook.
-- **Blocked:** the Supabase organisation is at its free-plan limit of two
-  active projects (feldpost, budget). The migration in
-  `supabase/migrations/` is ready to apply once a slot is free (pause a
-  project, or upgrade the organisation).
+- The organisation's free plan allows two active projects: "budget" was
+  paused (Matthias's choice) to make room.
+- **Decided since (UC-006):** Free + Pro. The "cloud version" is **rating
+  sync only** — `ratings` (rating, tags, place per content id), written only
+  with Pro (`has_pro()` in the RLS policy: the gate is in the database).
+  Photos and videos are never uploaded.

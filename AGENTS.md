@@ -32,7 +32,8 @@ Never report work as done without a green `verify`. Re-run one check alone:
    older files keep loading; a format change bumps `version` and `normalize()`
    refuses versions it does not know rather than guessing.
 3. **Media never leaves the device.** The only network calls are to Supabase
-   for the account (sign-in, "is my subscription active?") — through
+   for the account (sign-in, plan) and Pro rating sync (rating, tags, place
+   per content id — no names, no paths, no bytes) — through
    `src/account/` only, and only when the env vars are set
    ([`docs/adr/0001`](docs/adr/0001-accounts-and-subscriptions-on-supabase.md)).
 4. **No new dependency without saying what it replaces and why the platform

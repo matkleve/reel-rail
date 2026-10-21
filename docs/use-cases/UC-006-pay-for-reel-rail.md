@@ -1,7 +1,7 @@
 # UC-006 — Pay for reel-rail and use it with an account
 
 <!-- id: UC-006 -->
-<!-- built-in: supabase/ (schema ready, project not created yet) — see adr/0001 -->
+<!-- built-in: src/account/, supabase/migrations/ — see adr/0001 -->
 
 **Who:** a person who wants to keep using reel-rail beyond a trial; later,
 possibly someone who wants their ratings on phone and computer alike.
@@ -15,17 +15,21 @@ possibly someone who wants their ratings on phone and computer alike.
 - Photos and videos still never leave the device unless a cloud plan says so
   in plain words.
 
-## Open questions (for Matthias)
+## Decided (2026-10-21)
 
-- **What is paid?** Everything after a trial, or a free tier (e.g. one
-  folder, no trimming) plus "Pro"?
-- **Price and period**, and which payment provider (Stripe is the usual
-  pairing with Supabase).
-- **Cloud version:** sync of ratings only (small, cheap), or uploading the
-  photos themselves (storage costs, privacy promise changes)?
-- **Native app:** deleting from the iPhone Photos library and reading videos
-  without the long "preparing" wait need one (Capacitor wrapper). App Store
-  subscriptions then run through Apple.
+- **Free + Pro.** Free: everything on one device — sorting, countdown,
+  Recently deleted, trimming, picks, series, export. **Pro: rating sync**
+  between devices (enforced by the database). Further Pro features to be
+  decided; client-side gates for them would be bypassable, so anything that
+  must be paid for needs a server-side check like `has_pro()`.
+- **Cloud = ratings only**, never photos.
+- **Native iPhone app: prepare it** (Capacitor) — see docs/NATIVE.md.
+
+## Still open
+
+- Price and period; Stripe account (payments not wired — until then Pro is
+  granted by hand in the database for testing).
+- Trial length.
 
 ## Out of scope (until answered)
 

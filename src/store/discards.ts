@@ -3,7 +3,7 @@ import { getFolder, getSource, peekSource } from "@/fs/session";
 import { TRASH_DIR, formatBytes, moveFile, moveToTrash } from "@/fs/trash";
 import { DISCARD, type Media } from "@/types";
 
-import { useReel } from "./useReel";
+import { patchMedia, useReel } from "./useReel";
 import { showToast } from "./useUi";
 
 /**
@@ -27,8 +27,7 @@ export function graceMs(): number {
 }
 
 const reel = () => useReel.getState().reel;
-const patch = (id: string, fn: (m: Media) => Media) =>
-  useReel.getState().refresh({ ...reel(), media: { ...reel().media, [id]: fn(reel().media[id]!) } });
+const patch = (id: string, fn: (m: Media) => Media) => useReel.getState().refresh(patchMedia(reel(), [id], fn));
 
 /** Paths in _reel_trash/ that records point at — never handed out twice. */
 const takenBinPaths = () =>

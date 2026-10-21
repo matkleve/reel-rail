@@ -28,17 +28,32 @@ export function AccountMenu() {
   );
 }
 
+const SYNC_TEXT = {
+  off: "",
+  syncing: "Syncing ratings…",
+  synced: "Ratings in sync",
+  error: "Sync failed — retries on the next change",
+};
+
 function SignedIn({ email }: { email: string }) {
   const plan = useAccount((s) => s.plan);
+  const sync = useAccount((s) => s.sync);
   return (
     <div className="account-panel">
       <div className="popover-label">Signed in</div>
       <p className="account-email">{email}</p>
-      <p className="note">
-        {plan?.active
-          ? `reel-rail ${plan.plan ?? "Pro"}${plan.until ? ` · until ${new Date(plan.until).toLocaleDateString()}` : ""}`
-          : "No subscription yet."}
-      </p>
+      {plan?.active ? (
+        <p className="note">
+          <strong>Pro</strong>
+          {plan.until ? ` · until ${new Date(plan.until).toLocaleDateString()}` : ""}
+          {SYNC_TEXT[sync] ? ` · ${SYNC_TEXT[sync]}` : ""}
+        </p>
+      ) : (
+        <p className="note">
+          Free. <strong>Pro</strong> keeps your ratings, tags and places in sync between phone and computer — the photos
+          stay on each device.
+        </p>
+      )}
       <hr />
       <button type="button" className="menu-item" onClick={() => void signOut()}>
         <LogOut size={15} /> Sign out
@@ -100,7 +115,9 @@ function SignIn() {
       <Button type="submit" variant="primary" disabled={busy}>
         {sent ? "Sign in" : "Send code"}
       </Button>
-      <p className="note">Your photos stay on this device — the account is only for your subscription.</p>
+      <p className="note">
+        Your photos stay on this device. The account holds your plan and, with Pro, your ratings — never the photos.
+      </p>
     </form>
   );
 }

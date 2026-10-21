@@ -73,6 +73,8 @@ export type Media = {
    * was taken from — where "bring back" puts it.
    */
   binned?: { path?: string; until: string; from?: string };
+  /** When rating, tags or place last changed here (ISO) — rating sync keeps the newer side. */
+  changedAt?: string;
   /** A trim kept as a decision, applied on export (folder left as it is). Seconds. */
   trim?: { start: number; end: number };
 };

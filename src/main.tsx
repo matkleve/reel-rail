@@ -1,7 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { startAccount } from "./account/account";
+import { accountsEnabled, startAccount } from "./account/account";
+import { startSync } from "./account/syncRunner";
 import { App } from "./App";
 import "@fontsource-variable/inter";
 import "./styles/tokens.css";
@@ -14,6 +15,7 @@ import "./styles/screens.css";
 import "./styles/responsive.css";
 
 startAccount();
+if (accountsEnabled) startSync();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

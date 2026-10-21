@@ -48,9 +48,21 @@ export function targetIds(s: Pick<ReelState, "selection" | "currentId">): string
   return s.currentId ? [s.currentId] : [];
 }
 
+/** What the user decided about a medium — the part that syncs between devices. */
+export function decisionChanged(a: Media, b: Media): boolean {
+  return a.rating !== b.rating || a.place !== b.place || a.tags.join("\u0000") !== b.tags.join("\u0000");
+}
+
 export function patchMedia(reel: ReelFile, ids: string[], fn: (m: Media) => Media): ReelFile {
   const media = { ...reel.media };
-  for (const id of ids) if (media[id]) media[id] = fn(media[id]);
+  const now = new Date().toISOString();
+  for (const id of ids) {
+    const before = media[id];
+    if (!before) continue;
+    const after = fn(before);
+    // Stamped here, the one path every user decision goes through: rating sync resolves by it.
+    media[id] = after !== before && decisionChanged(before, after) ? { ...after, changedAt: now } : after;
+  }
   return { ...reel, media };
 }
 

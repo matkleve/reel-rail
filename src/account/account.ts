@@ -17,7 +17,7 @@ export const accountsEnabled = Boolean(URL && KEY);
 
 let client: Promise<SupabaseClient> | undefined;
 /** Loaded on first use: the SDK is only downloaded by someone who signs in. */
-function sb(): Promise<SupabaseClient> {
+export function sb(): Promise<SupabaseClient> {
   client ??= import("@supabase/supabase-js").then(({ createClient }) =>
     createClient(URL!, KEY!, { auth: { persistSession: true, storageKey: "reel-rail:auth" } }),
   );
@@ -35,8 +35,9 @@ export function planOf(row: Subscription | null, now = Date.now()): Plan {
   return { active: live && (!until || new Date(until).getTime() > now), plan: row.plan, until };
 }
 
-type AccountState = { email?: string; plan?: Plan; checked: boolean };
-export const useAccount = create<AccountState>()(() => ({ checked: false }));
+export type SyncState = "off" | "syncing" | "synced" | "error";
+type AccountState = { email?: string; plan?: Plan; checked: boolean; sync: SyncState };
+export const useAccount = create<AccountState>()(() => ({ checked: false, sync: "off" }));
 
 async function refresh(): Promise<void> {
   const supabase = await sb();
@@ -54,8 +55,10 @@ async function refresh(): Promise<void> {
 /** On start: restore a saved session (if accounts are on and one was saved). */
 export function startAccount(): void {
   if (!accountsEnabled) return;
+  // Coming back from the e-mail's sign-in link: the SDK reads the session from the URL.
+  const fromLink = /access_token=|[?&]code=/.test(window.location.hash + window.location.search);
   try {
-    if (!localStorage.getItem("reel-rail:auth")) return useAccount.setState({ checked: true });
+    if (!fromLink && !localStorage.getItem("reel-rail:auth")) return useAccount.setState({ checked: true });
   } catch {
     return;
   }
@@ -64,7 +67,13 @@ export function startAccount(): void {
 
 /** Step 1: an e-mail with a one-time code (no password to forget). */
 export async function sendCode(email: string): Promise<void> {
-  const { error } = await (await sb()).auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+  // The e-mail carries a code (template with {{ .Token }}) and a link back here; either signs in.
+  const { error } = await (
+    await sb()
+  ).auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
+  });
   if (error) throw error;
 }
 
