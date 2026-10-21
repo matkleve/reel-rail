@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+.vscode/
+.idea/
+# Throwaway measurement scripts and e2e screenshots
+tmp/

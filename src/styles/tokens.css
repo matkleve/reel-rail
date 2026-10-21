@@ -1,0 +1,95 @@
+/* ---------------------------------------------------------------------------
+   Design tokens — the single source of truth for every value in the UI
+   (pattern from grundriss). Components never contain raw colors, radii or
+   shadows; a new value becomes a token here first.
+
+   - `-deep` = stronger tone for hover/active   - `-soft` = tinted background
+   - `-ink`  = text legible ON that fill
+
+   Dark is the default on purpose: photos read better on a dark surround.
+   [data-theme="light"] is the opt-in.
+--------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  --color-canvas: #0b0c0f;
+  --color-surface: #15171c;
+  --color-surface-raised: #1d2027;
+  --color-ink: #f1f2f4;
+  --color-muted: #9aa1ae;
+  --color-line: #2a2e37;
+  --color-line-strong: #5d6472;
+
+  --color-accent: #ffb547;
+  --color-accent-deep: #ffc875;
+  --color-accent-soft: #3a2a10;
+  --color-accent-ink: #1a1206;
+
+  --color-select: #7fb2ff;
+  --color-select-soft: rgb(127 178 255 / 0.18);
+
+  --color-star: #ffd34d;
+  --color-success: #6fd6a2;
+  --color-danger: #ff8f86;
+
+  --color-rail: #3a3f4a;
+  --color-scrim: rgb(0 0 0 / 0.55);
+
+  --radius-thumb: 6px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+
+  --shadow-raised: 0 8px 28px rgb(0 0 0 / 0.5), 0 2px 6px rgb(0 0 0 / 0.35);
+  --shadow-thumb: 0 2px 8px rgb(0 0 0 / 0.45);
+
+  /* Motion. The overshoot curve is the "spring": items grow a touch past
+     their size and settle, which is what makes rating feel physical. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-spring: 180ms;
+  --dur-fast: 150ms;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-canvas: #f4f3f0;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-ink: #17181c;
+  --color-muted: #5b6070;
+  --color-line: #e2e0db;
+  --color-line-strong: #8e8d87;
+
+  --color-accent: #c26a00;
+  --color-accent-deep: #9c5500;
+  --color-accent-soft: #fbecd6;
+  --color-accent-ink: #ffffff;
+
+  --color-select: #2f5ad0;
+  --color-select-soft: rgb(47 90 208 / 0.14);
+
+  --color-star: #d99a00;
+  --color-success: #1c6b45;
+  --color-danger: #b3261e;
+
+  --color-rail: #c9c6bf;
+  --color-scrim: rgb(23 24 28 / 0.4);
+
+  --shadow-raised: 0 8px 24px rgb(23 24 28 / 0.14), 0 2px 4px rgb(23 24 28 / 0.06);
+  --shadow-thumb: 0 2px 6px rgb(23 24 28 / 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
