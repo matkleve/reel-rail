@@ -294,9 +294,20 @@ if (!(await page.locator(`.card-face[aria-label^="photo ${discardedPath},"]`).co
 ok("Recently deleted: bring back moves the file back onto the rail");
 
 // Discard a plain one (normal, no badges — the re-open checks below count those), then "Delete now".
+// Walk to a plain card (not rated, no badges) with the keyboard: the flat strip
+// mounts only a few cards around the current one, so it may not be on screen.
+async function goToPlain() {
+  await page.keyboard.press("Home");
+  for (let i = 0; i < 20; i++) {
+    if (await page.locator(".card.is-current.r0:not(:has(.badge))").count()) return;
+    await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(120);
+  }
+  await fail("no plain card left to discard");
+}
 const plainPath = async () =>
   (await page.locator(".card.is-current .card-face").getAttribute("aria-label")).match(/^photo (\S+),/)[1];
-await page.locator(".card.r0:not(:has(.badge)) .card-face").first().click();
+await goToPlain();
 const doomed = await plainPath();
 await page.keyboard.press("ArrowDown");
 await page.keyboard.press("ArrowDown");
@@ -310,7 +321,7 @@ if (onDisk.some((f) => f.endsWith(doomed))) await fail(`${doomed} should be dele
 ok(`"Delete now" deleted ${doomed} for good`);
 
 // ---- 30 days later: what waited in Recently deleted is deleted when the folder opens -------------
-await page.locator(".card.r0:not(:has(.badge)) .card-face").first().click();
+await goToPlain();
 const aged = await plainPath();
 await page.keyboard.press("ArrowDown");
 await page.keyboard.press("ArrowDown");
@@ -337,10 +348,23 @@ await page.waitForTimeout(800);
 await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
 await page.locator(".card").first().waitFor();
-if ((await page.locator(".card.rm2").count()) !== 0) await fail("no discard should be left");
-if ((await page.locator(".card.r2").count()) !== 1) await fail("rating lost after re-open");
-if ((await page.locator(".badge.is-done").count()) < 3) await fail("exports lost after re-open");
-if ((await page.locator(".badge.is-pick").count()) !== 1) await fail("pick lost after re-open");
+// Counted in the store's file, not on screen: the flat strip mounts only the cards around the current one.
+const reopened = await page.evaluate(async () => {
+  const trip = await (await navigator.storage.getDirectory()).getDirectoryHandle("Trip");
+  const reel = JSON.parse(await (await (await trip.getFileHandle(".reel.json")).getFile()).text());
+  const live = Object.values(reel.media).filter((m) => !m.binned && !m.missing);
+  return {
+    discards: live.filter((m) => m.rating === -2).length,
+    top: live.filter((m) => m.rating === 2).length,
+    done: live.filter((m) => m.exportedTo.some((e) => e.series !== "picks")).length,
+    picks: live.filter((m) => m.exportedTo.some((e) => e.series === "picks")).length,
+  };
+});
+if (reopened.discards !== 0) await fail("no discard should be left");
+if (reopened.top !== 1) await fail("rating lost after re-open");
+if (reopened.done < 3) await fail("exports lost after re-open");
+if (reopened.picks !== 1) await fail("pick lost after re-open");
+if (!(await page.locator(".card .badge").count())) await fail("badges should show on the cards after re-open");
 ok("re-open via remembered folder restores everything");
 
 // ---- Trim a video: the trimmed file replaces it, the original waits in _reel_trash -----------
@@ -354,7 +378,13 @@ await page.evaluate(async (b64) => {
 }, clip.toString("base64"));
 await page.reload();
 await page.getByRole("button", { name: /Continue with/ }).click();
-await page.locator('.card-face[aria-label^="video clip.mp4"]').click();
+// Walk to it: the strip mounts only the cards around the current one.
+await page.locator(".card").first().waitFor();
+await page.keyboard.press("End");
+for (let i = 0; i < 20 && !(await page.locator('.card.is-current .card-face[aria-label^="video clip.mp4"]').count()); i++) {
+  await page.keyboard.press("ArrowLeft");
+  await page.waitForTimeout(120);
+}
 await page.locator(".card.is-current .card-trim").waitFor();
 await page.waitForTimeout(500); // the card glides to the centre first
 await page.getByRole("button", { name: "Trim video" }).click();
