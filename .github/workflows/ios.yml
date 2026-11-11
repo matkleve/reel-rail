@@ -5,13 +5,15 @@ name: ios
 # the app; it then runs for 7 days). With a paid developer account, TestFlight
 # replaces this. Steps: docs/NATIVE.md § Without a Mac.
 #
-# Started by hand (Actions → ios → Run workflow) or by pushing a tag
-# `ios-<anything>`, not on every push: macOS minutes count ten times against
-# a private repository's free allowance.
+# Started by hand (Actions → ios → Run workflow — GitHub shows the button
+# once this file is on the default branch), or by a push to main that changes
+# the native project or this file. Not on every push: macOS minutes count ten
+# times against a private repository's free allowance.
 on:
   workflow_dispatch:
   push:
-    tags: ["ios-*"]
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
 
 jobs:
   ipa:
