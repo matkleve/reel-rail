@@ -265,6 +265,35 @@ for (const [w, h, name] of [
 }
 ok("no overflow at 1180×820, 1024×768, 820×1180 and on iPhones (393×660, 375×667)");
 
+// ---- Phone: the swipe deck instead of the carousel ----------------------------------------------------
+await page.setViewportSize({ width: 393, height: 760 });
+await page.waitForTimeout(500);
+const topCard = () => page.locator(".deck-card.is-top").getAttribute("data-id");
+const firstCard = await topCard();
+if (!firstCard) await fail("no swipe deck on a phone");
+if (await page.locator(".card").count()) await fail("the carousel should give way to the deck on a phone");
+{
+  const box = await page.locator(".deck").boundingBox();
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height * 0.2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i++) await page.mouse.move(x + i * 18, y + i * 2);
+  if (!(await page.locator(".deck-card.is-top.is-dragging").count())) await fail("the top card should follow the finger");
+  await page.mouse.up();
+  await page.waitForTimeout(700);
+}
+if ((await topCard()) === firstCard) await fail("throwing the card right should deal the next one");
+if (!(await page.locator(".deck-note.is-keep").count())) await fail("a throw should say what happened");
+await page.locator(".deck-note").getByRole("button", { name: "Undo" }).click();
+await page.waitForTimeout(300);
+if ((await topCard()) !== firstCard) await fail("Undo should bring the thrown card back on top");
+await page.getByRole("button", { name: "Favorite" }).click();
+await page.waitForTimeout(700);
+if ((await topCard()) === firstCard) await fail("the ★ button should throw the card too");
+await page.screenshot({ path: `${OUT}/5-phone-deck.png` });
+ok("phone: swipe deck — throw right deals the next card, Undo brings it back, buttons throw too");
+
 // ---- Next session: ratings come back when the same photos are added again ----------------------------
 await page.setViewportSize({ width: 1180, height: 820 });
 await page.waitForTimeout(700); // autosave

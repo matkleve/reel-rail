@@ -76,6 +76,7 @@ Every interactive element has all five states: default, hover, active
 │ stage — date/place (top left) · hints (top centre) · count (top right)                                               │
 │         carousel on the floor (80 % height)                                                                          │
 │         dock: [rating ×5] │ [tags] │ [pick]          (+ selection bar above it when something is selected)          │
+│         (phone: the swipe deck instead — see below)                                                                   │
 └ waveform 112px — days, tag-coloured waves, cursor ───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -103,19 +104,27 @@ the floor, with a red bar that runs out. The current one also gets the
 the card itself is too small to read. Countdowns are CSS animations started
 from the time left at render: no timer per card.
 
-## Phone (≤ 600 px)
+## Phone (≤ 600 px): the swipe deck
 
-Rating on the go is the job; the photo gets the room.
+Rating on the go is the job; the photo gets the room. The carousel, dock and
+stage overlay give way to the **deck** (`src/swipe/`, `src/styles/deck.css`).
 
+- One card at a time, the whole photo (contain) over a blurred copy of itself.
+  The next card waits underneath and grows into place as the top one is thrown.
+- **Throw = decision:** right Good, left Discard, up Favorite, down Not great.
+  A stamp (KEEP / NOPE / FAVORITE / MEH, in the rating colours) fades in as the
+  card leans. A short fast flick counts too (`deckGesture.ts`, tested).
+- Round buttons under the deck: ↺, ✕ (big), ★, ♥ (big), and the fifth slot is
+  what the item needs next — scissors for a trimmable video, tags otherwise.
+  Pick sits on the card (top right).
+- After each throw a note says what happened, with **Undo**; a discard says
+  when it leaves. The leaving bar shows when an undone discard is back on top.
+- On the photo: date and time, the place field, tags. Colours there come from
+  `--on-photo*` and `--photo-scrim`, the same in both themes — the photo is
+  not lighter because the chrome is.
 - Header: logo, library menu (icon), then Share/Picks, Series, Discards and
-  **⋯**. The rating filter, the filter panel and the theme live in ⋯, whose
-  button shows the number of active filters.
-- Dock: seven 42 px targets — five levels, tags, Pick (icon only). A video
-  is paused by tapping it; the scissors sit on the playing video.
-- Portrait carousel: cards live in the band between the date and the dock,
-  **measured** (`src/carousel/useInsets.ts`), not guessed; the centre card may
-  take 84 % of the width.
-- Waveform 72 px, axis as icons, no tag legend. The file name is hidden.
+  **⋯** (rating filter, filter panel, theme). Waveform 72 px below the deck:
+  on the phone it is how you browse.
 - Popovers cap their height to the screen and scroll.
 
 ## Rules

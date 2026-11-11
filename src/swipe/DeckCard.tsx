@@ -1,0 +1,122 @@
+import { ArrowDownToLine, Check, Layers, MapPin, Play } from "lucide-react";
+import type { CSSProperties, HTMLAttributes } from "react";
+
+import { Original } from "@/carousel/Original";
+import { togglePick } from "@/store/picks";
+import { PICKS, RATING_LABEL, ratingClass, type Media } from "@/types";
+import { PlaceField } from "@/ui/StageOverlay";
+import { tagStyle } from "@/ui/tagColor";
+import { useThumb } from "@/ui/useThumb";
+
+import { leanOf, type Verdict } from "./deckGesture";
+import type { DeckDrag } from "./useDeckDrag";
+
+const WHEN = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+const STAMPS: { verdict: Verdict; label: string }[] = [
+  { verdict: "keep", label: "Keep" },
+  { verdict: "discard", label: "Nope" },
+  { verdict: "favorite", label: "Favorite" },
+  { verdict: "meh", label: "Meh" },
+];
+
+type Props = {
+  media: Media;
+  /** The card you are deciding on; the other one waits underneath. */
+  top: boolean;
+  drag: DeckDrag;
+  leaving?: Verdict;
+  stackCount?: number;
+  presets: string[];
+  handlers?: HTMLAttributes<HTMLDivElement>;
+};
+
+/**
+ * One photo/video on the deck. The whole photo is shown (contain) over a
+ * blurred copy of itself, so a landscape shot is rated as it was taken, not
+ * as a crop.
+ */
+export function DeckCard({ media, top, drag, leaving, stackCount, presets, handlers }: Props) {
+  const thumb = useThumb(media);
+  const picked = media.exportedTo.some((e) => e.series === PICKS);
+  const lean = leaving
+    ? { keep: 0, discard: 0, favorite: 0, meh: 0, [leaving]: 1 }
+    : top
+      ? leanOf(drag.dx, drag.dy)
+      : { keep: 0, discard: 0, favorite: 0, meh: 0 };
+  const cls = ["deck-card", top ? "is-top" : "is-next", drag.active && top && "is-dragging", leaving && `is-leaving-${leaving}`]
+    .filter(Boolean)
+    .join(" ");
+  const style = {
+    "--dx": `${top ? drag.dx : 0}px`,
+    "--dy": `${top ? drag.dy : 0}px`,
+    // The card tilts as it is thrown sideways, like one held at the bottom.
+    "--rot": `${top ? drag.dx / 18 : 0}deg`,
+    "--keep": lean.keep,
+    "--discard": lean.discard,
+    "--favorite": lean.favorite,
+    "--meh": lean.meh,
+  } as CSSProperties;
+
+  return (
+    <div className={cls} style={style} data-id={media.id} aria-hidden={!top} {...(top ? handlers : {})}>
+      {thumb.url && <img className="deck-fill" src={thumb.url} alt="" draggable={false} />}
+      {thumb.url ? <img className="deck-photo" src={thumb.url} alt="" draggable={false} /> : <span className="card-ph" />}
+      {top && <Original media={media} />}
+
+      {stackCount && (
+        <span className="deck-chip deck-burst">
+          <Layers size={13} aria-hidden="true" /> {stackCount}
+        </span>
+      )}
+      {media.type === "video" && !top && (
+        <span className="deck-chip deck-video" aria-hidden="true">
+          <Play size={13} fill="currentColor" />
+        </span>
+      )}
+      {top && (
+        <button
+          type="button"
+          className={picked ? "deck-pick is-picked" : "deck-pick"}
+          aria-pressed={picked}
+          aria-label={picked ? "Picked — tap to unpick" : "Pick"}
+          onClick={() => void togglePick()}
+        >
+          {picked ? <Check size={18} strokeWidth={3} /> : <ArrowDownToLine size={18} />}
+        </button>
+      )}
+
+      {STAMPS.map((s) => (
+        <span key={s.verdict} className={`deck-stamp is-${s.verdict}`} aria-hidden="true">
+          {s.label}
+        </span>
+      ))}
+
+      <div className="deck-info">
+        <div className="deck-when tabular">
+          {WHEN.format(new Date(media.takenAt))}
+          {media.rating !== 0 && <span className={`deck-rating ${ratingClass(media.rating)}`}>{RATING_LABEL[media.rating]}</span>}
+        </div>
+        {top ? (
+          <PlaceField key={media.id} value={media.place ?? ""} />
+        ) : (
+          media.place && (
+            <span className="place-field">
+              <MapPin size={13} aria-hidden="true" />
+              {media.place}
+            </span>
+          )
+        )}
+        {media.tags.length > 0 && (
+          <div className="deck-tags">
+            {media.tags.map((t) => (
+              <span key={t} className="tag" style={tagStyle(t, presets)}>
+                <span>{t}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

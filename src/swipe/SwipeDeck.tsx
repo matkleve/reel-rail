@@ -1,0 +1,151 @@
+import { PartyPopper, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useShallow } from "zustand/react/shallow";
+
+import { TOGGLE_PLAY } from "@/carousel/events";
+import { graceMs } from "@/store/discards";
+import { useReel } from "@/store/useReel";
+import { useUi } from "@/store/useUi";
+import { Button } from "@/ui/kit/Button";
+import { LeavingBar } from "@/ui/LeavingBar";
+
+import { decide, deckOrder, restartDeck, topOf, undoDecision } from "./deck";
+import { DeckActions } from "./DeckActions";
+import { DeckCard } from "./DeckCard";
+import { DECIDE_PX, type Throw, type Verdict } from "./deckGesture";
+import { DeckHint } from "./DeckHint";
+import { useDeckDrag } from "./useDeckDrag";
+
+/** A duration token in ms — the fly-out waits for the CSS transition it starts. */
+function tokenMs(name: string): number {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return v.endsWith("ms") ? parseFloat(v) : parseFloat(v) * 1000 || 0;
+}
+
+type Note = { verdict: Verdict; at: number };
+
+/**
+ * The phone: one card at a time, thrown right (keep), left (discard), up
+ * (favorite) or down (not great). The next card waits underneath and grows
+ * into place as you throw. Browsing back and forth is the timeline's job.
+ */
+export function SwipeDeck() {
+  const s = useReel(
+    useShallow((x) => ({
+      order: x.order,
+      stacks: x.stacks,
+      expanded: x.expanded,
+      currentId: x.currentId,
+      filters: x.filters,
+      reel: x.reel,
+    })),
+  );
+  const ids = useMemo(() => deckOrder(s), [s]);
+  const top = topOf(s);
+  const [finishedAt, setFinishedAt] = useState<string>();
+  const [leaving, setLeaving] = useState<Verdict>();
+  const [note, setNote] = useState<Note>();
+  const done = !top || finishedAt === top || !ids.includes(top);
+  const next = done ? undefined : ids[ids.indexOf(top) + 1];
+
+  const throwCard = (verdict: Verdict) => {
+    if (leaving || done) return;
+    setLeaving(verdict);
+    setTimeout(() => {
+      if (!decide(verdict)) setFinishedAt(useReel.getState().currentId);
+      setLeaving(undefined);
+      setNote({ verdict, at: Date.now() });
+    }, tokenMs("--dur-3"));
+  };
+  const undo = () => {
+    if (leaving || !undoDecision()) return;
+    setFinishedAt(undefined);
+    setNote(undefined);
+  };
+
+  const onThrow = (t: Throw) => {
+    if (t.kind === "decide") throwCard(t.verdict);
+    else if (t.kind === "tap" && top && s.reel.media[top]?.type === "video") window.dispatchEvent(new Event(TOGGLE_PLAY));
+  };
+  const { drag, handlers } = useDeckDrag(onThrow, !leaving && !done);
+
+  // The current item may not pass a filter just switched on: deal the next one that does.
+  useEffect(() => {
+    if (!top || !ids.length || ids.includes(top)) return;
+    const at = s.order.indexOf(top);
+    useReel.getState().setCurrent(ids.find((id) => s.order.indexOf(id) > at) ?? ids.at(-1)!);
+  }, [top, ids, s.order]);
+
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(undefined), 3500);
+    return () => clearTimeout(t);
+  }, [note]);
+
+  const progress = leaving ? 1 : Math.min(1, Math.max(Math.abs(drag.dx), Math.abs(drag.dy)) / DECIDE_PX);
+  const stackCount = (id: string) => {
+    const sid = s.stacks.stackOf[id];
+    return sid && !s.expanded.has(sid) ? s.stacks.members[sid]!.length : undefined;
+  };
+  const topMedia = !done && top ? s.reel.media[top] : undefined;
+
+  return (
+    <div className="deck-wrap">
+      <div className="deck" style={{ "--progress": progress } as CSSProperties}>
+        {next && <DeckCard key={next} media={s.reel.media[next]!} top={false} drag={drag} stackCount={stackCount(next)} presets={s.reel.tagPresets} />}
+        {topMedia && (
+          <DeckCard
+            key={topMedia.id}
+            media={topMedia}
+            top
+            drag={drag}
+            leaving={leaving}
+            stackCount={stackCount(topMedia.id)}
+            presets={s.reel.tagPresets}
+            handlers={handlers}
+          />
+        )}
+        {done && <Finished empty={ids.length === 0} />}
+        {note && <DeckNote key={note.at} verdict={note.verdict} onUndo={undo} />}
+        {!done && <DeckHint />}
+      </div>
+      <LeavingBar />
+      <DeckActions media={topMedia} onThrow={throwCard} onUndo={undo} />
+    </div>
+  );
+}
+
+function Finished({ empty }: { empty: boolean }) {
+  const filtered = useReel((x) => x.filters.rating !== "all" || x.filters.tags.length > 0 || x.filters.hideDiscards || x.filters.neverExported);
+  return (
+    <div className="deck-done">
+      <PartyPopper size={32} aria-hidden="true" />
+      <h2>{empty ? "Nothing to sort" : "All sorted"}</h2>
+      <p>{empty ? (filtered ? "Nothing passes the filters." : "No photos or videos here yet.") : "That was the last one. Your picks are waiting in the header."}</p>
+      {!empty && (
+        <Button variant="secondary" icon={RotateCcw} onClick={restartDeck}>
+          Start over
+        </Button>
+      )}
+    </div>
+  );
+}
+
+const NOTE_TEXT: Record<Verdict, string> = { keep: "Kept", favorite: "Favorite", meh: "Not great", discard: "Discarded" };
+
+/** What just happened, with one tap to take it back. */
+function DeckNote({ verdict, onUndo }: { verdict: Verdict; onUndo(): void }) {
+  const inPlace = useReel((x) => x.reel.workflow === "edit") && useUi.getState().sourceKind === "folder";
+  const grace = Math.round(graceMs() / 1000);
+  const text =
+    verdict === "discard" ? `${inPlace ? "Leaves the folder" : "Discarded — leaves"} in ${grace} s` : NOTE_TEXT[verdict];
+  return (
+    <div className={`deck-note is-${verdict}`} role="status">
+      <span className="deck-note-dot" aria-hidden="true" />
+      {text}
+      <Button size="sm" variant="secondary" onClick={onUndo}>
+        Undo
+      </Button>
+    </div>
+  );
+}

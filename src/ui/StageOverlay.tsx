@@ -48,7 +48,7 @@ export function StageOverlay() {
 }
 
 /** Commits on Enter/blur; applies to the whole selection when there is one. */
-function PlaceField({ value }: { value: string }) {
+export function PlaceField({ value }: { value: string }) {
   const [draft, setDraft] = useState(value);
   const input = useRef<HTMLInputElement>(null);
   const focusTick = useUi((s) => s.placeFocus);

@@ -14,6 +14,8 @@ import { HelpDialog } from "@/ui/HelpDialog";
 import { SettingsDialog } from "@/ui/SettingsDialog";
 import { StageOverlay } from "@/ui/StageOverlay";
 import { StartScreen } from "@/ui/StartScreen";
+import { PHONE, useMedia } from "@/ui/useMedia";
+import { SwipeDeck } from "@/swipe/SwipeDeck";
 import { Toast } from "@/ui/Toast";
 import { useKeyboard } from "@/ui/useKeyboard";
 import { WorkflowDialog } from "@/ui/WorkflowDialog";
@@ -21,6 +23,9 @@ import { WorkflowDialog } from "@/ui/WorkflowDialog";
 export function App() {
   const phase = useUi((s) => s.phase);
   const theme = useUi((s) => s.theme);
+  // A phone gets the swipe deck: one card, thrown to decide. The carousel
+  // stays for bigger screens, where the keyboard and the wide rail win.
+  const phone = useMedia(PHONE);
   useKeyboard();
 
   // Layout effect: it must land before children's effects run — the waveform
@@ -41,9 +46,15 @@ export function App() {
     <div className="app">
       <Header />
       <main className="stage-wrap">
-        <Carousel />
-        <StageOverlay />
-        <Dock />
+        {phone ? (
+          <SwipeDeck />
+        ) : (
+          <>
+            <Carousel />
+            <StageOverlay />
+            <Dock />
+          </>
+        )}
       </main>
       <Waveform />
       <Toast />

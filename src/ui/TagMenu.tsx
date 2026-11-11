@@ -63,7 +63,7 @@ export function TagGroup({ media }: { media: Media }) {
   );
 }
 
-function TagPanel() {
+export function TagPanel() {
   const presets = useReel((s) => s.reel.tagPresets);
   // useShallow: targetIds builds a new array each call; compare its contents.
   const ids = useReel(useShallow((s) => targetIds(s)));
