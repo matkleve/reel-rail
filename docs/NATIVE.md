@@ -1,8 +1,9 @@
 # The native iPhone/iPad app (Capacitor)
 
-**Status: prepared, not built yet.** The Xcode project (`ios/`) and the Photos
-plugin are in the repo; building needs a Mac. Nothing in the web app changes:
-in a browser `isNativeApp()` is false and the plugin is never called.
+**Status: wired, not run on a device yet.** The Xcode project (`ios/`), the
+Photos plugin and the Photos source are in the repo. Build it on a Mac, or
+without one on GitHub (§ Without a Mac). Nothing in the web app changes: in a
+browser `isNativeApp()` is false and the plugin is never called.
 
 ## Why a native app
 
@@ -32,6 +33,23 @@ plug in the iPhone, pick it as the run destination, ▶︎. For the brother:
 `npm run ios` = `vite build && cap sync ios && cap open ios`. After any web
 change, `npx cap sync ios` copies the new `dist/` into the app.
 
+## Without a Mac (Windows + Sideloadly)
+
+1. GitHub → **Actions → ios → Run workflow** (or push a tag `ios-1`, `ios-2` …).
+   It builds an unsigned `reel-rail.ipa` on a GitHub Mac (~10 min); download
+   it from the run's **Artifacts**. On a private repo macOS minutes count ten
+   times against the free allowance — start it by hand, not on every push.
+2. On the Windows PC: install iTunes and iCloud from Apple's website (not the
+   Microsoft Store), then [Sideloadly](https://sideloadly.io).
+3. iPhone on the cable, drag the `.ipa` into Sideloadly, sign in with an
+   Apple ID (a free one is fine), Start.
+4. On the iPhone: *Settings → Privacy & Security → Developer Mode* on
+   (restart), then *Settings → General → VPN & Device Management* → trust your
+   Apple ID.
+5. A free Apple ID's signature lasts **7 days**: then sideload again (the
+   ratings stay — they live in the app's storage). A paid developer account
+   makes it a year, or use TestFlight.
+
 ## What is where
 
 ```
@@ -40,24 +58,28 @@ ios/App/App/PhotoLibraryPlugin.swift  requestAccess, listAssets, exportAsset, de
 ios/App/App/MainViewController.swift  registers the plugin (set in Main.storyboard)
 ios/App/App/Info.plist              Photos usage texts (shown in the permission prompt)
 src/native/photoLibrary.ts          the JS side: PhotoLibrary, isNativeApp(), assetFile()
+src/native/photosSource.ts          PhotosSource: the library as a Source ("Open my Photos" on the start screen)
+.github/workflows/ios.yml           unsigned .ipa on GitHub's Macs
 ```
 
-## Next step: a Photos source
+## The Photos source
 
-The app still opens photos through the file picker today. The next piece is a
-`PhotosSource` (beside `FolderSource` / `FilesSource` in `src/fs/`):
+"Open my Photos" (start screen, app only) → `openPhotos()` → `PhotosSource`:
 
-- `list()` from `listAssets` — instant, no copying.
-- `getFile()` from `exportAsset` — one original, on demand.
-- Recently Deleted → `deleteAssets` when a discard's countdown runs out
-  (one confirmation per batch from iOS — batch them, e.g. when leaving the
-  app, rather than one prompt per photo).
-- **Open decision:** identity. Today an item is known by a hash of its
-  first + last MB + size, which is what matches the same photo on the
-  computer (and rating sync). Computing it needs the bytes — fine for photos,
-  slow for long videos. Options: hash natively in Swift while streaming
-  (no copy into the web view), or key by the Photos id and match by hash
-  lazily. Decide before building.
+- `list()` from `listAssets` — instant, nothing copied. Each file carries
+  `known` (id, capture time, GPS), so the scan reads no bytes at all.
+- `getFile()` from `exportAsset` — one original, when it is shown; the last
+  few stay in memory (the top card is shown as a thumbnail and an original).
+- **Identity, decided 2026-11-11:** the Photos id (`ph-…`), not the content
+  hash — hashing needs every original copied out first. The cost: the same
+  photo on the computer is another item. Nothing pays that today, the app has
+  no rating sync (Free tier, below). Revisit if sync comes to the app: then
+  hash natively in Swift while streaming.
+- Read-only (`kind: "files"`): a discard is hidden after its countdown, never
+  deleted from Photos, and a trimmed video is handed to the share sheet
+  ("Save Video"). **Next:** deleting into Recently Deleted via `deleteAssets`
+  — behind the edit-or-leave question (hard rule 1), batched so iOS asks once
+  per batch rather than once per photo.
 
 ## Paying: on the web only, never in the app
 
@@ -79,7 +101,7 @@ their commission). So:
 
 ## Untested
 
-Nothing here has been compiled — this environment has no Xcode. Expect the
-first build to need small fixes. LIVE CHECK: build, grant Photos access,
+The Swift side has not run on a device yet. The GitHub build compiles it;
+expect the first device run to need small fixes. LIVE CHECK: build, grant Photos access,
 check `listAssets` from Safari's Web Inspector console:
 `Capacitor.Plugins.PhotoLibrary.listAssets().then(r => r.assets.length)`.

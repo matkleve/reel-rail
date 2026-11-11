@@ -1,7 +1,7 @@
 import { binUntil } from "@/fs/deletion";
-import { FilesSource } from "@/fs/filesSource";
 import { hashFile } from "@/fs/hash";
 import { getFolder, getMediaFile, getSource } from "@/fs/session";
+import type { SessionFiles, Source } from "@/fs/source";
 import { moveFile, moveToTrash } from "@/fs/trash";
 import { trimToBlob, trimToWritable, trimmedTakenAt, type TrimRange } from "@/fs/trimVideo";
 import { DISCARD, type Media } from "@/types";
@@ -98,7 +98,7 @@ async function trimForSharing(media: Media, original: File, range: TrimRange, wh
   const name = `${original.name.slice(0, dot)}-trimmed${original.name.slice(dot)}`;
   const file = new File([blob], name, { type: blob.type, lastModified: Date.now() });
   const { id } = await hashFile(file);
-  const path = (getSource() as FilesSource).put(file);
+  const path = (getSource() as Source & SessionFiles).put(file);
   // The original is still in Photos: a discard, so the checklist says to delete it there.
   takeOver(media, { id, file, path, when }, withRating(media, DISCARD));
   return file;

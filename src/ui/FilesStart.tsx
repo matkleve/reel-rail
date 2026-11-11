@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { savedLibrarySize } from "@/fs/filesSource";
 import { canPickFolder, isTouch } from "@/fs/support";
+import { isNativeApp } from "@/native/photoLibrary";
+import { openPhotos } from "@/store/openSource";
 import { useUi } from "@/store/useUi";
 
 import { Button } from "./kit/Button";
@@ -20,6 +22,8 @@ export function FilesStart() {
   const photos = useFilePick();
   const folder = useFilePick(true);
   const device = isTouch() ? "this device" : "this browser";
+  // The iPhone app reads the Photos library directly; the picker stays as the way to add files from elsewhere.
+  const native = isNativeApp();
 
   useEffect(() => {
     void savedLibrarySize().then(setSaved);
@@ -35,7 +39,12 @@ export function FilesStart() {
         </p>
       )}
       <div className="start-actions">
-        <Button variant="primary" size="lg" icon={Images} onClick={photos.open} autoFocus>
+        {native && (
+          <Button variant="primary" size="lg" icon={Images} onClick={() => void openPhotos()} autoFocus>
+            Open my Photos
+          </Button>
+        )}
+        <Button variant={native ? "ghost" : "primary"} size="lg" icon={Images} onClick={photos.open} autoFocus={!native}>
           {saved ? "Add photos again" : "Add photos & videos"}
         </Button>
         {canPickFolder() && (

@@ -2,7 +2,7 @@ import type { ReelFile } from "@/types";
 
 import { idbGet, idbSet } from "./idb";
 import { normalize } from "./reelFile";
-import type { Source, SourceFile } from "./source";
+import type { SessionFiles, Source, SourceFile } from "./source";
 import { isSkippedPath, mediaTypeOf } from "./walk";
 
 const LIBRARY_KEY = "library";
@@ -45,7 +45,7 @@ export function pathFor(file: Pick<File, "name"> & Key & { webkitRelativePath?: 
 }
 
 /** Files handed over by the system picker. They live for this session only. */
-export class FilesSource implements Source {
+export class FilesSource implements Source, SessionFiles {
   readonly kind = "files";
   readonly name: string;
   private files = new Map<string, File>();

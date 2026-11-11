@@ -1,0 +1,47 @@
+name: ios
+
+# The iPhone app as an unsigned .ipa, built on GitHub's Macs — for when there
+# is no Mac at hand. Install it with Sideloadly and a free Apple ID (it signs
+# the app; it then runs for 7 days). With a paid developer account, TestFlight
+# replaces this. Steps: docs/NATIVE.md § Without a Mac.
+#
+# Started by hand (Actions → ios → Run workflow) or by pushing a tag
+# `ios-<anything>`, not on every push: macOS minutes count ten times against
+# a private repository's free allowance.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["ios-*"]
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync ios
+      - name: Build the app (unsigned — Sideloadly signs it with your Apple ID)
+        shell: bash
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -derivedDataPath build/dd \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tail -n 200
+          test -d build/dd/Build/Products/Release-iphoneos/App.app
+      - name: Package as .ipa
+        run: |
+          mkdir -p build/Payload
+          cp -R build/dd/Build/Products/Release-iphoneos/App.app build/Payload/
+          cd build && zip -qry reel-rail.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reel-rail-ipa
+          path: build/reel-rail.ipa
+          retention-days: 30

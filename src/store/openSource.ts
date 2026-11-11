@@ -2,6 +2,7 @@ import { FilesSource } from "@/fs/filesSource";
 import { FolderSource } from "@/fs/folderSource";
 import { ensurePermission, loadHandle, saveHandle } from "@/fs/handleStore";
 import { scanSource } from "@/fs/scan";
+import { PhotoLibrary } from "@/native/photoLibrary";
 import { peekSource, setSource } from "@/fs/session";
 import type { Source } from "@/fs/source";
 
@@ -97,6 +98,26 @@ export async function openFiles(picked: File[]): Promise<void> {
     useReel.getState().refresh(reel);
     ui.set({ phase: "ready" });
     showToast(`${added} added`);
+  } catch (err) {
+    ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+/**
+ * Native app: the Photos library itself — listed instantly, each original
+ * copied out only when it is shown. The source is loaded on demand: the web
+ * app never needs it.
+ */
+export async function openPhotos(): Promise<void> {
+  const ui = useUi.getState();
+  try {
+    const { access } = await PhotoLibrary.requestAccess();
+    if (access !== "full" && access !== "limited") {
+      ui.set({ error: "reel-rail needs access to your photos. Allow it in Settings → Privacy & Security → Photos → reel-rail." });
+      return;
+    }
+    const { PhotosSource } = await import("@/native/photosSource");
+    await openSource(new PhotosSource());
   } catch (err) {
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });
   }

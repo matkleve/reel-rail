@@ -29,6 +29,13 @@ export async function scanSource(
   onProgress({ phase: "hashing", done, total: found.length });
 
   const identify = async (f: SourceFile) => {
+    if (f.known) {
+      const { id, size, mtime, meta } = f.known;
+      results.push({ id, path: f.path, type: f.type, size, mtime, meta });
+      done++;
+      onProgress({ phase: "hashing", done, total: found.length });
+      return;
+    }
     const file = await f.file();
     const known = byPath.get(f.path);
     if (known && known.size === file.size && known.mtime === file.lastModified) {
