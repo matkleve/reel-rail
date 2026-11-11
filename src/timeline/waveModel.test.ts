@@ -1,7 +1,7 @@
 import { media } from "@/test-utils";
 import type { Media } from "@/types";
 
-import { MAX_PAUSE_H, NEUTRAL, NIGHT_H, buildWave, maxZoom, nearest, waveLayers, windowAt } from "./waveform";
+import { MAX_PAUSE_H, NEUTRAL, NIGHT_H, buildWave, maxZoom, nearest, waveLayers, windowAt } from "./waveModel";
 
 function model(list: Media[]) {
   const map = Object.fromEntries(list.map((m) => [m.id, m]));

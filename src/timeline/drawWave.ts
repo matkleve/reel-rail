@@ -1,6 +1,6 @@
 import type { Rating } from "@/types";
 
-import { NEUTRAL, type Waves } from "./waveform";
+import { NEUTRAL, type Waves } from "./waveModel";
 
 /** Horizontal resolution of the wave, in px per bin. */
 export const BIN_PX = 3;

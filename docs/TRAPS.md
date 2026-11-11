@@ -6,6 +6,20 @@ Newest at the top. (Format from grundriss.)
 
 ---
 
+## Two files whose names differ only in case
+
+**Looked right:** `timeline/Waveform.tsx` (the component) next to
+`timeline/waveform.ts` (the model); `import … from "@/timeline/Waveform"`
+built and tested green on Linux for weeks.
+
+**Was true:** macOS (and Windows) file systems ignore case. On the first
+build on a Mac (the iPhone app, GitHub's macOS runner) the import resolved
+to `waveform.ts`, and the build failed: "Waveform is not exported". Linux
+CI cannot see it.
+
+**The check:** no two paths in `src/` that are equal ignoring case. The
+model is now `waveModel.ts`.
+
 ## Mouse drags in tests produce clicks; finger swipes do not
 
 **Looked right:** after a swipe, a flag swallows the click that ends on a

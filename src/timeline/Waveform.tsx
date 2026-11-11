@@ -10,7 +10,7 @@ import { tagColor, tagStyle } from "@/ui/tagColor";
 
 import { BIN_PX, drawWave, resolveColor } from "./drawWave";
 import { useWavePointers } from "./useWavePointers";
-import { NEUTRAL, buildWave, maxZoom, waveLayers, windowAt } from "./waveform";
+import { NEUTRAL, buildWave, maxZoom, waveLayers, windowAt } from "./waveModel";
 
 const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const LABEL_SPACING = 84;

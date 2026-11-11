@@ -3,7 +3,7 @@ import { useRef, useState, type PointerEvent, type RefObject } from "react";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 
-import { nearest, type WaveModel, type Window } from "./waveform";
+import { nearest, type WaveModel, type Window } from "./waveModel";
 
 /**
  * Pointer handling for the waveform: one finger (or the mouse) jumps and
