@@ -219,7 +219,9 @@ ok(".reel.json saved (ratings, place, altPaths, EXIF dates)");
 
 // ---- Filter -------------------------------------------------------------------
 await page.locator(".header").getByRole("radio", { name: "Top" }).click();
-if ((await page.locator(".card.is-dimmed").count()) < 4) await fail("Top filter should dim the other cards");
+// The flat strip mounts fewer, bigger cards: check every mounted one, not a count.
+if (!(await page.locator(".card.is-dimmed").count()) || (await page.locator(".card:not(.r2):not(.is-dimmed)").count()))
+  await fail("Top filter should dim every card that is not Top");
 await page.getByRole("radio", { name: "All" }).click();
 ok("filter dims instead of hiding");
 
