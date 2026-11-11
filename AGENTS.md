@@ -49,8 +49,8 @@ Never report work as done without a green `verify`. Re-run one check alone:
    No raw colors, radii, shadows or durations in components or CSS rules —
    tokens in `src/styles/tokens.css` only. Buttons, tooltips, popovers and
    dialogs come from `src/ui/kit/`. Check both themes.
-6. **Stay fast at 2,000+ media.** The carousel only mounts the cards around the
-   current one and the waveform is one canvas; anything that
+6. **Stay fast at 2,000+ media.** The strip only mounts the cards around the
+   current one, the deck two, and the timeline is one canvas; anything that
    renders per-medium must be O(visible), and per-change work at most O(n).
 7. **Files ≤ 300 lines** (lint-enforced). Split by responsibility, not to dodge the rule.
 
@@ -59,9 +59,9 @@ Never report work as done without a green `verify`. Re-run one check alone:
 ```
 src/fs/        file access: Source (FolderSource | FilesSource), hash, metadata, .reel.json, thumbnails, share, export
 src/store/     zustand stores (useReel = data, useUi = screens/dialogs), filters, stacks, autosave
-src/carousel/  the 3D carousel: pure layout + gesture classifier (tested), cards, swipe hook
-src/swipe/     the phone's swipe deck: throw classifier + deck moves (tested), cards, round buttons
-src/timeline/  the waveform timeline: pure model (tested) + canvas
+src/carousel/  the photo strip (Timeline screen): pure layout + gesture classifier (tested), cards, swipe hook
+src/swipe/     the swipe deck (Sort screen): throw classifier + deck moves (tested), cards, round buttons
+src/timeline/  the bar timeline: pure model (tested) + canvas
 src/cleanup/   "Recently deleted" (bring back, delete now)
 src/account/   the Supabase adapter: sign-in, subscription (nothing else talks to Supabase)
 supabase/      migrations (schema + row-level security) and the policy checklist

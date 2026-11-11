@@ -5,7 +5,7 @@ import { TRIMMABLE } from "@/fs/trimVideo";
 import { useUi } from "@/store/useUi";
 import { secondsLeft } from "@/fs/deletion";
 import { graceMs } from "@/store/discards";
-import { DISCARD, PICKS, ratingClass, type Media } from "@/types";
+import { DISCARD, PICKS, RATING_LABEL, ratingClass, type Media } from "@/types";
 import { Button } from "@/ui/kit/Button";
 import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
@@ -25,8 +25,8 @@ type Props = {
 };
 
 /**
- * One photo/video standing on the floor. Size and height are its rating;
- * brightness falls off with distance from the centre (the spotlight).
+ * One photo/video in the strip. Its rating is a chip in the corner (not its
+ * size); brightness falls off with distance from the centre (the spotlight).
  */
 export const Card = memo(function Card(p: Props) {
   const { media, place } = p;
@@ -39,7 +39,7 @@ export const Card = memo(function Card(p: Props) {
   const style = {
     width: place.w,
     height: place.h,
-    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotateY(${place.rotY}deg)`,
+    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0)`,
     zIndex: 100 - Math.abs(place.d),
     "--dim": Math.max(0.35, 1 - Math.abs(place.d) * 0.16),
   } as CSSProperties;
@@ -75,6 +75,12 @@ export const Card = memo(function Card(p: Props) {
           onClick={() => useUi.getState().set({ dialog: "trim" })}
         />
       )}
+      {media.rating !== 0 && (
+        <span className={`card-rating ${ratingClass(media.rating)}`} aria-hidden="true">
+          {media.rating === 2 && <Star size={11} fill="currentColor" strokeWidth={0} />}
+          {RATING_LABEL[media.rating]}
+        </span>
+      )}
       {media.rating === DISCARD && media.discardedAt && <Countdown discardedAt={media.discardedAt} />}
       {p.selected && <CircleCheck className="card-check" size={22} fill="var(--select)" color="white" aria-hidden="true" />}
       {p.stackCount && (
@@ -83,11 +89,6 @@ export const Card = memo(function Card(p: Props) {
         </span>
       )}
       <span className="card-badges" aria-hidden="true">
-        {media.rating === 2 && (
-          <span className="badge is-fav">
-            <Star size={12} fill="currentColor" strokeWidth={0} />
-          </span>
-        )}
         {picked && (
           <span className="badge is-pick">
             <ArrowDownToLine size={12} strokeWidth={2.6} />

@@ -14,7 +14,7 @@ import { HelpDialog } from "@/ui/HelpDialog";
 import { SettingsDialog } from "@/ui/SettingsDialog";
 import { StageOverlay } from "@/ui/StageOverlay";
 import { StartScreen } from "@/ui/StartScreen";
-import { PhoneTabs } from "@/ui/PhoneTabs";
+import { PhoneTabs } from "@/ui/ViewTabs";
 import { PHONE, useMedia } from "@/ui/useMedia";
 import { SwipeDeck } from "@/swipe/SwipeDeck";
 import { Toast } from "@/ui/Toast";
@@ -24,12 +24,11 @@ import { WorkflowDialog } from "@/ui/WorkflowDialog";
 export function App() {
   const phase = useUi((s) => s.phase);
   const theme = useUi((s) => s.theme);
-  // A phone has two screens: the swipe deck (one card, thrown to decide) and
-  // the photos side by side over the timeline. Bigger screens show the
-  // second one only — with a keyboard and a wide rail, rating there is faster.
+  // Two screens on every size: the swipe deck (one card, thrown to decide)
+  // and the photo strip over the timeline. A phone switches with tabs at the
+  // thumb, a bigger screen in the header.
   const phone = useMedia(PHONE);
-  const phoneView = useUi((s) => s.phoneView);
-  const sorting = phone && phoneView === "sort";
+  const sorting = useUi((s) => s.view === "sort");
   useKeyboard();
 
   // Layout effect: it must land before children's effects run — the timeline
@@ -47,7 +46,7 @@ export function App() {
     );
 
   return (
-    <div className={phone ? "app is-phone" : "app"}>
+    <div className={["app", phone && "is-phone", sorting && "is-sorting"].filter(Boolean).join(" ")}>
       <Header />
       <main className="stage-wrap">
         {sorting ? (

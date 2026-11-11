@@ -449,3 +449,17 @@
   outline: 2px solid var(--focus);
   outline-offset: -4px;
 }
+
+/* A big screen sorting: the deck keeps a phone-like width in the middle, and
+   the timeline row is gone (the strip's job). */
+.deck-wrap {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+.app.is-sorting:not(.is-phone) {
+  grid-template-rows:
+    calc(var(--header-h) + env(safe-area-inset-top, 0px))
+    minmax(0, 1fr)
+    env(safe-area-inset-bottom, 0px);
+}

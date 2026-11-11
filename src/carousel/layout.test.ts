@@ -1,7 +1,7 @@
 import { media } from "@/test-utils";
 import type { Media } from "@/types";
 
-import { RATING_SCALE, floorFor, layoutCarousel } from "./layout";
+import { layoutCarousel } from "./layout";
 
 const STAGE = { w: 1600, h: 600 };
 
@@ -27,7 +27,6 @@ describe("layoutCarousel", () => {
     const c = cards.find((x) => x.d === 0)!;
     expect(c.id).toBe("m2");
     expect(c.x).toBe(STAGE.w / 2);
-    expect(c.rotY).toBe(0);
   });
 
   it("puts neighbours directly side by side, without overlap, in time order", () => {
@@ -41,31 +40,21 @@ describe("layoutCarousel", () => {
     }
   });
 
-  it("each of the five levels is bigger and higher than the one below", () => {
+  it("the rating changes neither size nor height — it is a chip on the card", () => {
     const placed = ([-2, -1, 0, 1, 2] as const).map((r) => run([media("a", { rating: r })]).cards[0]!);
-    for (let i = 1; i < placed.length; i++) {
-      expect(placed[i]!.h).toBeGreaterThan(placed[i - 1]!.h);
-      expect(placed[i]!.bottom).toBeLessThan(placed[i - 1]!.bottom);
+    for (const c of placed) {
+      expect(c.h).toBeCloseTo(placed[0]!.h);
+      expect(c.bottom).toBeCloseTo(placed[0]!.bottom);
     }
   });
 
-  it("favorites are bigger and higher, discards smaller and lower", () => {
-    const ratings = [-2, 0, 2] as const;
-    const placed = ratings.map((r) => run([media("a", { rating: r })]).cards[0]!);
-    const [unusable, neutral, top] = placed as [typeof placed[0], typeof placed[0], typeof placed[0]];
-    expect(top.h / neutral.h).toBeCloseTo(RATING_SCALE[2] / RATING_SCALE[0]);
-    expect(top.bottom).toBeLessThan(neutral.bottom);
-    expect(unusable.h).toBeLessThan(neutral.h);
-    expect(unusable.bottom).toBeGreaterThan(neutral.bottom);
-  });
-
-  it("shrinks cards with distance and turns them toward the centre", () => {
-    const { cards } = run(series(7), 3);
+  it("shrinks cards with distance, all on one centre line", () => {
+    const { cards } = run(series(7), 3, 0.6); // portrait shots: several fit beside the centre
     const at = (d: number) => cards.find((c) => c.d === d)!;
     expect(at(1).h).toBeLessThan(at(0).h);
-    expect(at(3).h).toBeLessThan(at(1).h);
-    expect(at(1).rotY).toBeLessThan(0);
-    expect(at(-1).rotY).toBeGreaterThan(0);
+    expect(at(2).h).toBeLessThan(at(1).h);
+    const centre = (c: { bottom: number; h: number }) => c.bottom - c.h / 2;
+    expect(centre(at(2))).toBeCloseTo(centre(at(0)));
   });
 
   it("only lays out what fits around the viewport", () => {
@@ -88,17 +77,17 @@ describe("layoutCarousel", () => {
 
   it("keeps a panorama in the centre narrower than the stage", () => {
     const { cards } = run([media("a", { rating: 2 })], 0, 2.2);
-    expect(cards[0]!.w).toBeLessThanOrEqual(STAGE.w * 0.7 + 0.001);
+    expect(cards[0]!.w).toBeLessThanOrEqual(STAGE.w * 0.56 + 0.001);
   });
 });
 
-describe("portrait band", () => {
+describe("the band between date and dock", () => {
   // A phone in Safari: 393 wide, the date covers the top 70 px, the dock the bottom 80.
   const PHONE = { w: 393, h: 540, top: 70, bottom: 80 };
-  const at = (rating: Media["rating"], aspect: number) =>
-    layoutCarousel(["a"], 0, { a: media("a", { rating }) }, () => aspect, PHONE).cards[0]!;
+  const at = (rating: Media["rating"], aspect: number, stage = PHONE) =>
+    layoutCarousel(["a"], 0, { a: media("a", { rating }) }, () => aspect, stage).cards[0]!;
 
-  it("keeps every level between the date and the dock", () => {
+  it("keeps every card between the date and the dock", () => {
     for (const r of [-2, -1, 0, 1, 2] as const) {
       const c = at(r, 9 / 16);
       expect(c.bottom - c.h).toBeGreaterThanOrEqual(PHONE.top);
@@ -110,20 +99,8 @@ describe("portrait band", () => {
     expect(at(2, 4 / 3).w).toBeCloseTo(393 * 0.84);
   });
 
-  it("puts the floor line where the cards stand", () => {
-    expect(floorFor(PHONE) * PHONE.h).toBeCloseTo(at(0, 1).bottom);
-  });
-
-  it("ignores insets in landscape", () => {
-    const a = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 1600, h: 600, top: 90, bottom: 90 });
-    expect(a.cards[0]!.bottom / 600).toBeCloseTo(0.8);
-  });
-});
-
-describe("floor", () => {
-  it("sits low in landscape, leaving room for the dock", () => {
-    const land = layoutCarousel(["a"], 0, { a: media("a") }, () => 1.5, { w: 1600, h: 600 }).cards[0]!;
-    expect(land.bottom / 600).toBeCloseTo(0.8);
-    expect(floorFor({ w: 1600, h: 600 })).toBeCloseTo(0.8);
+  it("centres the card in what is left, in landscape too", () => {
+    const c = at(0, 1.5, { w: 1600, h: 600, top: 90, bottom: 110 });
+    expect(c.bottom - c.h / 2).toBeCloseTo(90 + (600 - 90 - 110) / 2);
   });
 });

@@ -12,7 +12,7 @@ import { useSize } from "@/ui/useSize";
 import { Card } from "./Card";
 import { TOGGLE_PLAY } from "./events";
 import { SWIPE_MIN } from "./gesture";
-import { floorFor, layoutCarousel } from "./layout";
+import { layoutCarousel } from "./layout";
 import { useInsets } from "./useInsets";
 import { useSwipe } from "./useSwipe";
 
@@ -22,7 +22,7 @@ const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric",
 const WHEEL_STEP = 70;
 
 /**
- * The stage: cards side by side on a slightly tilted floor, current one in the
+ * The stage: a flat strip of cards side by side, the current one big in the
  * middle. Only the ~20 cards around the current one exist in the DOM, so the
  * folder size does not matter.
  */
@@ -75,7 +75,6 @@ export function Carousel() {
       }}
     >
       <div className="stage-spotlight" />
-      <div className="stage-floor" style={{ top: `${floorFor(box) * 100}%` }} />
       <div className="stage-plane">
         {layout.seps.map((sep) => (
           <div key={sep.key} className="day-sep" style={{ transform: `translateX(${sep.x}px)` }}>

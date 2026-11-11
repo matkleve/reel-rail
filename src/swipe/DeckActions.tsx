@@ -17,11 +17,11 @@ export function DeckActions({ media, onThrow, onUndo }: Props) {
   const off = !media;
   return (
     <div className="deck-actions" role="toolbar" aria-label="Decide">
-      <Button className="deck-btn is-undo" icon={RotateCcw} label="Undo" tipSide="above" onClick={onUndo} />
-      <Button className="deck-btn is-delete" icon={Trash2} label="Delete" tipSide="above" disabled={off} onClick={() => onThrow("delete")} />
-      <Button className="deck-btn is-big is-bad" icon={X} label="Bad" tipSide="above" disabled={off} onClick={() => onThrow("bad")} />
-      <Button className="deck-btn is-top" icon={Star} label="Top" tipSide="above" disabled={off} onClick={() => onThrow("top")} />
-      <Button className="deck-btn is-big is-good" icon={Heart} label="Good" tipSide="above" disabled={off} onClick={() => onThrow("good")} />
+      <Button className="deck-btn is-undo" icon={RotateCcw} label="Undo" kbd="Z" tipSide="above" onClick={onUndo} />
+      <Button className="deck-btn is-delete" icon={Trash2} label="Delete" kbd="↓" tipSide="above" disabled={off} onClick={() => onThrow("delete")} />
+      <Button className="deck-btn is-big is-bad" icon={X} label="Bad" kbd="←" tipSide="above" disabled={off} onClick={() => onThrow("bad")} />
+      <Button className="deck-btn is-top" icon={Star} label="Top" kbd="↑" tipSide="above" disabled={off} onClick={() => onThrow("top")} />
+      <Button className="deck-btn is-big is-good" icon={Heart} label="Good" kbd="→" tipSide="above" disabled={off} onClick={() => onThrow("good")} />
     </div>
   );
 }

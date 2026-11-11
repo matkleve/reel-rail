@@ -102,7 +102,8 @@ await page.getByRole("button", { name: "Open a folder" }).click();
 // A new folder asks once how to work on it.
 await page.getByRole("button", { name: /^Edit this folder/ }).click();
 await page.locator(".card").first().waitFor({ timeout: 15000 });
-if ((await page.locator(".card").count()) < 5) await fail("expected the carousel to show several cards");
+// The first card is current: only its right side has neighbours (bigger now that the strip is flat).
+if ((await page.locator(".card").count()) < 4) await fail("expected the strip to show several cards");
 const counter = () => page.locator(".stage-count").innerText();
 if ((await counter()) !== "1 / 10") await fail(`expected 10 items (duplicate merged, txt ignored), got ${await counter()}`);
 ok("scan: 10 items, duplicate collapsed, txt ignored");
@@ -131,6 +132,7 @@ await page.keyboard.press("Enter");
 ok("burst: Enter opens, X rejects the rest, Z undoes");
 
 // ---- Rate --------------------------------------------------------------------
+// A flat strip: the rating is a chip on the card, never its size or height.
 const center = () => page.locator(".card.is-current").boundingBox();
 await page.waitForTimeout(500);
 const before = await center();
@@ -138,25 +140,22 @@ await page.keyboard.press("ArrowUp");
 await page.keyboard.press("ArrowUp");
 await page.waitForTimeout(500);
 const after = await center();
-if (!(after.height > before.height * 1.2 && after.y < before.y)) await fail("rating up should make the card bigger and higher");
+if (Math.abs(after.height - before.height) > 1 || Math.abs(after.y - before.y) > 1) await fail("rating must not resize or move the card");
+if ((await page.locator(".card.is-current .card-rating").innerText()).trim() !== "Top") await fail("two steps up should show the Top chip");
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowDown");
-await page.waitForTimeout(500);
-const meh = await center();
+await page.waitForTimeout(300);
+if ((await page.locator(".card.is-current .card-rating").innerText()).trim() !== "Bad") await fail("one step down should show the Bad chip");
 await page.keyboard.press("ArrowDown");
-await page.waitForTimeout(500);
-const low = await center();
-if (!(meh.height < before.height && low.height < meh.height * 0.7 && low.y + low.height > meh.y + meh.height)) {
-  await fail("each step down should shrink the card and let it sink");
-}
+await page.waitForTimeout(300);
 await page.keyboard.press("ArrowRight");
 await page.keyboard.press("ArrowUp");
 await page.keyboard.press("z");
 await page.waitForTimeout(400);
-if ((await page.locator(".card.r2").count()) !== 1) await fail("expected exactly one favorite card");
+if ((await page.locator(".card.r2").count()) !== 1) await fail("expected exactly one top card");
 if ((await page.locator(".card.rm2").count()) !== 1) await fail("expected exactly one discard card");
 if ((await page.locator(".card.r1").count()) !== 0) await fail("undo did not revert the last rating");
-ok("five levels: ↑/↓ grow+lift / shrink+sink cards, Z undoes");
+ok("five levels: ↑/↓ change the chip, never the card's size or height; Z undoes");
 await page.screenshot({ path: "tmp/e2e/2-rated.png" });
 
 // ---- Tags ------------------------------------------------------------------------

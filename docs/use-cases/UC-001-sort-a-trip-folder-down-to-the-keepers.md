@@ -1,7 +1,7 @@
 # UC-001 — Sort a trip folder down to the keepers
 
 <!-- id: UC-001 -->
-<!-- built-in: src/carousel, src/ui/Dock.tsx, src/store/discards.ts, src/fs/deletion.ts -->
+<!-- built-in: src/swipe, src/carousel, src/timeline, src/ui/Dock.tsx, src/store/discards.ts, src/fs/deletion.ts -->
 
 **Who:** someone back from a trip (first user: Matthias's brother), on a
 phone on the go or at a computer.

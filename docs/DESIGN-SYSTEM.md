@@ -8,7 +8,7 @@ and every action is one key or one click away.**
 
 1. **Photos first.** Chrome is pure neutral grey (zero saturation), so it
    never shifts how colours in a photo read. Warm colour (amber) appears in
-   one role only: favourites and "you are here".
+   one role only: top shots and "you are here".
 2. **Spotlight, not frames.** The current item is marked by light (it is lit,
    neighbours dim with distance) and depth (a deeper shadow, a hairline ring).
    It has no thick coloured border.
@@ -30,7 +30,7 @@ Three layers. Components use only layer 2 and 3.
 | 3 Scales | `--text-xs…3xl`, `--space-1…12`, `--radius-xs…xl`, `--shadow-1…3`, `--dur-1…3`, `--ease-*` | all sizes come from here |
 
 **Surfaces:** `--bg-stage` (darkest, behind photos) → `--surface-1` (header,
-waveform) → `--surface-2` (popovers, dialogs) → `--surface-3` (hover,
+timeline) → `--surface-2` (popovers, dialogs) → `--surface-3` (hover,
 inputs). Floating controls (dock, toasts, hints) use `--glass` with a blur.
 
 **Text:** `--text` for content, `--text-2` for secondary text, `--text-3`
@@ -40,7 +40,7 @@ for hints and meta. Never use opacity to make text quieter.
 
 | Token | Means |
 | --- | --- |
-| `--accent` (amber) | favourite, current position, brand |
+| `--accent` (amber) | top shots, current position, brand |
 | `--select` (blue) | selection, focus |
 | `--pick` (green) | in the picks folder |
 | `--danger` (red) | discard, destructive |
@@ -72,13 +72,19 @@ Every interactive element has all five states: default, hover, active
 ## Layout
 
 ```
-┌ header 52px — brand · folder ▾ │ All | Good+ | Favorites · Filter │ saved · Picks · Series · Discards · theme · keys ┐
-│ stage — date/place (top left) · hints (top centre) · count (top right)                                               │
-│         carousel on the floor (80 % height)                                                                          │
-│         dock: [rating ×5] │ [tags] │ [pick]          (+ selection bar above it when something is selected)          │
-│         (phone: the swipe deck instead — see below)                                                                   │
-└ waveform 112px — days, tag-coloured waves, cursor ───────────────────────────────────────────────────────────────────┘
+┌ header 52px — brand · folder ▾ · Sort|Timeline │ All | Good+ | Top · Filter │ saved · Picks · Series · Deleted · theme · keys ┐
+│ Sort:     the swipe deck, centred, at most 560 px wide; round buttons under it; no timeline                                 │
+│ Timeline: date/place (top left) · hints · count (top right)                                                                  │
+│           the flat strip, cards on one centre line between the date and the dock                                            │
+│           dock: [rating ×5] │ [tags] │ [pick]          (+ selection bar above it when something is selected)               │
+└ timeline 112px (Timeline only) — day labels, legend, stacked bars, cursor ─────────────────────────────────────────────────┘
 ```
+
+**The rating is never size or position.** It is a chip on the card
+(`.card-rating`), a stamp on the deck, a colour in the bars — the same words
+(Top, Good, Bad, Delete) and colours (`--rating-*`) everywhere. Until
+2026-11 it was size and height in a 3D carousel; a "bad" shot shrunk and sunk
+was too small to judge as the filler it may need to be.
 
 ## Touch
 
@@ -94,37 +100,40 @@ Every interactive element has all five states: default, hover, active
 - The stage owns every gesture (`touch-action: none`); swipes give live
   feedback (the row follows the finger, a pill names the level you will land
   on) before they commit.
-- Safe-area insets pad the header and the waveform in the home-screen app.
+- Safe-area insets pad the header and the timeline (the tab bar on a phone) in the home-screen app.
 
 ## Discards
 
-A discard is the smallest card (20 % of a favourite's height), sunk below
-the floor, with a red bar that runs out. The current one also gets the
-**leaving bar** above the dock — "Leaves in 26 s · Keep" — because on a phone
-the card itself is too small to read. Countdowns are CSS animations started
+A discard (Delete) is greyed, with a red bar that runs out. The current one
+also gets the **leaving bar** above the dock — "Leaves in 26 s · Keep". Countdowns are CSS animations started
 from the time left at render: no timer per card.
 
-## Phone (≤ 600 px): the swipe deck
+## The swipe deck (Sort)
 
-Rating on the go is the job; the photo gets the room. The carousel, dock and
-stage overlay give way to the **deck** (`src/swipe/`, `src/styles/deck.css`).
+`src/swipe/`, `src/styles/deck.css`. The phone starts here; a bigger screen
+switches to it in the header.
 
 - One card at a time, the whole photo (contain) over a blurred copy of itself.
   The next card waits underneath and grows into place as the top one is thrown.
-- **Throw = decision:** right Good, left Discard, up Favorite, down Not great.
-  A stamp (KEEP / NOPE / FAVORITE / MEH, in the rating colours) fades in as the
-  card leans. A short fast flick counts too (`deckGesture.ts`, tested).
-- Round buttons under the deck: ↺, ✕ (big), ★, ♥ (big), and the fifth slot is
-  what the item needs next — scissors for a trimmable video, tags otherwise.
-  Pick sits on the card (top right).
-- After each throw a note says what happened, with **Undo**; a discard says
-  when it leaves. The leaving bar shows when an undone discard is back on top.
+- **Throw = decision:** ↑ Top, → Good, ← Bad (stays as a filler), ↓ Delete.
+  A stamp (TOP / GOOD / BAD / DELETE, in the rating colours) fades in as the
+  card leans. A short fast flick counts too (`deckGesture.ts`, tested). The
+  arrow keys throw the same way; Z takes the last throw back.
+- Round buttons under the deck: undo, Delete (trash), Bad (✕, big), Top (★), Good (♥,
+  big). Pick, tags and — for a trimmable video — the scissors sit on the
+  card, top right.
+- After each throw a note says what happened, with **Undo**; a delete says
+  when it leaves.
 - On the photo: date and time, the place field, tags. Colours there come from
   `--on-photo*` and `--photo-scrim`, the same in both themes — the photo is
   not lighter because the chrome is.
-- Header: logo, library menu (icon), then Share/Picks, Series, Discards and
-  **⋯** (rating filter, filter panel, theme). Waveform 72 px below the deck:
-  on the phone it is how you browse.
+
+## Phone (≤ 600 px)
+
+- Two tabs at the thumb: **Sort** and **Timeline**. Sorting has no timeline
+  row; the Timeline tab shows the strip, the dock and 72 px of bars.
+- Header: logo, library menu (icon), then Share/Picks, Series, Deleted and
+  **⋯** (rating filter, filter panel, theme).
 - Popovers cap their height to the screen and scroll.
 
 ## Rules

@@ -4,6 +4,8 @@ import { TOGGLE_MUTE, TOGGLE_PLAY } from "@/carousel/events";
 import { TRIMMABLE } from "@/fs/trimVideo";
 import { rejectStackRest, toggleStack, toggleTag } from "@/store/actions";
 import { togglePick } from "@/store/picks";
+import { THROW, UNDO_THROW } from "@/swipe/events";
+import type { Verdict } from "@/swipe/deckGesture";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 
@@ -11,8 +13,11 @@ type Handler = (e: KeyboardEvent) => void;
 
 const reel = () => useReel.getState();
 const ui = () => useUi.getState();
-/** Waveform zoom; the upper bound is enforced where the trip length is known (Waveform). */
+/** Timeline zoom; the upper bound is enforced where the trip length is known (Timeline). */
 const zoomBy = (f: number) => ui().set({ timeZoom: Math.max(1, ui().timeZoom * f) });
+
+/** On the deck the arrows throw the top card, the same four directions as a finger. */
+const THROWS: Record<string, Verdict> = { ArrowRight: "good", ArrowLeft: "bad", ArrowUp: "top", ArrowDown: "delete" };
 
 /** Keyed by `KeyboardEvent.key`; letters are matched lower-case. */
 const KEYS: Record<string, Handler> = {
@@ -74,6 +79,13 @@ export function useKeyboard(): void {
       if (preset) {
         e.preventDefault();
         toggleTag(preset);
+        return;
+      }
+
+      if (ui().view === "sort" && (THROWS[e.key] || e.key.toLowerCase() === "z")) {
+        e.preventDefault();
+        const verdict = THROWS[e.key];
+        window.dispatchEvent(verdict ? new CustomEvent(THROW, { detail: verdict }) : new Event(UNDO_THROW));
         return;
       }
 

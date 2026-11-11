@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------------------
-   The stage. Cards stand side by side on a floor; the row is tilted back a
-   little and side cards turn toward the middle. The current card sits in a
-   soft spotlight; neighbours dim with distance (--dim, set per card).
+   The stage. A flat strip: cards side by side on one centre line, the
+   current one big in a soft spotlight; neighbours dim with distance (--dim,
+   set per card). The rating is a chip on the card, not its size or height.
    Positions come from carousel/layout.ts.
 --------------------------------------------------------------------------- */
 
@@ -14,8 +14,6 @@
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
-  perspective: 1800px;
-  perspective-origin: 50% 35%;
   background: var(--bg-stage);
 }
 .stage-spotlight {
@@ -24,27 +22,14 @@
   background: var(--spotlight);
   pointer-events: none;
 }
-.stage-floor {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--floor);
-  border-top: 1px solid var(--hairline);
-  pointer-events: none;
-}
 .stage-plane {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
   /* --drag-x: the row follows a sideways swipe, then springs to the new position. */
-  transform: rotateX(4deg) translateX(var(--drag-x, 0px));
-  transform-origin: 50% 80%;
-  transition: transform 260ms var(--ease-out);
-  /* The plane shares its 3D depth with the cards on it; where the tilt makes
-     the two nearly equal (the upper part of a card), hit-testing could pick
-     the empty plane and swallow the tap. Only the cards take pointer events;
-     a tap on empty floor still reaches .stage (swipes). */
+  transform: translateX(var(--drag-x, 0px));
+  transition: transform var(--dur-2) var(--ease-out);
+  /* Only the cards take pointer events; a tap on the empty stage still
+     reaches .stage (swipes). */
   pointer-events: none;
 }
 .stage-plane .card {
@@ -154,9 +139,8 @@
   transition:
     filter var(--dur-3) var(--ease-out),
     box-shadow var(--dur-2) var(--ease-out);
-  -webkit-box-reflect: below 2px linear-gradient(transparent 78%, var(--reflection));
 }
-/* Light theme: dimming to grey looks dirty on a light floor — fade instead. */
+/* Light theme: dimming to grey looks dirty on a light stage — fade instead. */
 :root[data-theme="light"] .card-face {
   filter: none;
 }
@@ -209,15 +193,43 @@
     0 6px 14px rgb(0 0 0 / 0.12);
 }
 
-.card.rm1 .card-face {
-  filter: brightness(calc(var(--dim, 1) * 0.82)) saturate(0.8);
-}
+/* A delete on its way out: greyed while its countdown runs. "Bad" is not
+   dimmed — it may be the filler you need, so it must be judged as it is. */
 .card.rm2 {
   opacity: 0.5;
 }
 .card.rm2 .card-face {
   filter: brightness(calc(var(--dim, 1) * 0.7)) grayscale(0.6);
-  -webkit-box-reflect: unset;
+}
+
+/* The rating, as a chip in the corner — the same words and colours as the deck and the bars. */
+/* Bottom left: the top corners hold the burst counter and the badges. */
+.card-rating {
+  position: absolute;
+  bottom: var(--space-3);
+  left: var(--space-2);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--on-photo-chip);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  pointer-events: none;
+}
+.card-rating.r2 {
+  color: var(--rating-2);
+}
+.card-rating.r1 {
+  color: var(--rating-1);
+}
+.card-rating.rm1 {
+  color: var(--rating-m1);
+}
+.card-rating.rm2 {
+  color: var(--rating-m2);
 }
 .card.is-current.rm2 {
   opacity: 0.85;

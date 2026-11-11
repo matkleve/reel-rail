@@ -37,6 +37,7 @@ import { FilterPanel } from "./FilterPanel";
 import { LibraryMenu } from "./LibraryMenu";
 import { MoreMenu } from "./MoreMenu";
 import { PHONE, useMedia } from "./useMedia";
+import { ViewSwitch } from "./ViewTabs";
 
 const RATING_OPTIONS: { value: RatingFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -73,6 +74,7 @@ export function Header() {
           reel-rail
         </span>
         {files ? <LibraryMenu /> : <FolderMenu />}
+        {!phone && <ViewSwitch />}
       </div>
 
       <div className="header-center">

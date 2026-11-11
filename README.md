@@ -70,36 +70,37 @@ site stays locked. Locally (`npm run dev`) there is no password.
 
 ## How it works
 
-**The carousel.** Your photos and videos stand side by side on a slightly
-tilted, reflective floor. The current one is big, in the middle and lit;
-its neighbours dim with distance. Videos start playing muted. **Its rating
-is its size and height:**
+**Two screens: Sort and Timeline.** Switch in the header (tabs at the
+bottom on a phone). A phone starts on Sort, a bigger screen on Timeline.
 
-| Rating | What happens |
-| --- | --- |
-| 2 Favorite | biggest, rises highest, star badge |
-| 1 Good | bigger, rises a little, tags show as chips below |
-| 0 Normal | stands on the floor |
-| −1 Not great | smaller, slides a little down |
-| −2 Discard | small, faded, sunk below the floor |
+**Sort — the swipe deck.** One photo at a time; throw it to decide:
 
-Arrow keys, the mouse wheel or a two-finger swipe flip through the carousel.
-Day changes show as a separator with the date.
+| Throw | Arrow key | Rating |
+| --- | --- | --- |
+| ↑ up | ↑ | Top |
+| → right | → | Good |
+| ← left | ← | Bad — stays, as a filler |
+| ↓ down | ↓ | Delete (30 s to undo, then it leaves) |
+
+The round buttons under the card do the same, plus ↺ (Z) to take the last
+throw back. Pick, tags and (videos) the scissors sit on the card.
+
+**Timeline — the strip.** Your photos and videos side by side, the current
+one big in the middle; its rating is a chip in the corner. Arrow keys, the
+mouse wheel or a swipe flip through; ↑/↓ change the rating. Day changes
+show as a separator with the date.
 
 **The dock** floats under the photo: the five rating levels (click one),
 tags, and Pick. With a selection, a bar above it offers "Create series".
 Every button's tooltip shows its keyboard shortcut. Date, time and place sit
 at the top left; click the place (or press P) to type one.
 
-**The waveform** at the bottom is the whole trip as glowing waves:
-
-- **Thickness** = how many photos/videos you took at that moment.
-- **Height** = how good they are: the wave rises above the middle line where
-  the shots are good and dips below it where they are weak. A thin bright
-  line traces the overall quality.
-- **Colour** = tag: every tag has its own wave in its own colour (legend
-  bottom right); untagged media form a neutral blue glow.
-- Every photo is a small spark at its own rating height.
+**The bars** at the bottom are the whole trip over time: one bar per
+stretch of time, as tall as how many shots you took then, stacked by rating
+— **Top** gold at the base, then **Good** green, **Bad** orange (the
+fillers) and grey for not rated yet. So you see at a glance where the best
+shots are, and where only fillers are. The rating filter (All / Good+ / Top)
+draws what it hides faint, so the gaps stay visible.
 
 Click or drag on it to jump there; the mouse wheel / pinch zooms from the
 whole trip down to half an hour. (Nights and long pauses are shortened so the
@@ -125,7 +126,7 @@ suggested title is built from place + most common tag + month ("Porto – Tram �
 Oct 26"); the dice button rolls a silly alternative. **Export…** copies the
 files in order as `01_…`, `02_…` into a new folder named after the title.
 
-**Filters** (top bar): All / ≥ Good / Favorites / Hide discards, "Never exported",
+**Filters** (top bar): All / Good+ / Top / Hide discards, "Never exported",
 and tags. Filtered items stay in place, greyed out, and arrow keys skip them.
 
 **Edit the folder, or leave it and export.** The first time you open a
@@ -181,7 +182,7 @@ Press **?** in the app for this list.
 | Enter | Open / close a burst |
 | X | In an open burst: all but the best → discard |
 | S | Create series from selection |
-| + / − / 0 | Zoom the waveform in / out / whole trip |
+| + / − / 0 | Zoom the timeline in / out / whole trip |
 | Home / End | First / last |
 | ? | Show / hide shortcuts |
 
@@ -211,7 +212,7 @@ type Media = {
   takenAt: string;       // ISO time: EXIF (photos) / mvhd atom (videos) / file date
   gps?: { lat: number; lng: number };
   place?: string;        // free text
-  rating: -2 | -1 | 0 | 1 | 2;  // discard, not great, normal, good, favorite
+  rating: -2 | -1 | 0 | 1 | 2;  // delete, bad, normal, good, top
   tags: string[];
   stackId?: string;      // burst group (phase 2)
   exportedTo: { series: string; at: string; path?: string }[];
@@ -306,8 +307,9 @@ with `?mode=files` in the address.
 ```
 src/fs/        file access: sources (folder / picked files), hash, EXIF/video metadata, .reel.json, thumbnails, share, export, picks, trash
 src/store/     zustand stores, filters, stacks, autosave, actions
-src/carousel/  the 3D carousel: pure layout + gestures (tested), cards, swipe, original/video
-src/timeline/  the waveform: pure model (tested), canvas drawing, component
+src/carousel/  the photo strip: pure layout + gestures (tested), cards, swipe, original/video
+src/swipe/     the swipe deck (Sort): throw classifier + deck moves (tested), cards, buttons
+src/timeline/  the bar timeline: pure model (tested), canvas drawing, component
 src/series/    title suggestion + dice, series dialogs, export
 src/cleanup/   "Recently deleted" (bring back, delete now)
 src/account/   accounts on Supabase (sign-in, subscription)

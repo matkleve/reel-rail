@@ -1,5 +1,5 @@
 import { ChartColumn, PartyPopper, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { TOGGLE_PLAY } from "@/carousel/events";
@@ -14,6 +14,7 @@ import { DeckActions } from "./DeckActions";
 import { DeckCard } from "./DeckCard";
 import { DECIDE_PX, type Throw, type Verdict } from "./deckGesture";
 import { DeckHint } from "./DeckHint";
+import { THROW, UNDO_THROW } from "./events";
 import { useDeckDrag } from "./useDeckDrag";
 
 /** A duration token in ms — the fly-out waits for the CSS transition it starts. */
@@ -76,6 +77,8 @@ export function SwipeDeck() {
     useReel.getState().setCurrent(ids.find((id) => s.order.indexOf(id) > at) ?? ids.at(-1)!);
   }, [top, ids, s.order]);
 
+  useDeckKeys(throwCard, undo);
+
   useEffect(() => {
     if (!note) return;
     const t = setTimeout(() => setNote(undefined), 3500);
@@ -115,6 +118,22 @@ export function SwipeDeck() {
   );
 }
 
+/** The keyboard throws too (useKeyboard sends events): the latest handlers, subscribed once. */
+function useDeckKeys(throwCard: (v: Verdict) => void, undo: () => void) {
+  const keys = useRef({ throwCard, undo });
+  keys.current = { throwCard, undo };
+  useEffect(() => {
+    const onThrow = (e: Event) => keys.current.throwCard((e as CustomEvent<Verdict>).detail);
+    const onUndo = () => keys.current.undo();
+    window.addEventListener(THROW, onThrow);
+    window.addEventListener(UNDO_THROW, onUndo);
+    return () => {
+      window.removeEventListener(THROW, onThrow);
+      window.removeEventListener(UNDO_THROW, onUndo);
+    };
+  }, []);
+}
+
 function Finished({ empty }: { empty: boolean }) {
   const filtered = useReel((x) => x.filters.rating !== "all" || x.filters.tags.length > 0 || x.filters.hideDiscards || x.filters.neverExported);
   return (
@@ -124,7 +143,7 @@ function Finished({ empty }: { empty: boolean }) {
       <p>{empty ? (filtered ? "Nothing passes the filters." : "No photos or videos here yet.") : "That was the last one. The timeline shows where your top shots are."}</p>
       {!empty && (
         <div className="deck-done-actions">
-          <Button variant="primary" icon={ChartColumn} onClick={() => useUi.getState().set({ phoneView: "timeline" })}>
+          <Button variant="primary" icon={ChartColumn} onClick={() => useUi.getState().set({ view: "timeline" })}>
             Open the timeline
           </Button>
           <Button variant="secondary" icon={RotateCcw} onClick={restartDeck}>

@@ -268,6 +268,8 @@ ok("no overflow at 1180×820, 1024×768, 820×1180 and on iPhones (393×660, 375
 // ---- Phone: the swipe deck instead of the carousel ----------------------------------------------------
 await page.setViewportSize({ width: 393, height: 760 });
 await page.waitForTimeout(500);
+// The screen stays what it was when the window shrinks; a phone switches with the tabs.
+await page.getByRole("button", { name: "Sort" }).click();
 const topCard = () => page.locator(".deck-card.is-top").getAttribute("data-id");
 const firstCard = await topCard();
 if (!firstCard) await fail("no swipe deck on a phone");
@@ -303,6 +305,21 @@ await page.screenshot({ path: `${OUT}/5-phone-timeline.png` });
 await page.getByRole("button", { name: "Sort" }).click();
 await page.locator(".deck-card.is-top").waitFor();
 ok("phone: Timeline tab shows the photos over the bars, Sort goes back to the deck");
+
+// ---- A bigger screen sorts too: header switch, arrow keys throw -------------------------------------
+await page.setViewportSize({ width: 1180, height: 820 });
+await page.waitForTimeout(400);
+if (!(await page.locator(".deck-card.is-top").count())) await fail("the deck should stay when the screen grows");
+const bigTop = await topCard();
+await page.keyboard.press("ArrowUp");
+await page.waitForTimeout(700);
+if (!(await page.locator(".deck-note.is-top").count()) || (await topCard()) === bigTop) await fail("↑ should throw the card as Top");
+await page.keyboard.press("z");
+await page.waitForTimeout(300);
+if ((await topCard()) !== bigTop) await fail("Z should bring the thrown card back on the deck");
+await page.locator(".header").getByRole("radio", { name: "Timeline" }).click();
+await page.locator(".card.is-current").waitFor();
+ok("big screen: Sort / Timeline in the header, arrow keys throw, Z takes it back");
 
 // ---- Next session: ratings come back when the same photos are added again ----------------------------
 await page.setViewportSize({ width: 1180, height: 820 });

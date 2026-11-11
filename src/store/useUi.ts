@@ -21,8 +21,8 @@ type UiState = {
   theme: "dark" | "light";
   /** Timeline zoom: 1 = whole trip, larger = a shorter stretch of time. */
   timeZoom: number;
-  /** The phone's two screens: the swipe deck (sort) or the photos with the timeline. */
-  phoneView: "sort" | "timeline";
+  /** The two screens: the swipe deck (sort) or the photo strip over the timeline. */
+  view: "sort" | "timeline";
   /** Name of the Space-key picks folder, once known. */
   picksFolderName?: string;
   toast?: Toast;
@@ -39,6 +39,15 @@ function initialTheme(): "dark" | "light" {
   }
 }
 
+/** A phone starts on the deck; a big screen with a keyboard on the strip. */
+function initialView(): "sort" | "timeline" {
+  try {
+    return window.matchMedia("(max-width: 600px)").matches ? "sort" : "timeline";
+  } catch {
+    return "timeline"; // no matchMedia (tests, old engines)
+  }
+}
+
 export const useUi = create<UiState>()((set) => ({
   phase: "start",
   dialog: null,
@@ -46,7 +55,7 @@ export const useUi = create<UiState>()((set) => ({
   tagEditing: false,
   theme: initialTheme(),
   timeZoom: 1,
-  phoneView: "sort",
+  view: initialView(),
   handover: false,
   set: (patch) => set(patch),
 }));
