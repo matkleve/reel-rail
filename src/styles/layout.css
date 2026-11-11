@@ -17,8 +17,8 @@
   align-items: center;
   gap: var(--space-4);
   padding: 0 var(--space-3) 0 var(--space-4);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-1);
+  /* No bar and no line: the header sits on the page; its controls are pills. */
+  background: var(--bg);
   min-width: 0;
 }
 .header-left,
@@ -41,9 +41,10 @@
   align-items: center;
   gap: var(--space-2);
   margin-right: var(--space-3);
-  font-size: var(--text-md);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 .logo {
   color: var(--text);
@@ -135,6 +136,7 @@
   max-width: 40%;
 }
 .stage-date {
+  font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 650;
   letter-spacing: -0.02em;
@@ -212,9 +214,9 @@
   align-items: center;
   gap: var(--space-4);
   padding: 4px 4px 4px var(--space-4);
-  border: 1px solid var(--border);
   border-radius: var(--radius-full);
   background: var(--glass);
+  box-shadow: var(--shadow-2);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
   color: var(--text-2);
@@ -254,8 +256,7 @@
   gap: var(--space-2);
   height: 52px;
   padding: 0 var(--space-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-full);
   background: var(--glass);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.5);
   backdrop-filter: blur(var(--glass-blur)) saturate(1.5);

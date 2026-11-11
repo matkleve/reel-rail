@@ -1,7 +1,10 @@
+/* A card, not a band: rounded, lifted by a shadow, no line above it. */
 .timeline {
   position: relative;
-  border-top: 1px solid var(--border);
+  margin: 0 var(--space-3) var(--space-3);
+  border-radius: var(--radius-xl);
   background: var(--timeline-bg);
+  box-shadow: var(--shadow-2);
   cursor: crosshair;
   touch-action: none;
   user-select: none;

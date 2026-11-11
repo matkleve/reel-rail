@@ -13,7 +13,8 @@ export function binCount(width: number): number {
   return Math.max(1, Math.min(MAX_BINS, Math.floor(width / BIN_PX)));
 }
 const GAP = 2;
-const BOTTOM = 4;
+const BOTTOM = 6;
+const RADIUS = 4;
 
 /** The colour of each part of a bar — rating tokens, so bars and cards speak the same language. */
 export const LEVEL_TOKEN: Record<Level, string> = {
@@ -54,8 +55,6 @@ export function drawBars(
   const binW = w / Math.max(1, bars.bins.length);
   const barW = Math.max(1, binW - GAP);
 
-  g.fillStyle = token(canvas, "--border-strong");
-  g.fillRect(0, base, w, 1);
 
   bars.bins.forEach((bin, i) => {
     const x = i * binW + GAP / 2;
@@ -67,8 +66,12 @@ export function drawBars(
       const hgt = Math.max(2, (n / bars.max) * room);
       g.globalAlpha = faint.has(level) ? 0.22 : 1;
       g.fillStyle = colors[level];
-      g.fillRect(x, y - hgt, barW, hgt);
-      y -= hgt + 1;
+      // Soft, rounded segments (the design has no hard corners); a plain rect where roundRect is missing.
+      g.beginPath();
+      if (g.roundRect) g.roundRect(x, y - hgt, barW, hgt, Math.min(RADIUS, barW / 2, hgt / 2));
+      else g.rect(x, y - hgt, barW, hgt);
+      g.fill();
+      y -= hgt + 2;
     }
   });
   g.globalAlpha = 1;

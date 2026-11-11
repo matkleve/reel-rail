@@ -38,8 +38,9 @@ Never report work as done without a green `verify`. Re-run one check alone:
    ([`docs/adr/0001`](docs/adr/0001-accounts-and-subscriptions-on-supabase.md)).
 4. **No new dependency without saying what it replaces and why the platform
    cannot do it.** Browser deps: react, zustand, exifr, lucide-react (icons —
-   tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/inter
-   (bundled typeface, so it works offline), mediabunny (lossless MP4/MOV
+   tree-shaken, a consistent set beats hand-drawn SVGs), @fontsource-variable/nunito
+   and @fontsource-variable/fraunces (bundled typefaces — body and display — so
+   they work offline; they replaced Inter with the warm "Sand" look), mediabunny (lossless MP4/MOV
    trimming — the platform has no muxer; loaded only when someone trims),
    @supabase/supabase-js (accounts; loaded only when someone signs in),
    @capacitor/core (native iPhone app bridge; inert in a browser).

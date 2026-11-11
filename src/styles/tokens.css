@@ -6,66 +6,76 @@
    2. Semantic     what a value MEANS (surface, text, border, accent, rating).
    3. Scales       type, space, radius, depth, motion, layout.
 
-   Photos are judged against this UI, so every surface is a pure neutral grey
-   (zero saturation): a tinted chrome shifts how colours in a photo read.
-   Dark is the default. [data-theme="light"] swaps only the semantic layer.
+   Warm on purpose (2026-11, the user's pick "Sand"): cream, terracotta and
+   soft round shapes instead of neutral black with hairlines. Photos still win
+   — the chrome is low in saturation, the photo is framed like a print, and
+   the strong colours are reserved for the four ratings.
+   Sand (light) is the default; [data-theme="dark"] is "Glut", warm espresso.
+   Only the semantic layer differs between the two.
 --------------------------------------------------------------------------- */
 
 :root {
   /* ---- 1. Primitives ---------------------------------------------------- */
-  --gray-0: #060607;
-  --gray-1: #0c0c0e;
-  --gray-2: #131316;
-  --gray-3: #1a1a1e;
-  --gray-4: #222227;
-  --gray-5: #2c2c32;
-  --gray-6: #3c3c44;
-  --gray-7: #55555f;
-  --gray-8: #75757f;
-  --gray-9: #a3a3ad;
-  --gray-10: #d6d6dc;
-  --gray-11: #f2f2f4;
+  /* A warm ramp (espresso → cream). Named "gray" so components keep one scale. */
+  --gray-0: #120d0b;
+  --gray-1: #1a1310;
+  --gray-2: #211915;
+  --gray-3: #2a1f1a;
+  --gray-4: #33261f;
+  --gray-5: #3d2e26;
+  --gray-6: #4e3c32;
+  --gray-7: #6b5546;
+  --gray-8: #94806f;
+  --gray-9: #c9b6a6;
+  --gray-10: #e8dacb;
+  --gray-11: #f7ede4;
   --white: #ffffff;
   --black: #000000;
 
-  --amber-4: #f6b94c;
-  --amber-5: #e9a531;
-  --amber-6: #b97a10;
-  --green-4: #5ee08f;
-  --green-6: #15803d;
-  --orange-4: #fb9b53;
-  --red-4: #f77b7b;
-  --red-6: #c53030;
-  --blue-4: #6f9dff;
+  --amber-4: #f5c04e;
+  --amber-5: #e8a92a;
+  --amber-6: #9a6408;
+  --green-4: #8ccf7e;
+  --green-6: #367a45;
+  --orange-4: #f08c5a;
+  --orange-6: #b65a22;
+  --red-4: #e86a5c;
+  --red-6: #b53c30;
+  --terracotta-4: #f2a65a;
+  --terracotta-6: #c8643b;
+  --blue-4: #8fb3ff;
   --blue-6: #2f62e0;
 
-  /* ---- 2. Semantic: dark (default) -------------------------------------- */
+  /* ---- 2. Semantic: Glut (dark) — light "Sand" below is the default ------- */
   color-scheme: dark;
 
   --bg: var(--gray-1);
-  --bg-stage: var(--gray-0);
+  --bg-stage: var(--gray-1);
   --surface-1: var(--gray-2); /* header, timeline, panels */
   --surface-2: var(--gray-3); /* popovers, dialogs, inputs */
   --surface-3: var(--gray-4); /* hover on surface-2 */
   --surface-press: var(--gray-5);
-  --glass: rgb(22 22 26 / 0.74); /* floating dock, toasts */
+  --glass: rgb(42 31 26 / 0.86); /* floating dock, toasts */
   --glass-blur: 22px;
 
-  --border: rgb(255 255 255 / 0.07);
-  --border-strong: rgb(255 255 255 / 0.13);
-  --hairline: rgb(255 255 255 / 0.05);
+  /* Barely there: shapes are told apart by fill and shadow, not by lines. */
+  --border: rgb(255 235 215 / 0.06);
+  --border-strong: rgb(255 235 215 / 0.1);
+  --hairline: rgb(255 235 215 / 0.04);
+  /* The white border of a print, around every photo. */
+  --frame: var(--gray-3);
 
   --text: var(--gray-11);
   --text-2: var(--gray-9);
-  --text-3: var(--gray-8);
-  --text-on-accent: #1b1406;
+  --text-3: #a8927f;
+  --text-on-accent: #2a1508;
   --text-on-primary: var(--gray-1);
 
   --primary: var(--gray-11); /* main call to action: neutral, never competes with photos */
   --primary-hover: var(--white);
-  --accent: var(--amber-4); /* brand + the one warm thing on screen: favourites, current */
-  --accent-hover: #f9c96f;
-  --accent-soft: rgb(246 185 76 / 0.14);
+  --accent: var(--terracotta-4); /* brand, "you are here", the active tab */
+  --accent-hover: #f7b878;
+  --accent-soft: rgb(242 166 90 / 0.16);
   --focus: var(--blue-4);
   --select: var(--blue-4);
   --select-soft: rgb(111 157 255 / 0.2);
@@ -95,19 +105,19 @@
   --tag-8: #c7b9a2;
 
   /* Timeline */
-  --timeline-bg: var(--gray-0);
+  --timeline-bg: var(--gray-2);
   --bar-unrated: var(--gray-6);
 
   /* Depth */
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
-  --shadow-3: 0 24px 64px rgb(0 0 0 / 0.6), 0 4px 12px rgb(0 0 0 / 0.35);
-  --shadow-photo: 0 18px 40px rgb(0 0 0 / 0.55), 0 4px 10px rgb(0 0 0 / 0.35);
+  --shadow-1: 0 1px 3px rgb(10 5 2 / 0.4);
+  --shadow-2: 0 10px 26px rgb(10 5 2 / 0.4), 0 2px 6px rgb(10 5 2 / 0.25);
+  --shadow-3: 0 24px 64px rgb(10 5 2 / 0.55), 0 4px 12px rgb(10 5 2 / 0.3);
+  --shadow-photo: 0 20px 44px rgb(10 5 2 / 0.5), 0 4px 10px rgb(10 5 2 / 0.3);
   --inset-highlight: inset 0 1px 0 rgb(255 255 255 / 0.06);
   --scrim: rgb(0 0 0 / 0.6);
   --reflection: rgb(255 255 255 / 0.1);
   --floor: linear-gradient(to bottom, rgb(255 255 255 / 0.035), transparent 70%);
-  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 255 255 / 0.05), transparent 72%);
+  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 220 180 / 0.05), transparent 72%);
 
   /* The swipe deck (phone). These sit on a photo, so they stay the same in
      the light theme: a photo is not lighter because the chrome is. */
@@ -115,9 +125,13 @@
   --on-photo: var(--white);
   --on-photo-chip: rgb(0 0 0 / 0.5);
   --on-photo-hover: rgb(255 255 255 / 0.16);
+  --stamp-bg: rgb(26 19 16 / 0.82);
 
   /* ---- 3. Scales -------------------------------------------------------- */
-  --font: "Inter Variable", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  /* Nunito: round terminals, friendly at small sizes. Fraunces: a soft serif
+     for dates and titles — the caption on a print. Both bundled (offline). */
+  --font: "Nunito Variable", Nunito, ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces Variable", Fraunces, Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
   --text-2xs: 10px;
@@ -140,19 +154,19 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-photo: 10px;
-  --radius-deck: 22px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-photo: 18px;
+  --radius-deck: 32px;
+  --frame-w: 8px;
   --radius-full: 999px;
 
   --deck-btn: 52px;
   --deck-btn-big: 66px;
   --deck-blur: 28px;
-  --stamp-border: 4px;
 
   --control-sm: 26px;
   --control-md: 32px;
@@ -160,7 +174,7 @@
 
   --header-h: 52px;
   --timeline-h: 112px;
-  --tabs-h: 56px;
+  --tabs-h: 72px; /* a 58 px pill plus its margin */
 
   /* Motion: 120 for feedback, 200 for UI moves, 320 for entrances. The
      spring overshoots a little — it is what makes rating feel physical. */
@@ -179,55 +193,59 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --bg: #f4f4f6;
-  --bg-stage: #ececef;
-  --surface-1: #ffffff;
+  --bg: #f5ede3;
+  --bg-stage: #f5ede3;
+  --surface-1: #fffaf4;
   --surface-2: #ffffff;
-  --surface-3: #f1f1f4;
-  --surface-press: #e6e6ea;
-  --glass: rgb(255 255 255 / 0.78);
+  --surface-3: #f6e4d4;
+  --surface-press: #efd5c0;
+  --glass: rgb(255 250 244 / 0.9);
 
-  --border: rgb(0 0 0 / 0.08);
-  --border-strong: rgb(0 0 0 / 0.14);
-  --hairline: rgb(0 0 0 / 0.05);
+  --border: rgb(120 80 50 / 0.08);
+  --border-strong: rgb(120 80 50 / 0.14);
+  --hairline: rgb(120 80 50 / 0.05);
+  --frame: #ffffff;
+  --stamp-bg: rgb(255 250 244 / 0.94);
 
-  --text: #141417;
-  --text-2: #5c5c66;
-  --text-3: #85858f;
+  --text: #2b211b;
+  --text-2: #6e5d50;
+  --text-3: #7d6a5b;
   --text-on-primary: #ffffff;
+  --text-on-accent: #ffffff;
 
-  --primary: #141417;
+  --primary: #2b211b;
   --primary-hover: #000000;
-  --accent: var(--amber-6);
-  --accent-hover: #9c6608;
-  --accent-soft: rgb(185 122 16 / 0.12);
+  --accent: var(--terracotta-6);
+  --accent-hover: #a8502c;
+  --accent-soft: rgb(200 100 59 / 0.12);
   --focus: var(--blue-6);
   --select: var(--blue-6);
   --select-soft: rgb(47 98 224 / 0.14);
   --pick: var(--green-6);
-  --pick-soft: rgb(21 128 61 / 0.12);
+  --pick-soft: rgb(54 122 69 / 0.12);
   --danger: var(--red-6);
-  --danger-soft: rgb(197 48 48 / 0.1);
+  --danger-soft: rgb(181 60 48 / 0.1);
   --success: var(--green-6);
 
-  --rating-2: var(--amber-5);
-  --rating-1: #22a35a;
-  --rating-0: #6b6b75;
-  --rating-m1: #e07a2e;
-  --rating-m2: #d64545;
+  /* Dark enough to read as text on white (chips, buttons), bright enough as bars. */
+  --rating-2: var(--amber-6);
+  --rating-1: var(--green-6);
+  --rating-0: #7d6a5b;
+  --rating-m1: var(--orange-6);
+  --rating-m2: var(--red-6);
 
-  --timeline-bg: #fafafb;
-  --bar-unrated: #c9c9d1;
+  --timeline-bg: #fffaf4;
+  --bar-unrated: #eadcca;
 
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08);
-  --shadow-2: 0 8px 24px rgb(0 0 0 / 0.1), 0 2px 6px rgb(0 0 0 / 0.06);
-  --shadow-3: 0 24px 64px rgb(0 0 0 / 0.16), 0 4px 12px rgb(0 0 0 / 0.08);
-  --shadow-photo: 0 18px 36px rgb(0 0 0 / 0.18), 0 4px 10px rgb(0 0 0 / 0.1);
+  --shadow-1: 0 1px 3px rgb(120 80 50 / 0.1);
+  --shadow-2: 0 8px 22px rgb(120 80 50 / 0.12), 0 2px 6px rgb(120 80 50 / 0.08);
+  --shadow-3: 0 24px 60px rgb(120 80 50 / 0.18), 0 4px 12px rgb(120 80 50 / 0.1);
+  --shadow-photo: 0 18px 40px rgb(120 80 50 / 0.2), 0 4px 10px rgb(120 80 50 / 0.1);
   --inset-highlight: inset 0 1px 0 rgb(255 255 255 / 0.7);
-  --scrim: rgb(20 20 23 / 0.35);
-  --reflection: rgb(0 0 0 / 0.07);
-  --floor: linear-gradient(to bottom, rgb(0 0 0 / 0.035), transparent 70%);
-  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 255 255 / 0.7), transparent 72%);
+  --scrim: rgb(43 33 27 / 0.35);
+  --reflection: rgb(120 80 50 / 0.07);
+  --floor: linear-gradient(to bottom, rgb(120 80 50 / 0.035), transparent 70%);
+  --spotlight: radial-gradient(ellipse 46% 52% at 50% 46%, rgb(255 255 255 / 0.6), transparent 72%);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -17,7 +17,7 @@
   padding-right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
 }
 .timeline {
-  border-bottom: env(safe-area-inset-bottom, 0px) solid var(--timeline-bg);
+  margin-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
 }
 .start {
   padding-top: env(safe-area-inset-top, 0px);

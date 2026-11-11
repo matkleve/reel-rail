@@ -39,7 +39,8 @@ export const Card = memo(function Card(p: Props) {
   const style = {
     width: place.w,
     height: place.h,
-    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0)`,
+    // Neighbours lie a little askew, like prints on a table; the current one straight.
+    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotate(${Math.sign(place.d) * 1.5}deg)`,
     zIndex: 100 - Math.abs(place.d),
     "--dim": Math.max(0.35, 1 - Math.abs(place.d) * 0.16),
   } as CSSProperties;

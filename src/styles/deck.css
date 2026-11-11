@@ -21,12 +21,16 @@
 
 /* ---- Cards ------------------------------------------------------------------ */
 
+/* A print: frame, photo window, caption. */
 .deck-card {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  padding: var(--frame-w) var(--frame-w) 0;
   border-radius: var(--radius-deck);
-  background: var(--black);
+  background: var(--frame);
   box-shadow: var(--shadow-photo);
   -webkit-user-select: none;
   user-select: none;
@@ -36,7 +40,8 @@
 .deck-card.is-top {
   z-index: 2;
   cursor: grab;
-  transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+  /* Lies a little askew, like a print put down by hand. */
+  transform: translate(var(--dx), var(--dy)) rotate(calc(var(--rot) - 1deg));
 }
 .deck-card.is-dragging {
   cursor: grabbing;
@@ -44,8 +49,9 @@
 }
 .deck-card.is-next {
   z-index: 1;
-  transform: translateY(calc((1 - var(--progress)) * 14px)) scale(calc(0.94 + 0.06 * var(--progress)));
-  filter: brightness(calc(0.55 + 0.45 * var(--progress)));
+  transform: translateY(calc((1 - var(--progress)) * 14px)) scale(calc(0.94 + 0.06 * var(--progress)))
+    rotate(calc((1 - var(--progress)) * 2.5deg));
+  filter: brightness(calc(0.8 + 0.2 * var(--progress)));
   transition:
     transform var(--dur-1) linear,
     filter var(--dur-1) linear;
@@ -61,6 +67,15 @@
 }
 .deck-card.is-leaving-delete {
   transform: translateY(140%) scale(0.85);
+}
+
+.deck-print {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: calc(var(--radius-deck) - var(--frame-w));
+  background: var(--black);
 }
 
 /* The whole photo over a blurred copy of itself: rated as it was taken, not as a crop. */
@@ -146,11 +161,12 @@
 .deck-stamp {
   position: absolute;
   z-index: 3;
-  padding: var(--space-1) var(--space-3);
-  border: var(--stamp-border) solid currentColor;
-  border-radius: var(--radius-lg);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--stamp-bg);
+  box-shadow: var(--shadow-2);
   font-size: var(--text-2xl);
-  font-weight: 800;
+  font-weight: 900;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   pointer-events: none;
@@ -185,31 +201,29 @@
 }
 
 .deck-info {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 2;
+  flex: none;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-12) var(--space-4) var(--space-4);
-  background: var(--photo-scrim);
-  color: var(--on-photo);
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2) var(--space-3);
+  color: var(--text);
 }
 .deck-when {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-lg);
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 650;
 }
 .deck-rating {
   padding: 2px var(--space-2);
   border-radius: var(--radius-full);
-  background: var(--on-photo-chip);
+  background: var(--surface-3);
+  font-family: var(--font);
   font-size: var(--text-xs);
+  font-weight: 800;
 }
 .deck-rating.r2 {
   color: var(--rating-2);
@@ -224,14 +238,9 @@
   color: var(--rating-m2);
 }
 .deck-info .place-field,
-.deck-info .place-field input,
-.deck-info .place-field input::placeholder {
-  color: var(--on-photo);
+.deck-info .place-field input {
+  color: var(--text-2);
   font-size: var(--text-md);
-}
-.deck-info .place-field:hover,
-.deck-info .place-field:focus-within {
-  background: var(--on-photo-hover);
 }
 .deck-tags {
   display: flex;
@@ -250,13 +259,15 @@
   justify-content: center;
   gap: var(--space-3);
   padding: var(--space-8);
-  border: 1px dashed var(--border-strong);
   border-radius: var(--radius-deck);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-2);
   color: var(--text-2);
   text-align: center;
 }
 .deck-done h2 {
   margin: 0;
+  font-family: var(--font-display);
   color: var(--text);
   font-size: var(--text-2xl);
 }
@@ -283,7 +294,6 @@
   align-items: center;
   gap: var(--space-2);
   padding: 4px 4px 4px var(--space-3);
-  border: 1px solid var(--border-strong);
   border-radius: var(--radius-full);
   background: var(--glass);
   -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -357,9 +367,9 @@
   width: var(--deck-btn);
   height: var(--deck-btn);
   padding: 0;
-  border: 1px solid var(--border-strong);
+  border: 0;
   border-radius: var(--radius-full);
-  background: var(--surface-1);
+  background: var(--surface-2);
   box-shadow: var(--shadow-2);
 }
 .deck-btn.btn:hover:not(:disabled) {
@@ -386,9 +396,14 @@
 .deck-btn.btn.is-bad:hover {
   color: var(--rating-m1);
 }
-.deck-btn.btn.is-good,
-.deck-btn.btn.is-good:hover {
-  color: var(--rating-1);
+/* The one filled button: the everyday "yes", in the brand colour. */
+.deck-btn.btn.is-good {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+.deck-btn.btn.is-good:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--text-on-accent);
 }
 .deck-btn.btn.is-top,
 .deck-btn.btn.is-undo,
@@ -420,29 +435,34 @@
   height: var(--timeline-h);
   border-bottom: 0;
 }
+/* A floating pill, not a bar with a line on top. */
 .phone-tabs {
   grid-row: 4;
   display: flex;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  border-top: 1px solid var(--border);
-  background: var(--surface-1);
+  gap: var(--space-1);
+  margin: 0 var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  padding: 5px;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-2);
 }
 .phone-tab {
   flex: 1 1 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--space-2);
   border: 0;
+  border-radius: var(--radius-full);
   background: none;
   color: var(--text-2);
   font: inherit;
-  font-size: var(--text-xs);
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: 800;
   cursor: pointer;
 }
 .phone-tab.is-active {
+  background: var(--accent-soft);
   color: var(--accent);
 }
 .phone-tab:focus-visible {

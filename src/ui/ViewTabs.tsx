@@ -26,7 +26,7 @@ export function PhoneTabs() {
           aria-current={v === view ? "page" : undefined}
           onClick={() => useUi.getState().set({ view: v })}
         >
-          <Icon size={22} aria-hidden="true" />
+          <Icon size={18} aria-hidden="true" />
           {label}
         </button>
       ))}

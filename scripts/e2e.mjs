@@ -439,15 +439,17 @@ if (result.length !== keptCount) await fail(`export should hold the ${keptCount}
 if ((await tripFiles()).join() !== sourceBefore.join()) await fail("export must not change the source folder");
 ok(`"leave it, export": ${result.length} kept items in Exports/Trip - sorted/, source untouched`);
 
-// ---- Help overlay + light theme ---------------------------------------------------
+// ---- Help overlay + the dark theme (Sand, light, is the default) -------------------------
 await page.keyboard.press("?");
 await page.getByRole("heading", { name: "Keyboard shortcuts" }).waitFor();
 await page.screenshot({ path: "tmp/e2e/4-help.png" });
 await page.keyboard.press("Escape");
-await page.getByRole("button", { name: "Light theme" }).click();
+if ((await page.evaluate(() => document.documentElement.dataset.theme)) !== "light") await fail("Sand (light) should be the default");
+await page.getByRole("button", { name: "Dark theme" }).click();
 await page.waitForTimeout(300);
-await page.screenshot({ path: "tmp/e2e/5-light.png" });
-ok("help overlay and light theme");
+if ((await page.evaluate(() => document.documentElement.dataset.theme)) !== "dark") await fail("the switch should turn on the dark theme");
+await page.screenshot({ path: "tmp/e2e/5-dark.png" });
+ok("help overlay; Sand is the default, the switch turns on Glut (dark)");
 
 await browser.close();
 server.kill();

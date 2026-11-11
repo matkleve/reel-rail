@@ -132,7 +132,8 @@
   padding: 0;
   border: 0;
   border-radius: var(--radius-photo);
-  background: var(--surface-3);
+  /* A print: the photo sits inside a frame (white in Sand, espresso in Glut). */
+  background: var(--frame);
   box-shadow: var(--shadow-photo);
   cursor: pointer;
   filter: brightness(var(--dim, 1));
@@ -155,11 +156,11 @@
 .card-ph {
   -webkit-user-drag: none;
   position: absolute;
-  inset: 0;
+  inset: var(--frame-w);
   display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
+  width: calc(100% - 2 * var(--frame-w));
+  height: calc(100% - 2 * var(--frame-w));
+  border-radius: calc(var(--radius-photo) - var(--frame-w));
   object-fit: cover;
 }
 .card-ph {
@@ -172,25 +173,18 @@
     background-position: -150% 0;
   }
 }
+/* Transparent: where a contained original leaves room, the same photo's
+   thumbnail shows through — no black bars inside the print. */
 .card-original {
-  background: var(--black);
+  background: transparent;
 }
 .card.is-current .card-original {
   object-fit: contain;
 }
 
-/* The current card: lit, a hairline ring, deeper shadow — no loud frame. */
+/* The current card: lifted by a deeper shadow — no ring, no line. */
 .card.is-current .card-face {
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.16),
-    0 30px 60px rgb(0 0 0 / 0.6),
-    0 8px 18px rgb(0 0 0 / 0.4);
-}
-:root[data-theme="light"] .card.is-current .card-face {
-  box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.08),
-    0 28px 50px rgb(0 0 0 / 0.22),
-    0 6px 14px rgb(0 0 0 / 0.12);
+  box-shadow: var(--shadow-3);
 }
 
 /* A delete on its way out: greyed while its countdown runs. "Bad" is not
@@ -276,10 +270,11 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--gray-6);
+  background: var(--frame);
   translate: 6px -6px;
+  rotate: 2deg;
   z-index: -1;
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--shadow-2);
 }
 .card-count {
   position: absolute;

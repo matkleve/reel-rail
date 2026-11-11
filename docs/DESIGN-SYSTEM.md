@@ -1,17 +1,24 @@
 # Design system
 
 reel-rail is a tool for looking at photos. Every rule here serves that:
-**the photo is the loudest thing on screen, the chrome is quiet and neutral,
+**the photo is the loudest thing on screen, the chrome is quiet and warm,
 and every action is one key or one click away.**
+
+The look is **"Sand"** (chosen by the user 2026-11, replacing neutral black
+with hairlines): cream, terracotta, round shapes, photos framed like prints.
+The dark theme is **"Glut"**: the same shapes in warm espresso.
 
 ## Principles
 
-1. **Photos first.** Chrome is pure neutral grey (zero saturation), so it
-   never shifts how colours in a photo read. Warm colour (amber) appears in
-   one role only: top shots and "you are here".
-2. **Spotlight, not frames.** The current item is marked by light (it is lit,
-   neighbours dim with distance) and depth (a deeper shadow, a hairline ring).
-   It has no thick coloured border.
+1. **Photos first.** The chrome is warm but low in saturation (cream,
+   espresso), so a photo's own colours still read true. Strong colour is kept
+   for meaning: the four ratings, and terracotta (`--accent`) for the brand,
+   "you are here" and the active tab.
+2. **Prints, not lines.** Every photo sits in a frame (`--frame`, white in
+   Sand) like a print; neighbours lie a little askew. Shapes are told apart
+   by fill and soft shadow — no hairlines, no borders between areas. Controls
+   are pills and circles (`--radius-full`); nothing in the chrome has a square
+   corner.
 3. **The mouse teaches the keyboard.** Every action is a visible control,
    and every control's tooltip names its key. Nothing is keyboard-only.
 4. **One control per concept.** Rating is one five-step control, not two
@@ -47,7 +54,9 @@ for hints and meta. Never use opacity to make text quieter.
 | `--rating-m2 … --rating-2` | red → orange → neutral → green → gold, the five levels |
 | `--tag-0 … --tag-8` | tags, equal lightness so no tag shouts; presets keep their slot |
 
-**Type:** Inter Variable (bundled, so it works offline). 13 px base;
+**Type:** Nunito Variable for everything (round, friendly at small sizes)
+and Fraunces Variable (`--font-display`) for dates and titles — the caption
+on a print. Both bundled, so they work offline. 13 px base;
 `--text-xl` 20 px for the stage date; `--text-3xl` 48 px only on the start
 screen. Numbers that change (counters) use `.tabular`.
 

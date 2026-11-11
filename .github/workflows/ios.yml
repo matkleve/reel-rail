@@ -7,13 +7,13 @@ name: ios
 #
 # Started by hand (Actions → ios → Run workflow — GitHub shows the button
 # once this file is on the default branch), or by a push to main that changes
-# the native project or this file. Not on every push: macOS minutes count ten
-# times against a private repository's free allowance.
+# the app. Docs-only pushes skip it: macOS minutes count ten times against a
+# private repository's free allowance (a build is 1–2 min).
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["ios/**", ".github/workflows/ios.yml"]
+    paths: ["ios/**", "src/**", "public/**", "index.html", "package.json", "package-lock.json", ".github/workflows/ios.yml"]
 
 # A newer push replaces a build still running: only the latest .ipa matters.
 concurrency:

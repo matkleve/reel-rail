@@ -24,6 +24,8 @@ const STAMPS: { verdict: Verdict; label: string }[] = [
   { verdict: "delete", label: "Delete" },
 ];
 
+const UPRIGHT: Record<Verdict, number> = { good: 0, bad: 0, top: 0, delete: 0 };
+
 type Props = {
   media: Media;
   /** The card you are deciding on; the other one waits underneath. */
@@ -36,18 +38,14 @@ type Props = {
 };
 
 /**
- * One photo/video on the deck. The whole photo is shown (contain) over a
- * blurred copy of itself, so a landscape shot is rated as it was taken, not
- * as a crop.
+ * One photo/video on the deck, as a print: a frame, the whole photo (contain,
+ * over a blurred copy of itself — a landscape shot is rated as taken, not as
+ * a crop), and the caption underneath.
  */
 export function DeckCard({ media, top, drag, leaving, stackCount, presets, handlers }: Props) {
   const thumb = useThumb(media);
   const picked = media.exportedTo.some((e) => e.series === PICKS);
-  const lean = leaving
-    ? { good: 0, bad: 0, top: 0, delete: 0, [leaving]: 1 }
-    : top
-      ? leanOf(drag.dx, drag.dy)
-      : { good: 0, bad: 0, top: 0, delete: 0 };
+  const lean = leaving ? { ...UPRIGHT, [leaving]: 1 } : top ? leanOf(drag.dx, drag.dy) : UPRIGHT;
   const cls = ["deck-card", top ? "is-top" : "is-next", drag.active && top && "is-dragging", leaving && `is-leaving-${leaving}`]
     .filter(Boolean)
     .join(" ");
@@ -64,53 +62,62 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
 
   return (
     <div className={cls} style={style} data-id={media.id} aria-hidden={!top} {...(top ? handlers : {})}>
-      {thumb.url && <img className="deck-fill" src={thumb.url} alt="" draggable={false} />}
-      {thumb.url ? <img className="deck-photo" src={thumb.url} alt="" draggable={false} /> : <span className="card-ph" />}
-      {top && <Original media={media} />}
+      <div className="deck-print">
+        {thumb.url && <img className="deck-fill" src={thumb.url} alt="" draggable={false} />}
+        {thumb.url ? <img className="deck-photo" src={thumb.url} alt="" draggable={false} /> : <span className="card-ph" />}
+        {top && <Original media={media} />}
 
-      {stackCount && (
-        <span className="deck-chip deck-burst">
-          <Layers size={13} aria-hidden="true" /> {stackCount}
-        </span>
-      )}
-      {media.type === "video" && !top && (
-        <span className="deck-chip deck-video" aria-hidden="true">
-          <Play size={13} fill="currentColor" />
-        </span>
-      )}
-      {top && <CardTools media={media} picked={picked} />}
-
-      {STAMPS.map((s) => (
-        <span key={s.verdict} className={`deck-stamp is-${s.verdict}`} aria-hidden="true">
-          {s.label}
-        </span>
-      ))}
-
-      <div className="deck-info">
-        <div className="deck-when tabular">
-          {WHEN.format(new Date(media.takenAt))}
-          {media.rating !== 0 && <span className={`deck-rating ${ratingClass(media.rating)}`}>{RATING_LABEL[media.rating]}</span>}
-        </div>
-        {top ? (
-          <PlaceField key={media.id} value={media.place ?? ""} />
-        ) : (
-          media.place && (
-            <span className="place-field">
-              <MapPin size={13} aria-hidden="true" />
-              {media.place}
-            </span>
-          )
+        {stackCount && (
+          <span className="deck-chip deck-burst">
+            <Layers size={13} aria-hidden="true" /> {stackCount}
+          </span>
         )}
-        {media.tags.length > 0 && (
-          <div className="deck-tags">
-            {media.tags.map((t) => (
-              <span key={t} className="tag" style={tagStyle(t, presets)}>
-                <span>{t}</span>
-              </span>
-            ))}
-          </div>
+        {media.type === "video" && !top && (
+          <span className="deck-chip deck-video" aria-hidden="true">
+            <Play size={13} fill="currentColor" />
+          </span>
         )}
+        {top && <CardTools media={media} picked={picked} />}
+
+        {STAMPS.map((s) => (
+          <span key={s.verdict} className={`deck-stamp is-${s.verdict}`} aria-hidden="true">
+            {s.label}
+          </span>
+        ))}
       </div>
+
+      <Caption media={media} top={top} presets={presets} />
+    </div>
+  );
+}
+
+/** The caption under the print, like a Polaroid — not over the photo. */
+function Caption({ media, top, presets }: { media: Media; top: boolean; presets: string[] }) {
+  return (
+    <div className="deck-info">
+      <div className="deck-when tabular">
+        {WHEN.format(new Date(media.takenAt))}
+        {media.rating !== 0 && <span className={`deck-rating ${ratingClass(media.rating)}`}>{RATING_LABEL[media.rating]}</span>}
+      </div>
+      {top ? (
+        <PlaceField key={media.id} value={media.place ?? ""} />
+      ) : (
+        media.place && (
+          <span className="place-field">
+            <MapPin size={13} aria-hidden="true" />
+            {media.place}
+          </span>
+        )
+      )}
+      {media.tags.length > 0 && (
+        <div className="deck-tags">
+          {media.tags.map((t) => (
+            <span key={t} className="tag" style={tagStyle(t, presets)}>
+              <span>{t}</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

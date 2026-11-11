@@ -33,9 +33,10 @@ type UiState = {
 
 function initialTheme(): "dark" | "light" {
   try {
-    return localStorage.getItem("reel-rail:theme") === "light" ? "light" : "dark";
+    // Sand (light) is the default since 2026-11; dark only when someone chose it.
+    return localStorage.getItem("reel-rail:theme") === "dark" ? "dark" : "light";
   } catch {
-    return "dark";
+    return "light";
   }
 }
 

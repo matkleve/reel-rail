@@ -30,6 +30,7 @@
   text-align: center;
 }
 .start-title {
+  font-family: var(--font-display);
   max-width: 14ch;
   font-size: var(--text-3xl);
   font-weight: 700;
@@ -37,6 +38,7 @@
   letter-spacing: -0.035em;
 }
 .start-title-sm {
+  font-family: var(--font-display);
   max-width: 22ch;
   font-size: var(--text-2xl);
   font-weight: 700;

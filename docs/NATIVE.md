@@ -36,8 +36,8 @@ change, `npx cap sync ios` copies the new `dist/` into the app.
 ## Without a Mac (Windows + Sideloadly)
 
 1. GitHub → **Actions → ios → Run workflow** (the button appears once `main`
-   is the default branch; a push to `main` that touches `ios/` or the
-   workflow starts it too). It builds an unsigned `reel-rail.ipa` on a GitHub Mac (~10 min); download
+   is the default branch; every push to `main` that changes the app
+   starts it too). It builds an unsigned `reel-rail.ipa` on a GitHub Mac (~10 min); download
    it from the run's **Artifacts**. On a private repo macOS minutes count ten
    times against the free allowance — start it by hand, not on every push.
 2. On the Windows PC: install iTunes and iCloud from Apple's website (not the
