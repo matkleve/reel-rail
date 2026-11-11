@@ -10,10 +10,14 @@ import type { Rating } from "@/types";
  * direction rates, and the deck moves on by itself — browsing is the
  * timeline's job.
  */
-export type Verdict = "keep" | "discard" | "favorite" | "meh";
+export type Verdict = "good" | "bad" | "top" | "delete";
 
-/** What each throw sets the rating to. Absolute, not a step: a swipe means the same every time. */
-export const VERDICT_RATING: Record<Verdict, Rating> = { keep: 1, discard: -2, favorite: 2, meh: -1 };
+/**
+ * What each throw sets the rating to. Absolute, not a step: a swipe means the
+ * same every time. Left is "bad", not "delete": a bad shot may still be the
+ * filler a series needs. Deleting is its own, deliberate direction (down).
+ */
+export const VERDICT_RATING: Record<Verdict, Rating> = { good: 1, bad: -1, top: 2, delete: -2 };
 
 /** Distance that decides on release, in px. */
 export const DECIDE_PX = 96;
@@ -25,8 +29,8 @@ export const TAP_SLOP = 10;
 export type Throw = { kind: "tap" } | { kind: "decide"; verdict: Verdict } | { kind: "none" };
 
 export function verdictOf(dx: number, dy: number): Verdict {
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "keep" : "discard";
-  return dy < 0 ? "favorite" : "meh";
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "good" : "bad";
+  return dy < 0 ? "top" : "delete";
 }
 
 export function classifyThrow(dx: number, dy: number, ms: number): Throw {
@@ -43,9 +47,9 @@ export function leanOf(dx: number, dy: number): Record<Verdict, number> {
   const clamp = (v: number) => Math.max(0, Math.min(1, v / DECIDE_PX));
   const sideways = Math.abs(dx) >= Math.abs(dy);
   return {
-    keep: sideways ? clamp(dx) : 0,
-    discard: sideways ? clamp(-dx) : 0,
-    favorite: sideways ? 0 : clamp(-dy),
-    meh: sideways ? 0 : clamp(dy),
+    good: sideways ? clamp(dx) : 0,
+    bad: sideways ? clamp(-dx) : 0,
+    top: sideways ? 0 : clamp(-dy),
+    delete: sideways ? 0 : clamp(dy),
   };
 }

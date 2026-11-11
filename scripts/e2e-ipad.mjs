@@ -167,7 +167,7 @@ if (!preview.includes("Good")) await fail(`rating preview while swiping up shoul
 if (!(await page.locator(".card.is-current.r1").count())) await fail("swipe up should rate the photo Good");
 await (await swipe(0, 140))();
 await (await swipe(0, 140))();
-if (!(await page.locator(".card.is-current.rm1").count())) await fail("two swipes down from Good should land on Not great");
+if (!(await page.locator(".card.is-current.rm1").count())) await fail("two swipes down from Good should land on Bad");
 await (await swipe(0, -140))();
 await (await swipe(0, -140))();
 ok("swipe up / down rates, with a live preview of the level");
@@ -175,8 +175,8 @@ ok("swipe up / down rates, with a live preview of the level");
 // ---- Tap targets and the dock ------------------------------------------------------------
 const rate = await page.locator(".rate-btn").first().boundingBox();
 if (rate.width < 44 || rate.height < 44) await fail(`rating buttons should be ≥ 44 px on touch, are ${rate.width}`);
-await page.getByRole("radio", { name: "Favorite", exact: true }).tap();
-if (!(await page.locator(".card.is-current.r2").count())) await fail("tapping Favorite should set it");
+await page.locator(".dock").getByRole("radio", { name: "Top", exact: true }).tap();
+if (!(await page.locator(".card.is-current.r2").count())) await fail("tapping Top should set it");
 ok("dock buttons are ≥ 44 px and work by tap");
 
 // ---- Pick + share ---------------------------------------------------------------------------
@@ -284,15 +284,25 @@ if (await page.locator(".card").count()) await fail("the carousel should give wa
   await page.waitForTimeout(700);
 }
 if ((await topCard()) === firstCard) await fail("throwing the card right should deal the next one");
-if (!(await page.locator(".deck-note.is-keep").count())) await fail("a throw should say what happened");
+if (!(await page.locator(".deck-note.is-good").count())) await fail("a throw right should say Good");
 await page.locator(".deck-note").getByRole("button", { name: "Undo" }).click();
 await page.waitForTimeout(300);
 if ((await topCard()) !== firstCard) await fail("Undo should bring the thrown card back on top");
-await page.getByRole("button", { name: "Favorite" }).click();
+await page.getByRole("button", { name: "Top" }).click();
 await page.waitForTimeout(700);
 if ((await topCard()) === firstCard) await fail("the ★ button should throw the card too");
+if (await page.locator(".timeline").count()) await fail("sorting on a phone has no timeline");
 await page.screenshot({ path: `${OUT}/5-phone-deck.png` });
 ok("phone: swipe deck — throw right deals the next card, Undo brings it back, buttons throw too");
+
+await page.getByRole("button", { name: "Timeline" }).click();
+await page.locator(".card.is-current").waitFor();
+if (!(await page.locator(".timeline canvas").count())) await fail("the phone's Timeline tab should show the bars");
+await noOverflow("phone timeline");
+await page.screenshot({ path: `${OUT}/5-phone-timeline.png` });
+await page.getByRole("button", { name: "Sort" }).click();
+await page.locator(".deck-card.is-top").waitFor();
+ok("phone: Timeline tab shows the photos over the bars, Sort goes back to the deck");
 
 // ---- Next session: ratings come back when the same photos are added again ----------------------------
 await page.setViewportSize({ width: 1180, height: 820 });

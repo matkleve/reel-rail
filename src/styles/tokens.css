@@ -44,7 +44,7 @@
 
   --bg: var(--gray-1);
   --bg-stage: var(--gray-0);
-  --surface-1: var(--gray-2); /* header, waveform, panels */
+  --surface-1: var(--gray-2); /* header, timeline, panels */
   --surface-2: var(--gray-3); /* popovers, dialogs, inputs */
   --surface-3: var(--gray-4); /* hover on surface-2 */
   --surface-press: var(--gray-5);
@@ -94,10 +94,9 @@
   --tag-7: #ff8f8f;
   --tag-8: #c7b9a2;
 
-  /* Waveform */
-  --wave-bg: var(--gray-0);
-  --wave-neutral: #8fb3e6;
-  --wave-spine: var(--gray-11);
+  /* Timeline */
+  --timeline-bg: var(--gray-0);
+  --bar-unrated: var(--gray-6);
 
   /* Depth */
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
@@ -160,7 +159,8 @@
   --control-lg: 44px;
 
   --header-h: 52px;
-  --wave-h: 112px;
+  --timeline-h: 112px;
+  --tabs-h: 56px;
 
   /* Motion: 120 for feedback, 200 for UI moves, 320 for entrances. The
      spring overshoots a little — it is what makes rating feel physical. */
@@ -216,9 +216,8 @@
   --rating-m1: #e07a2e;
   --rating-m2: #d64545;
 
-  --wave-bg: #fafafb;
-  --wave-neutral: #6b8fc4;
-  --wave-spine: #141417;
+  --timeline-bg: #fafafb;
+  --bar-unrated: #c9c9d1;
 
   --shadow-1: 0 1px 2px rgb(0 0 0 / 0.08);
   --shadow-2: 0 8px 24px rgb(0 0 0 / 0.1), 0 2px 6px rgb(0 0 0 / 0.06);

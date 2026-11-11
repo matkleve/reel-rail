@@ -9,15 +9,15 @@
   grid-template-rows:
     calc(var(--header-h) + env(safe-area-inset-top, 0px))
     minmax(0, 1fr)
-    calc(var(--wave-h) + env(safe-area-inset-bottom, 0px));
+    calc(var(--timeline-h) + env(safe-area-inset-bottom, 0px));
 }
 .header {
   padding-top: env(safe-area-inset-top, 0px);
   padding-left: calc(var(--space-4) + env(safe-area-inset-left, 0px));
   padding-right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
 }
-.wave {
-  border-bottom: env(safe-area-inset-bottom, 0px) solid var(--wave-bg);
+.timeline {
+  border-bottom: env(safe-area-inset-bottom, 0px) solid var(--timeline-bg);
 }
 .start {
   padding-top: env(safe-area-inset-top, 0px);
@@ -151,12 +151,12 @@
 /* ---------------------------------------------------------------------------
    Phone (portrait iPhone and anything as narrow). Rating on the go is the
    main job here: the photo gets the room, the chrome shrinks to one row of
-   icons on top, a dock of seven targets and a short waveform.
+   icons on top, a dock of seven targets and a short timeline.
 --------------------------------------------------------------------------- */
 @media (max-width: 600px) {
   :root {
     --header-h: 48px;
-    --wave-h: 72px;
+    --timeline-h: 72px;
   }
   .header {
     gap: var(--space-1);
@@ -243,15 +243,11 @@
     font-size: var(--text-xs);
     white-space: nowrap;
   }
-  .wave-label {
+  .timeline-label {
     top: 4px;
   }
-  /* Axis as icons only, no tag legend: the day labels need the width. */
-  .wave-axis {
-    gap: 0;
-    font-size: 0;
-  }
-  .wave-legend {
+  /* No legend: the day labels need the width, and the colours are the cards'. */
+  .timeline-legend {
     display: none;
   }
 }

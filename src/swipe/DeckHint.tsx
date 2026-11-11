@@ -25,10 +25,10 @@ export function DeckHint() {
   };
   return (
     <div className="hints deck-hint" role="note">
-      <span>→ keep</span>
-      <span>← discard</span>
-      <span>↑ favorite</span>
-      <span>↓ not great</span>
+      <span>→ good</span>
+      <span>← bad</span>
+      <span>↑ top</span>
+      <span>↓ delete</span>
       <Button icon={X} label="Hide hints" size="sm" onClick={dismiss} />
     </div>
   );

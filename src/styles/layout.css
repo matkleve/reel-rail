@@ -1,9 +1,9 @@
-/* App shell: header / stage (+ overlay + dock) / waveform. */
+/* App shell: header / stage (+ overlay + dock) / timeline. */
 
 .app {
   height: 100%;
   display: grid;
-  grid-template-rows: var(--header-h) minmax(0, 1fr) var(--wave-h);
+  grid-template-rows: var(--header-h) minmax(0, 1fr) var(--timeline-h);
   background: var(--bg-stage);
 }
 

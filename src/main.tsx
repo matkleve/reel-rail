@@ -11,7 +11,7 @@ import "./styles/components.css";
 import "./styles/layout.css";
 import "./styles/carousel.css";
 import "./styles/deck.css";
-import "./styles/waveform.css";
+import "./styles/timeline.css";
 import "./styles/screens.css";
 import "./styles/responsive.css";
 

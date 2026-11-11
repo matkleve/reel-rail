@@ -1,4 +1,4 @@
-import { PartyPopper, RotateCcw } from "lucide-react";
+import { ChartColumn, PartyPopper, RotateCcw } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -25,8 +25,8 @@ function tokenMs(name: string): number {
 type Note = { verdict: Verdict; at: number };
 
 /**
- * The phone: one card at a time, thrown right (keep), left (discard), up
- * (favorite) or down (not great). The next card waits underneath and grows
+ * The phone: one card at a time, thrown right (good), left (bad — still a
+ * filler), up (top) or down (delete). The next card waits underneath and grows
  * into place as you throw. Browsing back and forth is the timeline's job.
  */
 export function SwipeDeck() {
@@ -121,24 +121,29 @@ function Finished({ empty }: { empty: boolean }) {
     <div className="deck-done">
       <PartyPopper size={32} aria-hidden="true" />
       <h2>{empty ? "Nothing to sort" : "All sorted"}</h2>
-      <p>{empty ? (filtered ? "Nothing passes the filters." : "No photos or videos here yet.") : "That was the last one. Your picks are waiting in the header."}</p>
+      <p>{empty ? (filtered ? "Nothing passes the filters." : "No photos or videos here yet.") : "That was the last one. The timeline shows where your top shots are."}</p>
       {!empty && (
-        <Button variant="secondary" icon={RotateCcw} onClick={restartDeck}>
-          Start over
-        </Button>
+        <div className="deck-done-actions">
+          <Button variant="primary" icon={ChartColumn} onClick={() => useUi.getState().set({ phoneView: "timeline" })}>
+            Open the timeline
+          </Button>
+          <Button variant="secondary" icon={RotateCcw} onClick={restartDeck}>
+            Start over
+          </Button>
+        </div>
       )}
     </div>
   );
 }
 
-const NOTE_TEXT: Record<Verdict, string> = { keep: "Kept", favorite: "Favorite", meh: "Not great", discard: "Discarded" };
+const NOTE_TEXT: Record<Verdict, string> = { good: "Good", top: "Top", bad: "Bad — kept as a filler", delete: "Deleted" };
 
 /** What just happened, with one tap to take it back. */
 function DeckNote({ verdict, onUndo }: { verdict: Verdict; onUndo(): void }) {
   const inPlace = useReel((x) => x.reel.workflow === "edit") && useUi.getState().sourceKind === "folder";
   const grace = Math.round(graceMs() / 1000);
   const text =
-    verdict === "discard" ? `${inPlace ? "Leaves the folder" : "Discarded — leaves"} in ${grace} s` : NOTE_TEXT[verdict];
+    verdict === "delete" ? `${inPlace ? "Leaves the folder" : "Deleted — leaves"} in ${grace} s` : NOTE_TEXT[verdict];
   return (
     <div className={`deck-note is-${verdict}`} role="status">
       <span className="deck-note-dot" aria-hidden="true" />

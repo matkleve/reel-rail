@@ -1,10 +1,14 @@
-import { ArrowDownToLine, Check, Layers, MapPin, Play } from "lucide-react";
+import { ArrowDownToLine, Check, Layers, MapPin, Play, Scissors, Tag as TagIcon } from "lucide-react";
 import type { CSSProperties, HTMLAttributes } from "react";
 
 import { Original } from "@/carousel/Original";
+import { TRIMMABLE } from "@/fs/trimVideo";
 import { togglePick } from "@/store/picks";
+import { useUi } from "@/store/useUi";
 import { PICKS, RATING_LABEL, ratingClass, type Media } from "@/types";
+import { Popover } from "@/ui/kit/Popover";
 import { PlaceField } from "@/ui/StageOverlay";
+import { TagPanel } from "@/ui/TagMenu";
 import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
 
@@ -14,10 +18,10 @@ import type { DeckDrag } from "./useDeckDrag";
 const WHEN = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 const STAMPS: { verdict: Verdict; label: string }[] = [
-  { verdict: "keep", label: "Keep" },
-  { verdict: "discard", label: "Nope" },
-  { verdict: "favorite", label: "Favorite" },
-  { verdict: "meh", label: "Meh" },
+  { verdict: "good", label: "Good" },
+  { verdict: "bad", label: "Bad" },
+  { verdict: "top", label: "Top" },
+  { verdict: "delete", label: "Delete" },
 ];
 
 type Props = {
@@ -40,10 +44,10 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
   const thumb = useThumb(media);
   const picked = media.exportedTo.some((e) => e.series === PICKS);
   const lean = leaving
-    ? { keep: 0, discard: 0, favorite: 0, meh: 0, [leaving]: 1 }
+    ? { good: 0, bad: 0, top: 0, delete: 0, [leaving]: 1 }
     : top
       ? leanOf(drag.dx, drag.dy)
-      : { keep: 0, discard: 0, favorite: 0, meh: 0 };
+      : { good: 0, bad: 0, top: 0, delete: 0 };
   const cls = ["deck-card", top ? "is-top" : "is-next", drag.active && top && "is-dragging", leaving && `is-leaving-${leaving}`]
     .filter(Boolean)
     .join(" ");
@@ -52,10 +56,10 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
     "--dy": `${top ? drag.dy : 0}px`,
     // The card tilts as it is thrown sideways, like one held at the bottom.
     "--rot": `${top ? drag.dx / 18 : 0}deg`,
-    "--keep": lean.keep,
-    "--discard": lean.discard,
-    "--favorite": lean.favorite,
-    "--meh": lean.meh,
+    "--good": lean.good,
+    "--bad": lean.bad,
+    "--top": lean.top,
+    "--delete": lean.delete,
   } as CSSProperties;
 
   return (
@@ -74,17 +78,7 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
           <Play size={13} fill="currentColor" />
         </span>
       )}
-      {top && (
-        <button
-          type="button"
-          className={picked ? "deck-pick is-picked" : "deck-pick"}
-          aria-pressed={picked}
-          aria-label={picked ? "Picked — tap to unpick" : "Pick"}
-          onClick={() => void togglePick()}
-        >
-          {picked ? <Check size={18} strokeWidth={3} /> : <ArrowDownToLine size={18} />}
-        </button>
-      )}
+      {top && <CardTools media={media} picked={picked} />}
 
       {STAMPS.map((s) => (
         <span key={s.verdict} className={`deck-stamp is-${s.verdict}`} aria-hidden="true">
@@ -117,6 +111,43 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * What the item needs besides a verdict, on the card itself: pick, tags, and
+ * the scissors for a video that can be trimmed.
+ */
+function CardTools({ media, picked }: { media: Media; picked: boolean }) {
+  return (
+    <div className="deck-tools">
+      <button
+        type="button"
+        className={picked ? "deck-tool is-picked" : "deck-tool"}
+        aria-pressed={picked}
+        aria-label={picked ? "Picked — tap to unpick" : "Pick"}
+        onClick={() => void togglePick()}
+      >
+        {picked ? <Check size={18} strokeWidth={3} /> : <ArrowDownToLine size={18} />}
+      </button>
+      <Popover
+        side="below"
+        align="end"
+        className="tag-menu"
+        trigger={(p) => (
+          <button type="button" className="deck-tool" aria-label="Tags" {...p}>
+            <TagIcon size={18} />
+          </button>
+        )}
+      >
+        <TagPanel />
+      </Popover>
+      {media.type === "video" && TRIMMABLE.test(media.path) && (
+        <button type="button" className="deck-tool" aria-label="Trim video" onClick={() => useUi.getState().set({ dialog: "trim" })}>
+          <Scissors size={18} />
+        </button>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ type Handler = (e: KeyboardEvent) => void;
 const reel = () => useReel.getState();
 const ui = () => useUi.getState();
 /** Waveform zoom; the upper bound is enforced where the trip length is known (Waveform). */
-const zoomBy = (f: number) => ui().set({ waveZoom: Math.max(1, ui().waveZoom * f) });
+const zoomBy = (f: number) => ui().set({ timeZoom: Math.max(1, ui().timeZoom * f) });
 
 /** Keyed by `KeyboardEvent.key`; letters are matched lower-case. */
 const KEYS: Record<string, Handler> = {
@@ -47,7 +47,7 @@ const KEYS: Record<string, Handler> = {
   "+": () => zoomBy(2),
   "=": () => zoomBy(2),
   "-": () => zoomBy(1 / 2),
-  "0": () => ui().set({ waveZoom: 1 }),
+  "0": () => ui().set({ timeZoom: 1 }),
 };
 
 function typing(target: EventTarget | null): boolean {

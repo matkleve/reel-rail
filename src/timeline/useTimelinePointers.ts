@@ -3,16 +3,16 @@ import { useRef, useState, type PointerEvent, type RefObject } from "react";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 
-import { nearest, type WaveModel, type Window } from "./waveModel";
+import { nearest, type TimeAxis, type Window } from "./timeModel";
 
 /**
- * Pointer handling for the waveform: one finger (or the mouse) jumps and
+ * Pointer handling for the timeline: one finger (or the mouse) jumps and
  * scrubs, two fingers pinch to zoom.
  *
  * While scrubbing, the window holds still — otherwise it would re-centre on
  * every jump and run away under the finger.
  */
-export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveModel, win: Window, maxZoom: number) {
+export function useTimelinePointers(box: RefObject<HTMLElement | null>, axis: TimeAxis, win: Window, maxZoom: number) {
   const [dragWin, setDragWin] = useState<Window>();
   const pointers = useRef(new Map<number, number>());
   const pinch = useRef<{ dist: number; zoom: number }>(undefined);
@@ -20,7 +20,7 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
   const jump = (clientX: number, w: Window) => {
     const rect = box.current!.getBoundingClientRect();
     const p = w.start + ((clientX - rect.left) / rect.width) * w.span;
-    const id = model.ids[nearest(model.pos, p)];
+    const id = axis.ids[nearest(axis.pos, p)];
     if (id) useReel.getState().setCurrent(id);
   };
   const spread = () => {
@@ -34,7 +34,7 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
       pointers.current.set(e.pointerId, e.clientX);
       if (pointers.current.size >= 2) {
         // (Re)start the pinch from the fingers now down — a third finger must not make the zoom jump.
-        pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().waveZoom };
+        pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().timeZoom };
         setDragWin(undefined);
       } else if (pointers.current.size === 1) {
         setDragWin(win);
@@ -46,7 +46,7 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
       pointers.current.set(e.pointerId, e.clientX);
       if (pinch.current && pointers.current.size >= 2) {
         const zoom = pinch.current.zoom * (spread() / pinch.current.dist);
-        useUi.getState().set({ waveZoom: Math.max(1, Math.min(maxZoom, zoom)) });
+        useUi.getState().set({ timeZoom: Math.max(1, Math.min(maxZoom, zoom)) });
       } else if (dragWin) {
         jump(e.clientX, dragWin);
       }
@@ -54,7 +54,7 @@ export function useWavePointers(box: RefObject<HTMLElement | null>, model: WaveM
     onPointerUp(e: PointerEvent<HTMLElement>) {
       pointers.current.delete(e.pointerId);
       if (pointers.current.size < 2) pinch.current = undefined;
-      else pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().waveZoom };
+      else pinch.current = { dist: Math.max(20, spread()), zoom: useUi.getState().timeZoom };
       if (pointers.current.size === 0) setDragWin(undefined);
     },
   };

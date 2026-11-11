@@ -41,7 +41,7 @@ import { PHONE, useMedia } from "./useMedia";
 const RATING_OPTIONS: { value: RatingFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "good", label: "Good +" },
-  { value: "favorite", label: "Favorites" },
+  { value: "favorite", label: "Top" },
 ];
 
 /** Brand + folder on the left, what you see in the middle, where things go on the right. */

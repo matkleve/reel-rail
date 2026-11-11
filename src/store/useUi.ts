@@ -19,8 +19,10 @@ type UiState = {
   /** The inline free-tag field (keyboard: T) is open. */
   tagEditing: boolean;
   theme: "dark" | "light";
-  /** Waveform zoom: 1 = whole trip, larger = a shorter stretch of time. */
-  waveZoom: number;
+  /** Timeline zoom: 1 = whole trip, larger = a shorter stretch of time. */
+  timeZoom: number;
+  /** The phone's two screens: the swipe deck (sort) or the photos with the timeline. */
+  phoneView: "sort" | "timeline";
   /** Name of the Space-key picks folder, once known. */
   picksFolderName?: string;
   toast?: Toast;
@@ -43,7 +45,8 @@ export const useUi = create<UiState>()((set) => ({
   placeFocus: 0,
   tagEditing: false,
   theme: initialTheme(),
-  waveZoom: 1,
+  timeZoom: 1,
+  phoneView: "sort",
   handover: false,
   set: (patch) => set(patch),
 }));

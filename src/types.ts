@@ -11,11 +11,11 @@
 export type Rating = -2 | -1 | 0 | 1 | 2;
 
 export const RATING_LABEL: Record<Rating, string> = {
-  [2]: "Favorite",
+  [2]: "Top",
   [1]: "Good",
   [0]: "Normal",
-  [-1]: "Not great",
-  [-2]: "Discard",
+  [-1]: "Bad",
+  [-2]: "Delete",
 };
 export const DISCARD: Rating = -2;
 /** Seconds a discard stays on the rail (with a countdown) before it goes — the undo window. */

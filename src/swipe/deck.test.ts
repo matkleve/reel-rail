@@ -20,26 +20,26 @@ beforeEach(seed);
 
 describe("the deck", () => {
   it("rates the top card and deals the next", () => {
-    expect(decide("keep")).toBe(true);
+    expect(decide("good")).toBe(true);
     expect(rating("a")).toBe(1);
     expect(s().currentId).toBe("b");
-    decide("discard");
+    decide("delete");
     expect(rating("b")).toBe(-2);
-    decide("favorite");
+    decide("top");
     expect(rating("c")).toBe(2);
   });
 
   it("says when the last card is gone", () => {
-    decide("keep");
-    decide("keep");
-    expect(decide("meh")).toBe(false);
+    decide("good");
+    decide("good");
+    expect(decide("bad")).toBe(false);
     expect(rating("c")).toBe(-1);
   });
 
   it("undo brings the card back with its old rating — even when the swipe changed nothing", () => {
     s().setRatings([{ id: "a", rating: 1 }]);
-    decide("discard"); // a: 1 → −2
-    decide("keep"); // b: 0 → 1
+    decide("delete"); // a: 1 → −2
+    decide("good"); // b: 0 → 1
     expect(undoDecision()).toBe(true);
     expect(s().currentId).toBe("b");
     expect(rating("b")).toBe(0);
@@ -49,10 +49,10 @@ describe("the deck", () => {
     expect(undoDecision()).toBe(false);
   });
 
-  it("a repeated keep is undone without touching an older decision", () => {
-    decide("favorite"); // a: 0 → 2
+  it("a repeated good is undone without touching an older decision", () => {
+    decide("top"); // a: 0 → 2
     s().setRatings([{ id: "b", rating: 1 }]);
-    decide("keep"); // b stays 1: no store undo step
+    decide("good"); // b stays 1: no store undo step
     undoDecision();
     expect(rating("a")).toBe(2);
     expect(s().currentId).toBe("b");

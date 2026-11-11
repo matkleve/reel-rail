@@ -111,8 +111,9 @@ await page.keyboard.press("End");
 await page.waitForTimeout(400);
 if ((await page.locator(".day-sep").count()) < 1) await fail("expected a day separator in the carousel");
 await page.keyboard.press("Home");
-if ((await page.locator(".wave-label").count()) !== 2) await fail("expected 2 day labels on the waveform");
-ok("day separator, waveform with day labels, burst counter");
+if ((await page.locator(".timeline-label").count()) !== 2) await fail("expected 2 day labels on the timeline");
+if ((await page.locator(".timeline-legend").innerText()).replace(/\s+/g, " ").trim() !== "Top Good Bad Not rated") await fail("timeline legend");
+ok("day separator, timeline with day labels and its legend, burst counter");
 await page.waitForTimeout(800);
 await page.screenshot({ path: "tmp/e2e/1-opened.png" });
 
@@ -192,12 +193,12 @@ await page.getByText(/Copied to Picks/).waitFor({ timeout: 5000 });
 ok("Space copies into the picks folder, again takes it back");
 
 // ---- Waveform jump ----------------------------------------------------------------------
-const wave = await page.locator(".wave").boundingBox();
-await page.mouse.click(wave.x + wave.width - 3, wave.y + wave.height / 2);
+const timeline = await page.locator(".timeline").boundingBox();
+await page.mouse.click(timeline.x + timeline.width - 3, timeline.y + timeline.height / 2);
 await page.waitForTimeout(300);
-if ((await counter()) !== "10 / 10") await fail("clicking the waveform's right end should jump to the last item");
+if ((await counter()) !== "10 / 10") await fail("clicking the timeline's right end should jump to the last item");
 await page.keyboard.press("Home");
-ok("waveform click jumps in time");
+ok("timeline click jumps in time");
 
 // ---- Place, then save --------------------------------------------------------
 await page.keyboard.press("p");
@@ -218,7 +219,7 @@ if (!Object.values(saved.media).every((m) => m.takenAt.startsWith("2026-10-1")))
 ok(".reel.json saved (ratings, place, altPaths, EXIF dates)");
 
 // ---- Filter -------------------------------------------------------------------
-await page.getByRole("radio", { name: "Favorites" }).click();
+await page.locator(".header").getByRole("radio", { name: "Top" }).click();
 if ((await page.locator(".card.is-dimmed").count()) < 4) await fail("Top filter should dim the other cards");
 await page.getByRole("radio", { name: "All" }).click();
 ok("filter dims instead of hiding");

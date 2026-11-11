@@ -5,7 +5,7 @@ import { CleanupDialog } from "@/cleanup/CleanupDialog";
 import { CreateSeriesDialog } from "@/series/CreateSeriesDialog";
 import { SeriesListDialog } from "@/series/SeriesListDialog";
 import { useUi } from "@/store/useUi";
-import { Waveform } from "@/timeline/Waveform";
+import { Timeline } from "@/timeline/Timeline";
 import { TrimDialog } from "@/trim/TrimDialog";
 import { Dock } from "@/ui/Dock";
 import { Handover } from "@/ui/Handover";
@@ -14,6 +14,7 @@ import { HelpDialog } from "@/ui/HelpDialog";
 import { SettingsDialog } from "@/ui/SettingsDialog";
 import { StageOverlay } from "@/ui/StageOverlay";
 import { StartScreen } from "@/ui/StartScreen";
+import { PhoneTabs } from "@/ui/PhoneTabs";
 import { PHONE, useMedia } from "@/ui/useMedia";
 import { SwipeDeck } from "@/swipe/SwipeDeck";
 import { Toast } from "@/ui/Toast";
@@ -23,12 +24,15 @@ import { WorkflowDialog } from "@/ui/WorkflowDialog";
 export function App() {
   const phase = useUi((s) => s.phase);
   const theme = useUi((s) => s.theme);
-  // A phone gets the swipe deck: one card, thrown to decide. The carousel
-  // stays for bigger screens, where the keyboard and the wide rail win.
+  // A phone has two screens: the swipe deck (one card, thrown to decide) and
+  // the photos side by side over the timeline. Bigger screens show the
+  // second one only — with a keyboard and a wide rail, rating there is faster.
   const phone = useMedia(PHONE);
+  const phoneView = useUi((s) => s.phoneView);
+  const sorting = phone && phoneView === "sort";
   useKeyboard();
 
-  // Layout effect: it must land before children's effects run — the waveform
+  // Layout effect: it must land before children's effects run — the timeline
   // canvas reads the theme's colour tokens in its own effect.
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -43,10 +47,10 @@ export function App() {
     );
 
   return (
-    <div className="app">
+    <div className={phone ? "app is-phone" : "app"}>
       <Header />
       <main className="stage-wrap">
-        {phone ? (
+        {sorting ? (
           <SwipeDeck />
         ) : (
           <>
@@ -56,7 +60,8 @@ export function App() {
           </>
         )}
       </main>
-      <Waveform />
+      {!sorting && <Timeline />}
+      {phone && <PhoneTabs />}
       <Toast />
       <Handover />
       <CreateSeriesDialog />
