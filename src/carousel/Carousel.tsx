@@ -3,6 +3,7 @@ import { ImageOff } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
 import { subscribeThumbs, thumbFor, thumbsVersion } from "@/fs/thumbnails";
+import { locale, t } from "@/i18n";
 import { passes } from "@/store/filters";
 import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel } from "@/store/useReel";
@@ -16,7 +17,7 @@ import { layoutCarousel } from "./layout";
 import { useInsets } from "./useInsets";
 import { useSwipe } from "./useSwipe";
 
-const DAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const DAY = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
 
 /** Wheel/trackpad travel per step through the carousel. */
 const WHEEL_STEP = 70;
@@ -103,7 +104,7 @@ export function Carousel() {
       {ids.length === 0 && (
         <div className="stage-empty">
           <ImageOff size={28} aria-hidden="true" />
-          <p>No photos or videos in this folder yet.</p>
+          <p>{t("No photos or videos in this folder yet.")}</p>
         </div>
       )}
     </div>

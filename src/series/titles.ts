@@ -1,6 +1,7 @@
 import type { Media } from "@/types";
+import { locale, t } from "@/i18n";
 
-const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short" });
+const MONTH = new Intl.DateTimeFormat(locale, { month: "short" });
 
 /** Folder names cameras and phones invent — never a meaningful place. */
 const GENERIC_DIR = /^(dcim|\d{3}[a-z_]*|camera|camera roll|photos?|videos?|images?|pictures|export|import|media|raw|jpe?g|mov|mp4|\d{4}([-_.]\d{2}){0,2})$/i;
@@ -41,7 +42,7 @@ export function monthYear(media: Media[]): string | undefined {
 /** e.g. "Porto – Tram – Oct 26". Missing parts are left out, never invented. */
 export function suggestTitle(media: Media[]): string {
   const parts = [placeOf(media), topTag(media), monthYear(media)].filter(Boolean);
-  return parts.length ? parts.join(" – ") : "New series";
+  return parts.length ? parts.join(" – ") : t("New series");
 }
 
 const ADJECTIVES = [

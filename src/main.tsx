@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { accountsEnabled, startAccount } from "./account/account";
 import { startSync } from "./account/syncRunner";
 import { App } from "./App";
+import { lang } from "./i18n";
 import "@fontsource-variable/nunito";
 import "@fontsource-variable/fraunces";
 import "./styles/tokens.css";
@@ -18,6 +19,9 @@ import "./styles/responsive.css";
 
 startAccount();
 if (accountsEnabled) startSync();
+
+// Hyphenation, the screen reader's voice and the date pickers follow the UI language.
+document.documentElement.lang = lang;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

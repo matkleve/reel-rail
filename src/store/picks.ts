@@ -1,6 +1,7 @@
 import { getMediaFile, getSource } from "@/fs/session";
 import { renamed, shareFiles } from "@/fs/share";
 import { copyInto, getPicksFolder, removeCopy } from "@/fs/picksFolder";
+import { t, tn } from "@/i18n";
 import { PICKS, type Media } from "@/types";
 
 import { targetIds, useReel } from "./useReel";
@@ -32,7 +33,7 @@ export async function togglePick(): Promise<void> {
     if (items.every(isPicked)) await takeBack(dir, items);
     else await copy(dir, items.filter((m) => !isPicked(m)));
   } catch (err) {
-    showToast(`Could not write to “${dir.name}”: ${err instanceof Error ? err.message : err}`, "error");
+    showToast(t("Could not write to “{folder}”: {error}", { folder: dir.name, error: err instanceof Error ? err.message : String(err) }), "error");
   }
 }
 
@@ -42,7 +43,7 @@ async function copy(dir: FileSystemDirectoryHandle, items: Media[]): Promise<voi
     const record = { series: PICKS, at: new Date().toISOString(), path: `${dir.name}/${name}` };
     useReel.getState().patch([m.id], (x) => ({ ...x, exportedTo: [...x.exportedTo, record] }));
   }
-  showToast(items.length === 1 ? `Copied to ${dir.name}` : `${items.length} items copied to ${dir.name}`);
+  showToast(tn("Copied to {folder}", "{n} items copied to {folder}", items.length, { folder: dir.name }));
 }
 
 async function takeBack(dir: FileSystemDirectoryHandle, items: Media[]): Promise<void> {
@@ -56,8 +57,13 @@ async function takeBack(dir: FileSystemDirectoryHandle, items: Media[]): Promise
   }
   showToast(
     kept
-      ? `Removed from the list — ${kept} copy(ies) left in ${dir.name} because they changed`
-      : `Removed from ${dir.name}`,
+      ? tn(
+          "Removed from the list — 1 copy left in {folder} because it changed",
+          "Removed from the list — {n} copies left in {folder} because they changed",
+          kept,
+          { folder: dir.name },
+        )
+      : t("Removed from {folder}", { folder: dir.name }),
   );
 }
 
@@ -75,7 +81,11 @@ function toggleMark(items: Media[]): void {
       exportedTo: off ? m.exportedTo.filter((e) => e.series !== PICKS) : isPicked(m) ? m.exportedTo : [...m.exportedTo, { series: PICKS, at }],
     }),
   );
-  showToast(off ? "Unpicked" : `Picked${items.length > 1 ? ` ${items.length}` : ""} — share them with “Share picks”`);
+  showToast(
+    off
+      ? t("Unpicked")
+      : tn("Picked — share them with “Share picks”", "Picked {n} — share them with “Share picks”", items.length),
+  );
 }
 
 /** All picked items that are loaded right now, in timeline order. */
@@ -88,14 +98,14 @@ export function pickedMedia(): Media[] {
 export async function sharePicks(): Promise<void> {
   const items = pickedMedia();
   if (!items.length) {
-    showToast("Nothing picked yet — tap Pick (or press Space) on a photo first");
+    showToast(t("Nothing picked yet — tap Pick (or press Space) on a photo first"));
     return;
   }
   try {
     const files = await Promise.all(items.map(async (m) => renamed(await getMediaFile(m), baseName(m.path))));
-    const result = await shareFiles(files, "reel-rail picks");
-    if (result === "downloaded") showToast(`${files.length} files downloaded`);
+    const result = await shareFiles(files, t("reel-rail picks"));
+    if (result === "downloaded") showToast(tn("1 file downloaded", "{n} files downloaded", files.length));
   } catch (err) {
-    showToast(`Could not share: ${err instanceof Error ? err.message : err}`, "error");
+    showToast(t("Could not share: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
   }
 }

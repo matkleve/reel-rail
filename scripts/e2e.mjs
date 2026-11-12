@@ -314,7 +314,7 @@ await page.keyboard.press("ArrowDown");
 await page.locator(`.card-face[aria-label^="photo ${doomed},"]`).waitFor({ state: "detached", timeout: 5000 });
 await page.getByRole("button", { name: /^Deleted/ }).click();
 await page.getByRole("button", { name: "Delete now…" }).click();
-await page.getByRole("button", { name: /^Delete \d+ files/ }).click();
+await page.getByRole("button", { name: /^Delete \d+ files?$/ }).click();
 await page.getByText(/^Deleted 1 file ·/).waitFor({ timeout: 5000 });
 onDisk = await tripFiles();
 if (onDisk.some((f) => f.endsWith(doomed))) await fail(`${doomed} should be deleted for good: ${onDisk}`);

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loadHandle } from "@/fs/handleStore";
 import type { ScanProgress } from "@/fs/scan";
 import { sourceMode } from "@/fs/support";
+import { t } from "@/i18n";
 import { openFolder, pickAndOpen } from "@/store/openSource";
 import { useUi } from "@/store/useUi";
 
@@ -33,22 +34,22 @@ function FolderStart() {
         {remembered ? (
           <>
             <Button variant="primary" size="lg" icon={FolderOpen} onClick={() => void openFolder(remembered)} autoFocus>
-              Continue with “{remembered.name}”
+              {t("Continue with “{name}”", { name: remembered.name })}
             </Button>
             <Button variant="ghost" size="lg" onClick={() => void pickAndOpen()}>
-              Open another folder
+              {t("Open another folder")}
             </Button>
           </>
         ) : (
           <Button variant="primary" size="lg" icon={FolderOpen} onClick={() => void pickAndOpen()} autoFocus>
-            Open a folder
+            {t("Open a folder")}
           </Button>
         )}
       </div>
       <StartError error={error} />
       <Steps />
       <Privacy>
-        Nothing leaves this computer. Your originals are never changed — reel-rail only writes one file,{" "}
+        {t("Nothing leaves this computer. Your originals are never changed — reel-rail only writes one file,")}{" "}
         <code>.reel.json</code>.
       </Privacy>
     </Shell>
@@ -71,8 +72,8 @@ function Scanning({ progress, folderName }: { progress?: ScanProgress; folderNam
         </div>
         <p className="text-2 tabular">
           {listing
-            ? `Looking for photos and videos… ${progress?.total ?? 0} found`
-            : `Reading ${progress.done} of ${progress.total}`}
+            ? t("Looking for photos and videos… {n} found", { n: progress?.total ?? 0 })
+            : t("Reading {done} of {total}", { done: progress.done, total: progress.total })}
         </p>
       </div>
     </Shell>

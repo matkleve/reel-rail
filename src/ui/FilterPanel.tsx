@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react";
 
+import { t } from "@/i18n";
 import { DEFAULT_FILTERS } from "@/store/filters";
 import { useReel } from "@/store/useReel";
 
@@ -13,32 +14,32 @@ export function FilterPanel() {
   const presets = useReel((s) => s.reel.tagPresets);
   const setFilters = useReel((s) => s.setFilters);
   const all = useAllTags();
-  const toggle = (t: string) =>
-    setFilters({ tags: filters.tags.includes(t) ? filters.tags.filter((x) => x !== t) : [...filters.tags, t] });
+  const toggle = (tag: string) =>
+    setFilters({ tags: filters.tags.includes(tag) ? filters.tags.filter((x) => x !== tag) : [...filters.tags, tag] });
 
   return (
     <div className="filter-panel">
-      <Switch label="Hide discards" checked={filters.hideDiscards} onChange={(v) => setFilters({ hideDiscards: v })} />
-      <Switch label="Not exported yet" checked={filters.neverExported} onChange={(v) => setFilters({ neverExported: v })} />
+      <Switch label={t("Hide discards")} checked={filters.hideDiscards} onChange={(v) => setFilters({ hideDiscards: v })} />
+      <Switch label={t("Not exported yet")} checked={filters.neverExported} onChange={(v) => setFilters({ neverExported: v })} />
       <hr />
-      <div className="popover-label">Tags — show any of</div>
+      <div className="popover-label">{t("Tags — show any of")}</div>
       <div className="tag-cloud">
-        {all.map((t) => (
+        {all.map((tag) => (
           <button
-            key={t}
+            key={tag}
             type="button"
             className="tag tag-toggle"
-            style={tagStyle(t, presets)}
-            aria-pressed={filters.tags.includes(t)}
-            onClick={() => toggle(t)}
+            style={tagStyle(tag, presets)}
+            aria-pressed={filters.tags.includes(tag)}
+            onClick={() => toggle(tag)}
           >
-            <span>{t}</span>
+            <span>{tag}</span>
           </button>
         ))}
       </div>
       <hr />
       <button type="button" className="menu-item" onClick={() => setFilters({ ...DEFAULT_FILTERS, rating: filters.rating })}>
-        <RotateCcw size={15} /> Reset filters
+        <RotateCcw size={15} /> {t("Reset filters")}
       </button>
     </div>
   );

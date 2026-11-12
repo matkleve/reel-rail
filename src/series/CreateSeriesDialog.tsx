@@ -1,6 +1,7 @@
 import { Dices, FolderOutput, Share } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { t } from "@/i18n";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import type { Media, Series } from "@/types";
@@ -44,8 +45,8 @@ function CreateSeries({ onDone }: { onDone(): void }) {
     <Dialog
       open
       onClose={onDone}
-      title={created ? "Series created" : "New series"}
-      subtitle={`${media.length} items · saved with your ratings — files are only copied when you ${share ? "share" : "export"}`}
+      title={created ? t("Series created") : t("New series")}
+      subtitle={subtitle(media.length, share)}
       wide
       footer={
         <SeriesFooter
@@ -66,7 +67,7 @@ function CreateSeries({ onDone }: { onDone(): void }) {
         }}
       >
         <label className="field-label" htmlFor="series-title">
-          Title
+          {t("Title")}
         </label>
         <div className="title-row">
           <input
@@ -74,7 +75,7 @@ function CreateSeries({ onDone }: { onDone(): void }) {
             className="input input-lg"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            aria-label="Series title"
+            aria-label={t("Series title")}
             disabled={!!created}
             data-autofocus
           />
@@ -82,7 +83,7 @@ function CreateSeries({ onDone }: { onDone(): void }) {
             variant="secondary"
             size="lg"
             icon={Dices}
-            label="Roll a funny title"
+            label={t("Roll a funny title")}
             onClick={() => setTitle(funnyTitle(media))}
             disabled={!!created}
           />
@@ -96,6 +97,12 @@ function CreateSeries({ onDone }: { onDone(): void }) {
       <ExportStatus state={state} />
     </Dialog>
   );
+}
+
+function subtitle(n: number, share: boolean): string {
+  return share
+    ? t("{n} items · saved with your ratings — files are only copied when you share", { n })
+    : t("{n} items · saved with your ratings — files are only copied when you export", { n });
 }
 
 type FooterProps = {
@@ -117,14 +124,14 @@ function SeriesFooter(p: FooterProps) {
     return (
       <div className="footer-row" key="draft">
         <Button variant="ghost" onClick={p.onCancel}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <span className="spacer" />
         <Button variant="secondary" icon={p.share ? Share : FolderOutput} onClick={p.onCreateAndExport}>
-          {p.share ? "Create & share…" : "Create & export…"}
+          {p.share ? t("Create & share…") : t("Create & export…")}
         </Button>
         <Button variant="primary" type="submit" form="series-form">
-          Create series
+          {t("Create series")}
         </Button>
       </div>
     );
@@ -133,11 +140,11 @@ function SeriesFooter(p: FooterProps) {
       <span className="spacer" />
       {p.exporting === "idle" && (
         <Button variant="secondary" icon={p.share ? Share : FolderOutput} onClick={p.onExport}>
-          {p.share ? "Share…" : "Export…"}
+          {p.share ? t("Share…") : t("Export…")}
         </Button>
       )}
       <Button variant="primary" onClick={p.onCancel} disabled={p.exporting === "running"}>
-        Done
+        {t("Done")}
       </Button>
     </div>
   );

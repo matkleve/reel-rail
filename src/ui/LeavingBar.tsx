@@ -2,6 +2,7 @@ import { ArchiveRestore, Trash2 } from "lucide-react";
 import { useEffect, useState, type CSSProperties } from "react";
 
 import { secondsLeft } from "@/fs/deletion";
+import { t } from "@/i18n";
 import { graceMs } from "@/store/discards";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -21,8 +22,8 @@ export function LeavingBar() {
 
   useEffect(() => {
     if (!counting) return;
-    const t = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
   }, [counting]);
 
   if (!media || !counting) return null;
@@ -32,7 +33,9 @@ export function LeavingBar() {
     <div className="leaving" role="status" key={media.id}>
       <Trash2 size={15} aria-hidden="true" />
       <span className="tabular">
-        {inPlace ? "Leaves the folder" : "Leaves"} in {Math.ceil(left)} s
+        {inPlace
+          ? t("Leaves the folder in {n} s", { n: Math.ceil(left) })
+          : t("Leaves in {n} s", { n: Math.ceil(left) })}
       </span>
       <span
         className="leaving-bar"
@@ -45,7 +48,7 @@ export function LeavingBar() {
         icon={ArchiveRestore}
         onClick={() => useReel.getState().setRatings([{ id: media.id, rating: 0 }])}
       >
-        Keep
+        {t("Keep")}
       </Button>
     </div>
   );

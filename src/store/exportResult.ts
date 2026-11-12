@@ -1,5 +1,6 @@
 import { exportResult } from "@/fs/exportResult";
 import { folderName } from "@/fs/exportSeries";
+import { t } from "@/i18n";
 import { DISCARD } from "@/types";
 
 import { useReel } from "./useReel";
@@ -9,18 +10,20 @@ import { showToast, useUi } from "./useUi";
 export async function runExportResult(): Promise<void> {
   const { reel, order } = useReel.getState();
   const kept = order.map((id) => reel.media[id]!).filter((m) => m.rating !== DISCARD);
-  if (!kept.length) return showToast("Nothing kept yet");
+  if (!kept.length) return showToast(t("Nothing kept yet"));
   let target: FileSystemDirectoryHandle;
   try {
     target = await window.showDirectoryPicker({ id: "reel-export", mode: "readwrite" });
   } catch {
     return; // picker closed
   }
-  const name = folderName(`${useUi.getState().folderName ?? "Trip"} – sorted`);
+  const name = folderName(t("{folder} – sorted", { folder: useUi.getState().folderName ?? t("Trip") }));
   try {
-    const path = await exportResult(target, name, kept, (done) => showToast(`Exporting ${done} of ${kept.length}…`));
-    showToast(`Exported ${kept.length} to ${path}`);
+    const path = await exportResult(target, name, kept, (done) =>
+      showToast(t("Exporting {done} of {total}…", { done, total: kept.length })),
+    );
+    showToast(t("Exported {n} to {path}", { n: kept.length, path }));
   } catch (err) {
-    showToast(`Export stopped: ${err instanceof Error ? err.message : err}`, "error");
+    showToast(t("Export stopped: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
   }
 }

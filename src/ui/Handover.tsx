@@ -1,5 +1,6 @@
 import { LoaderCircle } from "lucide-react";
 
+import { t } from "@/i18n";
 import { useUi } from "@/store/useUi";
 
 import { Button } from "./kit/Button";
@@ -17,13 +18,14 @@ export function Handover() {
     <div className="handover" role="status">
       <div className="handover-card">
         <LoaderCircle className="handover-spin" size={22} aria-hidden="true" />
-        <strong>Waiting for your photos…</strong>
+        <strong>{t("Waiting for your photos…")}</strong>
         <p>
-          Videos take longest: the phone copies each one out of the Photos library before the browser gets it. Bigger
-          batches are fine — reel-rail picks up as soon as they arrive.
+          {t(
+            "Videos take longest: the phone copies each one out of the Photos library before the browser gets it. Bigger batches are fine — reel-rail picks up as soon as they arrive.",
+          )}
         </p>
         <Button variant="ghost" size="sm" onClick={() => useUi.getState().set({ handover: false })}>
-          Hide
+          {t("Hide")}
         </Button>
       </div>
     </div>

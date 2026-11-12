@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 
+import { t } from "@/i18n";
 import { Button } from "@/ui/kit/Button";
 
 const KEY = "reel-rail:deck-hint-dismissed";
@@ -29,11 +30,11 @@ export function DeckHint() {
   };
   return (
     <div className="deck-hint" role="note">
-      <span>→ good</span>
-      <span>← bad</span>
-      <span>↑ top</span>
-      <span>↓ delete</span>
-      <Button icon={X} label="Hide hints" size="sm" onClick={dismiss} />
+      <span>→ {t("good")}</span>
+      <span>← {t("bad")}</span>
+      <span>↑ {t("top")}</span>
+      <span>↓ {t("delete")}</span>
+      <Button icon={X} label={t("Hide hints")} size="sm" onClick={dismiss} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { t } from "@/i18n";
 import { setTagPresets } from "@/store/actions";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -26,19 +27,19 @@ function PresetDialog({ onDone }: { onDone(): void }) {
     <Dialog
       open
       onClose={onDone}
-      title="Tag presets"
-      subtitle="Keys 1–9 add or remove these tags on the current item or the selection."
+      title={t("Tag presets")}
+      subtitle={t("Keys 1–9 add or remove these tags on the current item or the selection.")}
       footer={
         <>
           <Button variant="ghost" onClick={() => setPresets([...DEFAULT_TAG_PRESETS])}>
-            Reset to defaults
+            {t("Reset to defaults")}
           </Button>
           <span className="spacer" />
           <Button variant="ghost" onClick={onDone}>
-            Cancel
+            {t("Cancel")}
           </Button>
           <Button variant="primary" type="submit" form="preset-form">
-            Save
+            {t("Save")}
           </Button>
         </>
       }
@@ -59,7 +60,7 @@ function PresetDialog({ onDone }: { onDone(): void }) {
             <input
               className="input"
               value={p}
-              aria-label={`Preset ${i + 1}`}
+              aria-label={t("Preset {n}", { n: i + 1 })}
               onChange={(e) => setPresets(presets.map((x, j) => (j === i ? e.target.value : x)))}
             />
           </label>

@@ -2,6 +2,7 @@ import { Check, Tag as TagIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
+import { t } from "@/i18n";
 import { addTag, removeTag, toggleTag } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -18,7 +19,7 @@ export function useAllTags(): string[] {
   const presets = useReel((s) => s.reel.tagPresets);
   return useMemo(() => {
     const set = new Set(presets.filter(Boolean));
-    for (const m of Object.values(media)) for (const t of m.tags) set.add(t);
+    for (const m of Object.values(media)) for (const tag of m.tags) set.add(tag);
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [media, presets]);
 }
@@ -41,10 +42,10 @@ export function TagGroup({ media }: { media: Media }) {
 
   return (
     <div className="dock-tags">
-      {media.tags.slice(0, 3).map((t) => (
-        <span key={t} className="tag" style={tagStyle(t, presets)}>
-          <span>{t}</span>
-          <button type="button" onClick={() => removeTag(media.id, t)} aria-label={`Remove tag ${t}`}>
+      {media.tags.slice(0, 3).map((tag) => (
+        <span key={tag} className="tag" style={tagStyle(tag, presets)}>
+          <span>{tag}</span>
+          <button type="button" onClick={() => removeTag(media.id, tag)} aria-label={t("Remove tag {tag}", { tag })}>
             ×
           </button>
         </span>
@@ -54,7 +55,7 @@ export function TagGroup({ media }: { media: Media }) {
         side="above"
         className="tag-menu"
         trigger={(p) => (
-          <Button ref={trigger} icon={TagIcon} label="Tags" kbd="T" tipSide="above" {...p} />
+          <Button ref={trigger} icon={TagIcon} label={t("Tags")} kbd="T" tipSide="above" {...p} />
         )}
       >
         <TagPanel />
@@ -68,7 +69,7 @@ export function TagPanel() {
   // useShallow: targetIds builds a new array each call; compare its contents.
   const ids = useReel(useShallow((s) => targetIds(s)));
   const media = useReel((s) => s.reel.media);
-  const has = (t: string) => ids.length > 0 && ids.every((id) => media[id]?.tags.includes(t));
+  const has = (tag: string) => ids.length > 0 && ids.every((id) => media[id]?.tags.includes(tag));
   const all = useAllTags();
   const [draft, setDraft] = useState("");
 
@@ -78,8 +79,8 @@ export function TagPanel() {
         className="input"
         list="reel-tags"
         value={draft}
-        placeholder="New tag…"
-        aria-label="New tag"
+        placeholder={t("New tag…")}
+        aria-label={t("New tag")}
         data-autofocus
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
@@ -91,18 +92,18 @@ export function TagPanel() {
         }}
       />
       <datalist id="reel-tags">
-        {all.map((t) => (
-          <option key={t} value={t} />
+        {all.map((tag) => (
+          <option key={tag} value={tag} />
         ))}
       </datalist>
-      <div className="popover-label">Presets</div>
+      <div className="popover-label">{t("Presets")}</div>
       {presets.map(
-        (t, i) =>
-          t && (
-            <button key={t} type="button" className="menu-item" onClick={() => toggleTag(t)}>
-              <span className="tag-dot" style={tagStyle(t, presets)} />
-              {t}
-              {has(t) && <Check size={14} className="menu-check" />}
+        (tag, i) =>
+          tag && (
+            <button key={tag} type="button" className="menu-item" onClick={() => toggleTag(tag)}>
+              <span className="tag-dot" style={tagStyle(tag, presets)} />
+              {tag}
+              {has(tag) && <Check size={14} className="menu-check" />}
               <Kbd>{String(i + 1)}</Kbd>
             </button>
           ),

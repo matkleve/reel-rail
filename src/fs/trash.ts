@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { freeName, namesIn } from "./names";
 
 export const TRASH_DIR = "_reel_trash";
@@ -42,7 +43,7 @@ export async function moveFile(
     const file = await handle.getFile();
     const copy = await toDir.getFileHandle(name, { create: true });
     await file.stream().pipeTo(await copy.createWritable());
-    if ((await copy.getFile()).size !== file.size) throw new Error(`copy of ${from} is incomplete`);
+    if ((await copy.getFile()).size !== file.size) throw new Error(t("The copy of {path} is incomplete", { path: from }));
     await fromDir.removeEntry(srcName);
   }
   return [...dst, name].join("/");

@@ -1,42 +1,45 @@
+import { t } from "@/i18n";
+
 /** Single source for the shortcut overlay; README mirrors it. */
 export const SHORTCUT_GROUPS: { title: string; items: [string[], string][] }[] = [
   {
-    title: "Browse",
+    title: t("Browse"),
     items: [
-      [["←", "→"], "Previous / next (wheel and swipe work too)"],
-      [["Home", "End"], "First / last"],
-      [["Enter"], "Open / close a burst"],
-      [["+", "−", "0"], "Zoom the timeline in / out / whole trip"],
+      [["←", "→"], t("Previous / next (wheel and swipe work too)")],
+      [["Home", "End"], t("First / last")],
+      [["Enter"], t("Open / close a burst")],
+      [["+", "−", "0"], t("Zoom the timeline in / out / whole trip")],
     ],
   },
   {
-    title: "Rate & keep",
+    title: t("Rate & keep"),
     items: [
-      [["↑"], "Better — bigger and higher"],
-      [["↓"], "Worse — smaller, slides down"],
-      [["Z"], "Undo the last rating"],
-      [["X"], "Open burst: all but the best → discard"],
-      [["Space"], "Pick: copy to your picks folder (again: undo)"],
+      [["↑"], t("Better rating")],
+      [["↓"], t("Worse rating")],
+      [["→", "←", "↑", "↓"], t("In Sort: good, bad, top, delete")],
+      [["Z"], t("Undo the last rating")],
+      [["X"], t("Open burst: all but the best → discard")],
+      [[t("Space")], t("Pick: copy to your picks folder (again: undo)")],
     ],
   },
   {
-    title: "Select",
+    title: t("Select"),
     items: [
-      [["Shift", "←/→"], "Extend the selection"],
-      [["⌘/Ctrl", "Click"], "Add or remove one item"],
-      [["Esc"], "Clear the selection"],
-      [["S"], "Create a series from the selection"],
+      [["Shift", "←/→"], t("Extend the selection")],
+      [["⌘/Ctrl", t("Click")], t("Add or remove one item")],
+      [["Esc"], t("Clear the selection")],
+      [["S"], t("Create a series from the selection")],
     ],
   },
   {
-    title: "Describe & view",
+    title: t("Describe & view"),
     items: [
-      [["1–9"], "Toggle a tag preset"],
-      [["T"], "Tag menu"],
-      [["P"], "Edit the place"],
-      [["V", "M"], "Video: play/pause, sound"],
-      [["C"], "Video: trim"],
-      [["?"], "This overlay"],
+      [["1–9"], t("Toggle a tag preset")],
+      [["T"], t("Tag menu")],
+      [["P"], t("Edit the place")],
+      [["V", "M"], t("Video: play/pause, sound")],
+      [["C"], t("Video: trim")],
+      [["?"], t("This overlay")],
     ],
   },
 ];

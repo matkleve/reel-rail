@@ -1,5 +1,6 @@
 import { FolderInput, FolderPen } from "lucide-react";
 
+import { t } from "@/i18n";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import type { Workflow } from "@/types";
@@ -25,8 +26,8 @@ export function WorkflowDialog() {
     <Dialog
       open
       onClose={close}
-      title={`How should reel-rail work on “${folder}”?`}
-      subtitle="You can change this later in the folder menu."
+      title={t("How should reel-rail work on “{folder}”?", { folder: folder ?? "" })}
+      subtitle={t("You can change this later in the folder menu.")}
     >
       <div className="choice-list">
         <button
@@ -38,20 +39,22 @@ export function WorkflowDialog() {
         >
           <FolderPen size={22} aria-hidden="true" />
           <span>
-            <strong>Edit this folder</strong>
+            <strong>{t("Edit this folder")}</strong>
             <span>
-              Discards and the cut-away parts of videos leave the folder — it ends up holding only what you keep. They
-              wait 30 days in Recently deleted.
+              {t(
+                "Discards and the cut-away parts of videos leave the folder — it ends up holding only what you keep. They wait 30 days in Recently deleted.",
+              )}
             </span>
           </span>
         </button>
         <button type="button" className="choice" aria-pressed={current === "export"} onClick={() => choose("export")}>
           <FolderInput size={22} aria-hidden="true" />
           <span>
-            <strong>Leave it as it is, export the result</strong>
+            <strong>{t("Leave it as it is, export the result")}</strong>
             <span>
-              Nothing in this folder changes. When you are done, “Export result…” copies what you kept — trims applied —
-              into a new folder.
+              {t(
+                "Nothing in this folder changes. When you are done, “Export result…” copies what you kept — trims applied — into a new folder.",
+              )}
             </span>
           </span>
         </button>

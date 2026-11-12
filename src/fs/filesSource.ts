@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import type { ReelFile } from "@/types";
 
 import { idbGet, idbSet } from "./idb";
@@ -50,7 +51,7 @@ export class FilesSource implements Source, SessionFiles {
   readonly name: string;
   private files = new Map<string, File>();
 
-  constructor(name = "My photos") {
+  constructor(name = t("My photos")) {
     this.name = name;
   }
 
@@ -85,7 +86,7 @@ export class FilesSource implements Source, SessionFiles {
 
   async getFile(path: string): Promise<File> {
     const f = this.files.get(path);
-    if (!f) throw new Error(`“${path}” is not loaded — add it again`);
+    if (!f) throw new Error(t("“{path}” is not loaded — add it again", { path }));
     return f;
   }
 

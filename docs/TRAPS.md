@@ -146,3 +146,14 @@ Chromium's OPFS for a folder that did not exist — an en dash was enough. A
 (it hung the result export; series titles carry en dashes too). Free names
 are chosen from a listing of the folder instead (`src/fs/names.ts`). Do not
 go back to probing.
+
+## The iPhone app reports English unless it declares German
+
+In a WKWebView `navigator.language` is the app's language, not simply the
+device's: iOS picks it from the localizations the bundle declares. With only
+`CFBundleDevelopmentRegion = en`, a German iPhone runs the app in English and
+`src/i18n` shows English. `CFBundleLocalizations` in `ios/App/App/Info.plist`
+lists `en` and `de`; a new UI language needs an entry there as well as a
+dictionary. (The Photos permission text, `NSPhotoLibraryUsageDescription`,
+is still English: localizing it needs an `InfoPlist.strings` per language,
+added to the Xcode project.)

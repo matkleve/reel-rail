@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { idbGet, idbSet } from "@/fs/idb";
 import { normalize } from "@/fs/reelFile";
 import type { SessionFiles, Source, SourceFile } from "@/fs/source";
@@ -66,7 +67,7 @@ export function photoFiles(assets: PhotoAsset[], read: (a: PhotoAsset) => Promis
  */
 export class PhotosSource implements Source, SessionFiles {
   readonly kind = "files";
-  readonly name = "Photos";
+  readonly name = t("Photos");
   private byPath = new Map<string, PhotoAsset>();
   private session = new Map<string, File>();
   private recent = new Map<string, Promise<File>>();
@@ -86,7 +87,7 @@ export class PhotosSource implements Source, SessionFiles {
     const cached = this.recent.get(path);
     if (cached) return cached;
     const asset = this.byPath.get(path);
-    if (!asset) return Promise.reject(new Error(`“${path}” is no longer in Photos`));
+    if (!asset) return Promise.reject(new Error(t("“{path}” is no longer in Photos", { path })));
     const file = assetFile(asset);
     this.recent.set(path, file);
     // A failed export must not stay cached as the answer.

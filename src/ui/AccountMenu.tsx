@@ -2,6 +2,7 @@ import { CircleUserRound, LogOut } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { accountsEnabled, sendCode, signOut, useAccount, verifyCode } from "@/account/account";
+import { locale, t } from "@/i18n";
 
 import { Button } from "./kit/Button";
 import { Popover } from "./kit/Popover";
@@ -17,7 +18,7 @@ export function AccountMenu() {
       trigger={(p) => (
         <Button
           icon={CircleUserRound}
-          label={email ? `Account — ${email}` : "Sign in"}
+          label={email ? t("Account — {email}", { email }) : t("Sign in")}
           variant={email ? "secondary" : "ghost"}
           {...p}
         />
@@ -30,9 +31,9 @@ export function AccountMenu() {
 
 const SYNC_TEXT = {
   off: "",
-  syncing: "Syncing ratings…",
-  synced: "Ratings in sync",
-  error: "Sync failed — retries on the next change",
+  syncing: t("Syncing ratings…"),
+  synced: t("Ratings in sync"),
+  error: t("Sync failed — retries on the next change"),
 };
 
 function SignedIn({ email }: { email: string }) {
@@ -40,23 +41,23 @@ function SignedIn({ email }: { email: string }) {
   const sync = useAccount((s) => s.sync);
   return (
     <div className="account-panel">
-      <div className="popover-label">Signed in</div>
+      <div className="popover-label">{t("Signed in")}</div>
       <p className="account-email">{email}</p>
       {plan?.active ? (
         <p className="note">
           <strong>Pro</strong>
-          {plan.until ? ` · until ${new Date(plan.until).toLocaleDateString()}` : ""}
+          {plan.until ? ` · ${t("until {date}", { date: new Date(plan.until).toLocaleDateString(locale) })}` : ""}
           {SYNC_TEXT[sync] ? ` · ${SYNC_TEXT[sync]}` : ""}
         </p>
       ) : (
         <p className="note">
-          Free. <strong>Pro</strong> keeps your ratings, tags and places in sync between phone and computer — the photos
-          stay on each device.
+          {t("Free.")} <strong>Pro</strong>{" "}
+          {t("keeps your ratings, tags and places in sync between phone and computer — the photos stay on each device.")}
         </p>
       )}
       <hr />
       <button type="button" className="menu-item" onClick={() => void signOut()}>
-        <LogOut size={15} /> Sign out
+        <LogOut size={15} /> {t("Sign out")}
       </button>
     </div>
   );
@@ -87,13 +88,13 @@ function SignIn() {
 
   return (
     <form className="account-panel" onSubmit={(e) => void submit(e)}>
-      <div className="popover-label">{sent ? "Enter the code from the e-mail" : "Sign in or create an account"}</div>
+      <div className="popover-label">{sent ? t("Enter the code from the e-mail") : t("Sign in or create an account")}</div>
       {!sent ? (
         <input
           className="input"
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("you@example.com")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -113,10 +114,10 @@ function SignIn() {
       )}
       {error && <p className="account-error">{error}</p>}
       <Button type="submit" variant="primary" disabled={busy}>
-        {sent ? "Sign in" : "Send code"}
+        {sent ? t("Sign in") : t("Send code")}
       </Button>
       <p className="note">
-        Your photos stay on this device. The account holds your plan and, with Pro, your ratings — never the photos.
+        {t("Your photos stay on this device. The account holds your plan and, with Pro, your ratings — never the photos.")}
       </p>
     </form>
   );

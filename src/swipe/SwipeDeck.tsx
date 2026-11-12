@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { useShallow } from "zustand/react/shallow";
 
 import { TOGGLE_PLAY } from "@/carousel/events";
+import { t } from "@/i18n";
 import { graceMs } from "@/store/discards";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -64,9 +65,9 @@ export function SwipeDeck() {
     setNote(undefined);
   };
 
-  const onThrow = (t: Throw) => {
-    if (t.kind === "decide") throwCard(t.verdict);
-    else if (t.kind === "tap" && top && s.reel.media[top]?.type === "video") window.dispatchEvent(new Event(TOGGLE_PLAY));
+  const onThrow = (th: Throw) => {
+    if (th.kind === "decide") throwCard(th.verdict);
+    else if (th.kind === "tap" && top && s.reel.media[top]?.type === "video") window.dispatchEvent(new Event(TOGGLE_PLAY));
   };
   const { drag, handlers } = useDeckDrag(onThrow, !leaving && !done);
 
@@ -81,8 +82,8 @@ export function SwipeDeck() {
 
   useEffect(() => {
     if (!note) return;
-    const t = setTimeout(() => setNote(undefined), 3500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setNote(undefined), 3500);
+    return () => clearTimeout(timer);
   }, [note]);
 
   const progress = leaving ? 1 : Math.min(1, Math.max(Math.abs(drag.dx), Math.abs(drag.dy)) / DECIDE_PX);
@@ -139,15 +140,21 @@ function Finished({ empty }: { empty: boolean }) {
   return (
     <div className="deck-done">
       <PartyPopper size={32} aria-hidden="true" />
-      <h2>{empty ? "Nothing to sort" : "All sorted"}</h2>
-      <p>{empty ? (filtered ? "Nothing passes the filters." : "No photos or videos here yet.") : "That was the last one. The timeline shows where your top shots are."}</p>
+      <h2>{empty ? t("Nothing to sort") : t("All sorted")}</h2>
+      <p>
+        {empty
+          ? filtered
+            ? t("Nothing passes the filters.")
+            : t("No photos or videos here yet.")
+          : t("That was the last one. The timeline shows where your top shots are.")}
+      </p>
       {!empty && (
         <div className="deck-done-actions">
           <Button variant="primary" icon={ChartColumn} onClick={() => useUi.getState().set({ view: "timeline" })}>
-            Open the timeline
+            {t("Open the timeline")}
           </Button>
           <Button variant="secondary" icon={RotateCcw} onClick={restartDeck}>
-            Start over
+            {t("Start over")}
           </Button>
         </div>
       )}
@@ -155,20 +162,24 @@ function Finished({ empty }: { empty: boolean }) {
   );
 }
 
-const NOTE_TEXT: Record<Verdict, string> = { good: "Good", top: "Top", bad: "Bad — kept as a filler", delete: "Deleted" };
+const NOTE_TEXT: Record<Verdict, string> = { good: t("Good"), top: t("Top"), bad: t("Bad — kept as a filler"), delete: t("Deleted") };
 
 /** What just happened, with one tap to take it back. */
 function DeckNote({ verdict, onUndo }: { verdict: Verdict; onUndo(): void }) {
   const inPlace = useReel((x) => x.reel.workflow === "edit") && useUi.getState().sourceKind === "folder";
   const grace = Math.round(graceMs() / 1000);
   const text =
-    verdict === "delete" ? `${inPlace ? "Leaves the folder" : "Deleted — leaves"} in ${grace} s` : NOTE_TEXT[verdict];
+    verdict === "delete"
+      ? inPlace
+        ? t("Leaves the folder in {n} s", { n: grace })
+        : t("Deleted — leaves in {n} s", { n: grace })
+      : NOTE_TEXT[verdict];
   return (
     <div className={`deck-note is-${verdict}`} role="status">
       <span className="deck-note-dot" aria-hidden="true" />
       {text}
       <Button size="sm" variant="secondary" onClick={onUndo}>
-        Undo
+        {t("Undo")}
       </Button>
     </div>
   );

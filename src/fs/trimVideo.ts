@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { videoCreationTime } from "./videoMeta";
 
 /**
@@ -76,12 +77,17 @@ async function convert(file: Blob, range: TrimRange, target: "buffer" | Writable
     copy: { mode: "forced", boundaryPolicy: "expand" },
     showWarnings: false,
   });
-  if (!conversion.isValid || !conversion.utilizedTracks.some((t) => t.type === "video"))
-    throw new Error("This video can’t be trimmed without re-encoding it.");
+  if (!conversion.isValid || !conversion.utilizedTracks.some((tr) => tr.type === "video"))
+    throw new Error(t("This video can’t be trimmed without re-encoding it."));
   // A trimmed file replaces the original: it must not quietly lose a sound or picture track
   // (spatial audio, a second camera layer) that could not be copied.
   const lost = conversion.discardedTracks.filter((d) => d.track.type === "video" || d.track.type === "audio");
-  if (lost.length) throw new Error(`This video has a ${lost[0]!.track.type} track reel-rail can’t keep when trimming.`);
+  if (lost.length)
+    throw new Error(
+      lost[0]!.track.type === "audio"
+        ? t("This video has a sound track reel-rail can’t keep when trimming.")
+        : t("This video has a picture track reel-rail can’t keep when trimming."),
+    );
   if (onProgress) conversion.onProgress = (p) => onProgress(p);
   await conversion.execute();
   return output.target instanceof mb.BufferTarget ? output.target.buffer : null;
@@ -90,7 +96,7 @@ async function convert(file: Blob, range: TrimRange, target: "buffer" | Writable
 /** Trims into memory (files mode: the result is shared). */
 export async function trimToBlob(file: File, range: TrimRange, takenAt: Date, onProgress?: Progress): Promise<Blob> {
   const buffer = await convert(file, range, "buffer", onProgress);
-  if (!buffer) throw new Error("Trimming produced no data");
+  if (!buffer) throw new Error(t("Trimming produced no data"));
   const bytes = new Uint8Array(buffer);
   patchCreationTime(bytes, takenAt);
   return new Blob([bytes], { type: file.type || "video/quicktime" });

@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { useUi } from "@/store/useUi";
 
 import { Dialog } from "./kit/Dialog";
@@ -8,7 +9,7 @@ export function HelpDialog() {
   const open = useUi((s) => s.dialog === "help");
   const close = () => useUi.getState().set({ dialog: null });
   return (
-    <Dialog open={open} onClose={close} title="Keyboard shortcuts" subtitle="Everything also works with the mouse — hover a button to see its key." wide>
+    <Dialog open={open} onClose={close} title={t("Keyboard shortcuts")} subtitle={t("Everything also works with the mouse — hover a button to see its key.")} wide>
       <div className="shortcut-groups">
         {SHORTCUT_GROUPS.map((g) => (
           <section key={g.title}>

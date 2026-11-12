@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { pickPicksFolder } from "@/fs/picksFolder";
+import { t } from "@/i18n";
 import { activeExtras, type RatingFilter } from "@/store/filters";
 import { runExportResult } from "@/store/exportResult";
 import { pickAndOpen } from "@/store/openSource";
@@ -40,9 +41,9 @@ import { PHONE, useMedia } from "./useMedia";
 import { ViewSwitch } from "./ViewTabs";
 
 const RATING_OPTIONS: { value: RatingFilter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "good", label: "Good +" },
-  { value: "favorite", label: "Top" },
+  { value: "all", label: t("All") },
+  { value: "good", label: t("Good +") },
+  { value: "favorite", label: t("Top") },
 ];
 
 /** Brand + folder on the left, what you see in the middle, where things go on the right. */
@@ -81,7 +82,7 @@ export function Header() {
         {!phone && (
           <>
             <Segmented
-              label="Show"
+              label={t("Show")}
               options={RATING_OPTIONS}
               value={filters.rating}
               onChange={(rating) => setFilters({ rating })}
@@ -92,10 +93,10 @@ export function Header() {
                   icon={SlidersHorizontal}
                   variant={extras ? "secondary" : "ghost"}
                   count={extras}
-                  title="Filter"
+                  title={t("Filter")}
                   {...p}
                 >
-                  <span className="btn-label is-minor">Filter</span>
+                  <span className="btn-label is-minor">{t("Filter")}</span>
                 </Button>
               )}
             >
@@ -112,20 +113,20 @@ export function Header() {
             icon={Share}
             count={picks}
             onClick={() => void sharePicks()}
-            title="Share all picks — Photos, Files, AirDrop…"
+            title={t("Share all picks — Photos, Files, AirDrop…")}
           >
-            <span className="btn-label">Share picks</span>
+            <span className="btn-label">{t("Share picks")}</span>
           </Button>
         ) : (
-          <Button icon={ArrowDownToLine} count={picks} onClick={() => void choosePicks()} title="Where Space copies to">
-            <span className="btn-label">Picks</span>
+          <Button icon={ArrowDownToLine} count={picks} onClick={() => void choosePicks()} title={t("Where Space copies to")}>
+            <span className="btn-label">{t("Picks")}</span>
           </Button>
         )}
-        <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })} title="Series">
-          <span className="btn-label">Series</span>
+        <Button icon={Layers} count={seriesCount} onClick={() => set({ dialog: "seriesList" })} title={t("Series")}>
+          <span className="btn-label">{t("Series")}</span>
         </Button>
-        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title="Recently deleted">
-          <span className="btn-label">Deleted</span>
+        <Button icon={Trash2} count={discards} onClick={() => set({ dialog: "cleanup" })} title={t("Recently deleted")}>
+          <span className="btn-label">{t("Deleted")}</span>
         </Button>
         <AccountMenu />
         {phone ? (
@@ -135,10 +136,10 @@ export function Header() {
             <span className="divider-v" />
             <Button
               icon={theme === "dark" ? Sun : Moon}
-              label={theme === "dark" ? "Light theme" : "Dark theme"}
+              label={theme === "dark" ? t("Light theme") : t("Dark theme")}
               onClick={() => toggleTheme(theme)}
             />
-            <Button icon={Keyboard} label="Keyboard shortcuts" kbd="?" onClick={() => set({ dialog: "help" })} />
+            <Button icon={Keyboard} label={t("Keyboard shortcuts")} kbd="?" onClick={() => set({ dialog: "help" })} />
           </>
         )}
       </div>
@@ -163,19 +164,19 @@ function FolderMenu() {
       )}
     >
       <button type="button" className="menu-item" onClick={() => (close(), void pickAndOpen())}>
-        <FolderOpen size={15} /> Open another folder…
+        <FolderOpen size={15} /> {t("Open another folder…")}
       </button>
       <button type="button" className="menu-item" onClick={() => (close(), void choosePicks())}>
-        <ArrowDownToLine size={15} /> Picks folder: {picksName ?? "not set"}
+        <ArrowDownToLine size={15} /> {t("Picks folder: {name}", { name: picksName ?? t("not set") })}
       </button>
       <hr />
       <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "workflow" }))}>
         {workflow === "export" ? <FolderInput size={15} /> : <FolderPen size={15} />}
-        {workflow === "export" ? "Leaving the folder as it is" : "Editing this folder"}…
+        {workflow === "export" ? t("Leaving the folder as it is…") : t("Editing this folder…")}
       </button>
       {workflow === "export" && (
         <button type="button" className="menu-item" onClick={() => (close(), void runExportResult())}>
-          <FolderOutput size={15} /> Export result…
+          <FolderOutput size={15} /> {t("Export result…")}
         </button>
       )}
       <hr />
@@ -184,10 +185,10 @@ function FolderMenu() {
         className="menu-item"
         onClick={() => (close(), useUi.getState().set({ dialog: "settings" }))}
       >
-        <Settings size={15} /> Tag presets…
+        <Settings size={15} /> {t("Tag presets…")}
       </button>
       <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "help" }))}>
-        <Keyboard size={15} /> Keyboard shortcuts <Kbd>?</Kbd>
+        <Keyboard size={15} /> {t("Keyboard shortcuts")} <Kbd>?</Kbd>
       </button>
     </Popover>
   );
@@ -197,7 +198,7 @@ function SaveState() {
   const state = useReel((s) => s.saveState);
   if (state === "idle") return null;
   const [Icon, text] =
-    state === "saving" ? [LoaderCircle, "Saving"] : state === "error" ? [CircleAlert, "Not saved"] : [Check, "Saved"];
+    state === "saving" ? [LoaderCircle, t("Saving")] : state === "error" ? [CircleAlert, t("Not saved")] : [Check, t("Saved")];
   return (
     <span className={`save-state is-${state}`} aria-live="polite" title={`.reel.json — ${text}`}>
       <Icon size={13} aria-hidden="true" />

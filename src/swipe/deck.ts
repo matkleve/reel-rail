@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { passes } from "@/store/filters";
 import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel, type ReelState } from "@/store/useReel";
@@ -51,7 +52,7 @@ export function undoDecision(): boolean {
   const m = s.reel.media[last.id];
   if (!m) return false;
   if (m.binned) {
-    showToast("Already in Recently deleted — bring it back from there");
+    showToast(t("Already in Recently deleted — bring it back from there"));
     return false;
   }
   s.setRatings([{ id: last.id, rating: last.before }]);

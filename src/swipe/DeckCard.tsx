@@ -3,6 +3,7 @@ import type { CSSProperties, HTMLAttributes } from "react";
 
 import { Original } from "@/carousel/Original";
 import { TRIMMABLE } from "@/fs/trimVideo";
+import { locale, t } from "@/i18n";
 import { togglePick } from "@/store/picks";
 import { useUi } from "@/store/useUi";
 import { PICKS, RATING_LABEL, ratingClass, type Media } from "@/types";
@@ -15,13 +16,13 @@ import { useThumb } from "@/ui/useThumb";
 import { leanOf, type Verdict } from "./deckGesture";
 import type { DeckDrag } from "./useDeckDrag";
 
-const WHEN = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const WHEN = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 const STAMPS: { verdict: Verdict; label: string }[] = [
-  { verdict: "good", label: "Good" },
-  { verdict: "bad", label: "Bad" },
-  { verdict: "top", label: "Top" },
-  { verdict: "delete", label: "Delete" },
+  { verdict: "good", label: t("Good") },
+  { verdict: "bad", label: t("Bad") },
+  { verdict: "top", label: t("Top") },
+  { verdict: "delete", label: t("Delete") },
 ];
 
 const UPRIGHT: Record<Verdict, number> = { good: 0, bad: 0, top: 0, delete: 0 };
@@ -111,9 +112,9 @@ function Caption({ media, top, presets }: { media: Media; top: boolean; presets:
       )}
       {media.tags.length > 0 && (
         <div className="deck-tags">
-          {media.tags.map((t) => (
-            <span key={t} className="tag" style={tagStyle(t, presets)}>
-              <span>{t}</span>
+          {media.tags.map((tag) => (
+            <span key={tag} className="tag" style={tagStyle(tag, presets)}>
+              <span>{tag}</span>
             </span>
           ))}
         </div>
@@ -133,7 +134,7 @@ function CardTools({ media, picked }: { media: Media; picked: boolean }) {
         type="button"
         className={picked ? "deck-tool is-picked" : "deck-tool"}
         aria-pressed={picked}
-        aria-label={picked ? "Picked — tap to unpick" : "Pick"}
+        aria-label={picked ? t("Picked — tap to unpick") : t("Pick")}
         onClick={() => void togglePick()}
       >
         {picked ? <Check size={18} strokeWidth={3} /> : <ArrowDownToLine size={18} />}
@@ -143,7 +144,7 @@ function CardTools({ media, picked }: { media: Media; picked: boolean }) {
         align="end"
         className="tag-menu"
         trigger={(p) => (
-          <button type="button" className="deck-tool" aria-label="Tags" {...p}>
+          <button type="button" className="deck-tool" aria-label={t("Tags")} {...p}>
             <TagIcon size={18} />
           </button>
         )}
@@ -151,7 +152,7 @@ function CardTools({ media, picked }: { media: Media; picked: boolean }) {
         <TagPanel />
       </Popover>
       {media.type === "video" && TRIMMABLE.test(media.path) && (
-        <button type="button" className="deck-tool" aria-label="Trim video" onClick={() => useUi.getState().set({ dialog: "trim" })}>
+        <button type="button" className="deck-tool" aria-label={t("Trim video")} onClick={() => useUi.getState().set({ dialog: "trim" })}>
           <Scissors size={18} />
         </button>
       )}

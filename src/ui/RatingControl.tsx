@@ -1,5 +1,6 @@
 import { Circle, Star, ThumbsDown, ThumbsUp, Trash2, type LucideIcon } from "lucide-react";
 
+import { t } from "@/i18n";
 import { rateTo } from "@/store/actions";
 import { RATING_LABEL, ratingClass, type Rating } from "@/types";
 
@@ -16,7 +17,7 @@ const LEVELS: { r: Rating; icon: LucideIcon }[] = [
 /** The five levels as one control — click to set, ↑/↓ to step. Colour = level. */
 export function RatingControl({ value, many }: { value: Rating; many: boolean }) {
   return (
-    <div className="rating-control" role="radiogroup" aria-label={many ? "Rating of selected items" : "Rating"}>
+    <div className="rating-control" role="radiogroup" aria-label={many ? t("Rating of selected items") : t("Rating")}>
       {LEVELS.map(({ r, icon: Icon }) => (
         <button
           key={r}

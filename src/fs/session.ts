@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import type { Media } from "@/types";
 
 import type { FolderSource } from "./folderSource";
@@ -19,14 +20,14 @@ export function peekSource(): Source | undefined {
 }
 
 export function getSource(): Source {
-  if (!source) throw new Error("Nothing open");
+  if (!source) throw new Error(t("Nothing open"));
   return source;
 }
 
 /** The folder, for what only a writable folder can do (trash). */
 export function getFolder(): FolderSource {
   const s = getSource();
-  if (s.kind !== "folder") throw new Error("Only possible with a folder opened in Chrome or Edge");
+  if (s.kind !== "folder") throw new Error(t("Only possible with a folder opened in Chrome or Edge"));
   return s as FolderSource;
 }
 

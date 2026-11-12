@@ -7,15 +7,17 @@
  * always still parses (see README § .reel.json).
  */
 
+import { t } from "@/i18n";
+
 /** Five levels: 2 favorite, 1 good, 0 normal, −1 not great, −2 discard. */
 export type Rating = -2 | -1 | 0 | 1 | 2;
 
 export const RATING_LABEL: Record<Rating, string> = {
-  [2]: "Top",
-  [1]: "Good",
-  [0]: "Normal",
-  [-1]: "Bad",
-  [-2]: "Delete",
+  [2]: t("Top"),
+  [1]: t("Good"),
+  [0]: t("Normal"),
+  [-1]: t("Bad"),
+  [-2]: t("Delete"),
 };
 export const DISCARD: Rating = -2;
 /** Seconds a discard stays on the rail (with a countdown) before it goes — the undo window. */
@@ -106,16 +108,17 @@ export type ReelFile = {
   workflow?: Workflow;
 };
 
+/** In the UI language: a new library's tags are words its owner uses. Stored ones stay as they are. */
 export const DEFAULT_TAG_PRESETS = [
-  "Food",
-  "People",
-  "Landscape",
-  "City",
-  "Drone",
-  "Sunset",
-  "Selfie",
-  "Nature",
-  "Night",
+  t("Food"),
+  t("People"),
+  t("Landscape"),
+  t("City"),
+  t("Drone"),
+  t("Sunset"),
+  t("Selfie"),
+  t("Nature"),
+  t("Night"),
 ];
 
 export function emptyReel(): ReelFile {

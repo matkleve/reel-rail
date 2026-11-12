@@ -2,6 +2,7 @@ import { ArrowDownToLine, FolderOpen, Layers, Lock } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { isTouch, sourceMode } from "@/fs/support";
+import { t } from "@/i18n";
 
 import { Kbd } from "./kit/Kbd";
 import { Logo } from "./Logo";
@@ -11,9 +12,9 @@ import { Logo } from "./Logo";
 export function Hero() {
   return (
     <>
-      <h1 className="start-title">Sort a day of travel shots in minutes.</h1>
+      <h1 className="start-title">{t("Sort a day of travel shots in minutes.")}</h1>
       <p className="start-lead">
-        Your photos and videos on one timeline. Rate them in a flick, pick the keepers, bundle them into series.
+        {t("Your photos and videos on one timeline. Rate them in a flick, pick the keepers, bundle them into series.")}
       </p>
     </>
   );
@@ -56,31 +57,31 @@ export function Steps() {
     <ol className="start-steps">
       <li>
         <FolderOpen size={18} aria-hidden="true" />
-        <strong>{files ? "Add" : "Open"}</strong>
-        <span>{files ? "photos and videos from Photos or Files" : "a trip folder — sub-folders included"}</span>
+        <strong>{files ? t("Add") : t("Open")}</strong>
+        <span>{files ? t("photos and videos from Photos or Files") : t("a trip folder — sub-folders included")}</span>
       </li>
       <li>
         <Layers size={18} aria-hidden="true" />
-        <strong>Rate</strong>
+        <strong>{t("Rate")}</strong>
         <span>
           {touch ? (
-            "Swipe each photo: → good, ← bad, ↑ top, ↓ delete"
+            t("Swipe each photo: → good, ← bad, ↑ top, ↓ delete")
           ) : (
             <>
-              <Kbd>→</Kbd> good, <Kbd>←</Kbd> bad, <Kbd>↑</Kbd> top, <Kbd>↓</Kbd> delete
+              <Kbd>→</Kbd> {t("good")}, <Kbd>←</Kbd> {t("bad")}, <Kbd>↑</Kbd> {t("top")}, <Kbd>↓</Kbd> {t("delete")}
             </>
           )}
         </span>
       </li>
       <li>
         <ArrowDownToLine size={18} aria-hidden="true" />
-        <strong>Pick</strong>
+        <strong>{t("Pick")}</strong>
         <span>
           {files ? (
-            "Tap Pick on the keepers, then share them all at once"
+            t("Tap Pick on the keepers, then share them all at once")
           ) : (
             <>
-              <Kbd>Space</Kbd> copies the keeper to your picks folder
+              <Kbd>{t("Space")}</Kbd> {t("copies the keeper to your picks folder")}
             </>
           )}
         </span>

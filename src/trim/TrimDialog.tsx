@@ -2,6 +2,7 @@ import { Pause, Play, Scissors, Share } from "lucide-react";
 import { useState } from "react";
 
 import { canShareFiles, shareFiles } from "@/fs/share";
+import { t } from "@/i18n";
 import { saveTrim } from "@/store/trim";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
@@ -41,13 +42,13 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
       if (out.kind === "share") return setPhase({ kind: "share", file: out.file });
       showToast(
         out.kind === "replaced"
-          ? `Trimmed — the original is in Recently deleted for ${KEEP_DAYS} days`
-          : "Trim saved — it is applied when you export the result",
+          ? t("Trimmed — the original is in Recently deleted for {days} days", { days: KEEP_DAYS })
+          : t("Trim saved — it is applied when you export the result"),
       );
       onDone();
     } catch (err) {
       console.error(err);
-      showToast(`Trimming failed: ${err instanceof Error ? err.message : err}`, "error");
+      showToast(t("Trimming failed: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
       setPhase({ kind: "edit" });
     }
   };
@@ -58,7 +59,7 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
       await shareFiles([file], file.name);
       onDone();
     } catch (err) {
-      showToast(`Sharing failed: ${err instanceof Error ? err.message : err}`, "error");
+      showToast(t("Sharing failed: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
     }
   };
 
@@ -69,8 +70,8 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
     <Dialog
       open
       onClose={phase.kind === "saving" ? () => {} : onDone}
-      title="Trim video"
-      subtitle={duration ? `Keep ${formatTime(length)} of ${formatTime(duration)}` : undefined}
+      title={t("Trim video")}
+      subtitle={duration ? t("Keep {part} of {whole}", { part: formatTime(length), whole: formatTime(duration) }) : undefined}
       wide
       footer={
         <TrimFooter
@@ -87,7 +88,7 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
       <div className="trim-controls">
         <Button
           icon={playing ? Pause : Play}
-          label={playing ? "Pause" : "Play the kept part"}
+          label={playing ? t("Pause") : t("Play the kept part")}
           variant="secondary"
           onClick={togglePlay}
           disabled={!duration || phase.kind !== "edit"}
@@ -126,10 +127,10 @@ function TrimFooter({ phase, mode, canSave, onCancel, onSave, onShare }: FooterP
   if (phase.kind === "share")
     return (
       <div className="footer-row" key="share">
-        <span className="note">Trimmed. Save it to Photos, then delete the original there.</span>
+        <span className="note">{t("Trimmed. Save it to Photos, then delete the original there.")}</span>
         <span className="spacer" />
         <Button variant="primary" icon={Share} onClick={() => onShare(phase.file)} autoFocus>
-          {canShareFiles([phase.file]) ? "Save to Photos…" : "Download"}
+          {canShareFiles([phase.file]) ? t("Save to Photos…") : t("Download")}
         </Button>
       </div>
     );
@@ -139,24 +140,24 @@ function TrimFooter({ phase, mode, canSave, onCancel, onSave, onShare }: FooterP
         <div className="progress trim-progress">
           <div className="progress-bar" style={{ width: `${Math.round(phase.progress * 100)}%` }} />
         </div>
-        <span className="text-2 tabular">Trimming… {Math.round(phase.progress * 100)} %</span>
+        <span className="text-2 tabular">{t("Trimming… {pct} %", { pct: Math.round(phase.progress * 100) })}</span>
       </div>
     );
   return (
     <div className="footer-row" key="edit">
       <span className="note">
         {mode === "files"
-          ? "The cut is lossless. Your library keeps the original until you delete it in Photos."
+          ? t("The cut is lossless. Your library keeps the original until you delete it in Photos.")
           : mode === "export"
-            ? "The folder stays as it is — the trim is applied when you export the result."
-            : `The cut-away part leaves the folder. The original waits ${KEEP_DAYS} days in Recently deleted.`}
+            ? t("The folder stays as it is — the trim is applied when you export the result.")
+            : t("The cut-away part leaves the folder. The original waits {days} days in Recently deleted.", { days: KEEP_DAYS })}
       </span>
       <span className="spacer" />
       <Button variant="ghost" onClick={onCancel}>
-        Cancel
+        {t("Cancel")}
       </Button>
       <Button variant="primary" icon={Scissors} onClick={onSave} disabled={!canSave}>
-        {mode === "edit" ? "Trim & replace" : "Trim"}
+        {mode === "edit" ? t("Trim & replace") : t("Trim")}
       </Button>
     </div>
   );

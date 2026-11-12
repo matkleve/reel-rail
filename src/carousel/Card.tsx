@@ -2,6 +2,7 @@ import { ArrowDownToLine, Check, CircleCheck, Layers, Play, Scissors, Star } fro
 import { memo, type CSSProperties, type MouseEvent } from "react";
 
 import { TRIMMABLE } from "@/fs/trimVideo";
+import { t } from "@/i18n";
 import { useUi } from "@/store/useUi";
 import { secondsLeft } from "@/fs/deletion";
 import { graceMs } from "@/store/discards";
@@ -51,7 +52,7 @@ export const Card = memo(function Card(p: Props) {
         type="button"
         className="card-face"
         onClick={(e) => p.onPick(media.id, e)}
-        aria-label={`${media.type} ${media.path}, rating ${media.rating}${p.stackCount ? `, burst of ${p.stackCount}` : ""}`}
+        aria-label={cardLabel(media, p.stackCount)}
         aria-pressed={p.selected}
         tabIndex={-1}
       >
@@ -69,7 +70,7 @@ export const Card = memo(function Card(p: Props) {
         <Button
           className="card-trim"
           icon={Scissors}
-          label="Trim video"
+          label={t("Trim video")}
           kbd="C"
           size="sm"
           variant="secondary"
@@ -112,6 +113,12 @@ export const Card = memo(function Card(p: Props) {
   );
 });
 
+function cardLabel(media: Media, stackCount?: number): string {
+  const vars = { path: media.path, rating: media.rating };
+  const what = media.type === "video" ? t("video {path}, rating {rating}", vars) : t("photo {path}, rating {rating}", vars);
+  return stackCount ? what + t(", burst of {n}", { n: stackCount }) : what;
+}
+
 /**
  * A discard's undo window: the bar runs out, then the card leaves the rail.
  * Pure CSS from the time left at render — no timer per card.
@@ -123,7 +130,7 @@ function Countdown({ discardedAt }: { discardedAt: string }) {
     <span
       className="card-countdown"
       role="timer"
-      aria-label={`Leaves in ${Math.ceil(left)} s — rate it up to keep it`}
+      aria-label={t("Leaves in {n} s — rate it up to keep it", { n: Math.ceil(left) })}
       style={{ "--grace": `${grace}s`, "--elapsed": `${grace - left}s` } as CSSProperties}
     />
   );

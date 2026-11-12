@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 
 import { daysLeft } from "@/fs/deletion";
 import { formatBytes } from "@/fs/trash";
+import { t, tn } from "@/i18n";
 import { MiniThumb } from "@/series/MiniThumb";
 import { deleteNow, restore } from "@/store/discards";
 import { useReel } from "@/store/useReel";
@@ -41,30 +42,30 @@ function Cleanup({ onDone }: { onDone(): void }) {
     setBusy(true);
     try {
       const r = await deleteNow(onDisk.map((m) => m.id));
-      showToast(`Deleted ${r.count} ${r.count === 1 ? "file" : "files"} · ${formatBytes(r.bytes)} freed`);
-      if (r.failed) showToast(`${r.failed} files could not be deleted`, "error");
+      showToast(tn("Deleted 1 file · {size} freed", "Deleted {n} files · {size} freed", r.count, { size: formatBytes(r.bytes) }));
+      if (r.failed) showToast(tn("1 file could not be deleted", "{n} files could not be deleted", r.failed), "error");
       onDone();
     } catch (err) {
-      showToast(`Deleting stopped: ${err instanceof Error ? err.message : err}`, "error");
+      showToast(t("Deleting stopped: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
       setBusy(false);
     }
   };
 
   const note =
     kind === "files"
-      ? "A browser can’t delete from your photo library: use this list to clear them out in the Photos app."
+      ? t("A browser can’t delete from your photo library: use this list to clear them out in the Photos app.")
       : workflow === "export"
-        ? "This folder is left as it is — these are just not part of the export."
-        : `Moved to _reel_trash/ and deleted for good after ${KEEP_DAYS} days.`;
+        ? t("This folder is left as it is — these are just not part of the export.")
+        : t("Moved to _reel_trash/ and deleted for good after {days} days.", { days: KEEP_DAYS });
 
   return (
     <Dialog
       open
       onClose={onDone}
-      title="Recently deleted"
+      title={t("Recently deleted")}
       subtitle={
         items.length
-          ? `${items.length} ${items.length === 1 ? "item" : "items"}${onDisk.length ? ` · ${formatBytes(bytes)}` : ""}`
+          ? `${tn("1 item", "{n} items", items.length)}${onDisk.length ? ` · ${formatBytes(bytes)}` : ""}`
           : undefined
       }
       wide
@@ -86,12 +87,12 @@ function Cleanup({ onDone }: { onDone(): void }) {
       {!items.length ? (
         <div className="empty-state">
           <Trash2 size={28} aria-hidden="true" />
-          <strong>Nothing deleted</strong>
-          <p>Swipe a shot all the way down: it shrinks, a bar runs out, and it lands here.</p>
+          <strong>{t("Nothing deleted")}</strong>
+          <p>{t("Throw a photo down (or rate it Delete): a bar runs out, and it lands here.")}</p>
         </div>
       ) : (
         <>
-          <p className="note">{onDisk.length ? `${note} Tap one to bring it back.` : "Tap one to bring it back."}</p>
+          <p className="note">{onDisk.length ? `${note} ${t("Tap one to bring it back.")}` : t("Tap one to bring it back.")}</p>
           <div className="cleanup-grid">
             {items.map((m) => (
               <Tile key={m.id} media={m} disabled={busy} />
@@ -109,14 +110,14 @@ function Tile({ media: m, disabled }: { media: Media; disabled: boolean }) {
     <button
       type="button"
       className="cleanup-tile"
-      title={`${m.path} — bring back`}
+      title={t("{path} — bring back", { path: m.path })}
       disabled={disabled}
       onClick={() => void restore(m.id)}
     >
       <MiniThumb media={m} />
-      {days !== undefined && <span className="cleanup-days tabular">{days === 0 ? "today" : `${days} d`}</span>}
+      {days !== undefined && <span className="cleanup-days tabular">{days === 0 ? t("today") : t("{n} d", { n: days })}</span>}
       <span className="cleanup-keep">
-        <ArchiveRestore size={16} /> Bring back
+        <ArchiveRestore size={16} /> {t("Bring back")}
       </span>
     </button>
   );
@@ -133,28 +134,33 @@ type FooterProps = {
 
 /** Idle → confirm → busy. Keys keep React from reusing the clicked button across states. */
 function DeleteFooter(p: FooterProps) {
-  if (p.busy) return <span className="text-2">Deleting…</span>;
+  if (p.busy) return <span className="text-2">{t("Deleting…")}</span>;
   if (p.confirming)
     return (
       <div className="footer-row" key="confirm">
         <span className="text-2">
-          Delete {p.count} files ({formatBytes(p.bytes)}) for good? This can’t be undone.
+          {tn(
+            "Delete 1 file ({size}) for good? This can’t be undone.",
+            "Delete {n} files ({size}) for good? This can’t be undone.",
+            p.count,
+            { size: formatBytes(p.bytes) },
+          )}
         </span>
         <span className="spacer" />
         <Button variant="ghost" onClick={() => p.onConfirm(false)}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button variant="danger" icon={Trash2} onClick={p.onRun} autoFocus>
-          Delete {p.count} files
+          {tn("Delete 1 file", "Delete {n} files", p.count)}
         </Button>
       </div>
     );
   return (
     <div className="footer-row" key="idle">
-      <span className="note">Don’t want to wait {KEEP_DAYS} days?</span>
+      <span className="note">{t("Don’t want to wait {days} days?", { days: KEEP_DAYS })}</span>
       <span className="spacer" />
       <Button variant="primary" icon={Trash2} onClick={() => p.onConfirm(true)}>
-        Delete now…
+        {t("Delete now…")}
       </Button>
     </div>
   );

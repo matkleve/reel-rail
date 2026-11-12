@@ -1,6 +1,7 @@
 import { GRACE_MS, binUntil, deletePath, dueForDeletion, dueToLeave, withoutMedia } from "@/fs/deletion";
 import { getFolder, getSource, peekSource } from "@/fs/session";
 import { TRASH_DIR, formatBytes, moveFile, moveToTrash } from "@/fs/trash";
+import { t, tn } from "@/i18n";
 import { DISCARD, type Media } from "@/types";
 
 import { patchMedia, useReel } from "./useReel";
@@ -44,7 +45,7 @@ const busy = new Set<string>();
 
 /** Runs `fn` with `id` reserved; refuses if something else is already moving that file. */
 export async function withFileLock<T>(id: string, fn: () => Promise<T>): Promise<T> {
-  if (busy.has(id)) throw new Error("This file is being moved right now — try again in a moment.");
+  if (busy.has(id)) throw new Error(t("This file is being moved right now — try again in a moment."));
   busy.add(id);
   try {
     return await fn();
@@ -114,7 +115,7 @@ export async function restore(id: string): Promise<void> {
     try {
       path = await moveFile(getFolder().dir, m.binned.path, path);
     } catch (err) {
-      showToast(`Couldn’t bring it back: ${err instanceof Error ? err.message : err}`, "error");
+      showToast(t("Couldn’t bring it back: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
       return;
     }
   }
@@ -174,8 +175,20 @@ export async function purgeDue(): Promise<void> {
   if (!ids.length) return;
   const r = await destroy(ids, (m) => new Date(m.binned!.until).getTime() <= Date.now());
   if (r.count)
-    showToast(`Deleted ${r.count} ${r.count === 1 ? "file" : "files"} after 30 days · ${formatBytes(r.bytes)} freed`);
-  if (r.failed) showToast(`${r.failed} files could not be deleted — trying again next time`, "error");
+    showToast(
+      tn("Deleted 1 file after 30 days · {size} freed", "Deleted {n} files after 30 days · {size} freed", r.count, {
+        size: formatBytes(r.bytes),
+      }),
+    );
+  if (r.failed)
+    showToast(
+      tn(
+        "1 file could not be deleted — trying again next time",
+        "{n} files could not be deleted — trying again next time",
+        r.failed,
+      ),
+      "error",
+    );
 }
 
 /** "Delete now" in Recently deleted — confirmed by the user. */

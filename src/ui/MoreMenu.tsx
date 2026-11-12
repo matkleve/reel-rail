@@ -1,5 +1,6 @@
 import { Ellipsis, Moon, Sun } from "lucide-react";
 
+import { t } from "@/i18n";
 import { activeExtras, type RatingFilter } from "@/store/filters";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -33,17 +34,17 @@ export function MoreMenu({
       trigger={(p) => (
         <Button
           icon={Ellipsis}
-          label="View and filter"
+          label={t("View and filter")}
           variant={active ? "secondary" : "ghost"}
           count={active}
           {...p}
         />
       )}
     >
-      <div className="popover-label">Show</div>
+      <div className="popover-label">{t("Show")}</div>
       <div className="more-show">
         <Segmented
-          label="Show"
+          label={t("Show")}
           options={ratingOptions}
           value={filters.rating}
           onChange={(rating) => setFilters({ rating })}
@@ -52,7 +53,7 @@ export function MoreMenu({
       <FilterPanel />
       <hr />
       <button type="button" className="menu-item" onClick={onTheme}>
-        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />} {theme === "dark" ? "Light theme" : "Dark theme"}
+        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />} {theme === "dark" ? t("Light theme") : t("Dark theme")}
       </button>
     </Popover>
   );

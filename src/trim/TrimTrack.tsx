@@ -1,5 +1,7 @@
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
 
+import { t } from "@/i18n";
+
 const FRAMES = 8;
 /** The shortest clip worth keeping, in seconds. */
 export const MIN_LENGTH = 0.5;
@@ -77,7 +79,7 @@ export function TrimTrack({ url, duration, start, end, playhead, onChange, onSee
           role="slider"
           className={`trim-handle is-${which}`}
           style={{ left: pct(which === "start" ? start : end) }}
-          aria-label={which === "start" ? "Trim start" : "Trim end"}
+          aria-label={which === "start" ? t("Trim start") : t("Trim end")}
           aria-valuemin={0}
           aria-valuemax={Math.round(duration * 10) / 10}
           aria-valuenow={Math.round((which === "start" ? start : end) * 10) / 10}

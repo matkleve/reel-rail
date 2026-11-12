@@ -89,7 +89,11 @@ checks `sourceKind` and offers the files-mode alternative.
 ## Code style
 
 - Imports use the `@/` alias (`src/`).
-- Copy (UI text) is English.
+- Copy (UI text) is written in English and wrapped in `t()` / `tn()` from
+  `@/i18n`; the English text is the key. German lives in `src/i18n/de*.ts` —
+  add every new string there too (`i18n.test.ts` fails on a missing or
+  unused key). Keys must be string literals; dates use `locale`, not a
+  hard-coded `"en-GB"`.
 - Comment the **why**. A comment that records a rejected alternative is what
   stops the next agent from reintroducing the bug.
 - Conventional Commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`.

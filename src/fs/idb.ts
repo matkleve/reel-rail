@@ -8,6 +8,8 @@
  * only storage there is.
  */
 
+import { t } from "@/i18n";
+
 const DB = "reel-rail";
 const VERSION = 2;
 export type Store = "handles" | "kv";
@@ -43,7 +45,7 @@ function open(): Promise<IDBDatabase> {
     // upgrade. Say so instead of hanging; the next call tries again.
     req.onblocked = () => {
       opening = undefined;
-      reject(new Error("reel-rail is open in another tab or window with an older version — close it and reload."));
+      reject(new Error(t("reel-rail is open in another tab or window with an older version — close it and reload.")));
     };
   });
   return opening;

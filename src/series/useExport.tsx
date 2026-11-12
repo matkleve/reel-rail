@@ -4,6 +4,7 @@ import { useState } from "react";
 import { exportName, exportSeries } from "@/fs/exportSeries";
 import { getMediaFile, getSource } from "@/fs/session";
 import { renamed, shareFiles } from "@/fs/share";
+import { t } from "@/i18n";
 import { useReel } from "@/store/useReel";
 import type { Series } from "@/types";
 
@@ -36,8 +37,11 @@ export function useExport() {
       setState({
         kind: "error",
         message: files
-          ? `${absent} of ${series.mediaIds.length} photos aren’t loaded right now — add them again, then share.`
-          : "None of these files are in the folder any more.",
+          ? t("{absent} of {total} photos aren’t loaded right now — add them again, then share.", {
+              absent,
+              total: series.mediaIds.length,
+            })
+          : t("None of these files are in the folder any more."),
       });
       return;
     }
@@ -88,7 +92,7 @@ export function ExportStatus({ state }: { state: ExportState }) {
           <div className="progress-bar" style={{ width: `${pct}%` }} />
         </div>
         <span className="text-2 tabular">
-          Copying {state.done} of {state.total}…
+          {t("Copying {done} of {total}…", { done: state.done, total: state.total })}
         </span>
       </div>
     );
@@ -97,13 +101,21 @@ export function ExportStatus({ state }: { state: ExportState }) {
     return (
       <p className="export-status success-text" aria-live="polite">
         <CircleCheck size={15} aria-hidden="true" />
-        {state.path === "shared" ? "Shared" : state.path === "downloads" ? "Downloaded" : <>Exported to <code>{state.path}</code></>}
+        {state.path === "shared" ? (
+          t("Shared")
+        ) : state.path === "downloads" ? (
+          t("Downloaded")
+        ) : (
+          <>
+            {t("Exported to")} <code>{state.path}</code>
+          </>
+        )}
       </p>
     );
   if (state.kind === "error")
     return (
       <p className="export-status error-text" role="alert">
-        <CircleAlert size={15} aria-hidden="true" /> Export failed: {state.message}
+        <CircleAlert size={15} aria-hidden="true" /> {t("Export failed: {error}", { error: state.message })}
       </p>
     );
   return null;

@@ -1,5 +1,6 @@
 import { Eye, FolderOutput, Layers, Share } from "lucide-react";
 
+import { locale, t, tn } from "@/i18n";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import type { Series } from "@/types";
@@ -10,20 +11,21 @@ import { Kbd } from "@/ui/kit/Kbd";
 import { MiniThumb } from "./MiniThumb";
 import { ExportStatus, useExport } from "./useExport";
 
-const WHEN = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
+const WHEN = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
 
 export function SeriesListDialog() {
   const open = useUi((s) => s.dialog === "seriesList");
   const series = useReel((s) => s.reel.series);
   const close = () => useUi.getState().set({ dialog: null });
   return (
-    <Dialog open={open} onClose={close} title="Series" subtitle={series.length ? `${series.length} saved` : undefined} wide>
+    <Dialog open={open} onClose={close} title={t("Series")} subtitle={series.length ? t("{n} saved", { n: series.length }) : undefined} wide>
       {series.length === 0 ? (
         <div className="empty-state">
           <Layers size={28} aria-hidden="true" />
-          <strong>No series yet</strong>
+          <strong>{t("No series yet")}</strong>
           <p>
-            Select a few items — <Kbd>Shift</Kbd> + <Kbd>→</Kbd> or <Kbd>⌘/Ctrl</Kbd> + click — and press <Kbd>S</Kbd>.
+            {t("Select a few items —")} <Kbd>Shift</Kbd> + <Kbd>→</Kbd> {t("or")} <Kbd>⌘/Ctrl</Kbd> {t("+ click — and press")}{" "}
+            <Kbd>S</Kbd>.
           </p>
         </div>
       ) : (
@@ -57,8 +59,8 @@ function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
       <div className="series-main">
         <strong>{series.title}</strong>
         <span className="text-3">
-          {items.length} items · {WHEN.format(new Date(series.createdAt))}
-          {series.exportedPath && <> · {series.exportedPath === "shared" || series.exportedPath === "downloads" ? series.exportedPath : `exported to ${series.exportedPath}`}</>}
+          {tn("1 item", "{n} items", items.length)} · {WHEN.format(new Date(series.createdAt))}
+          {series.exportedPath && <> · {exportedText(series.exportedPath)}</>}
         </span>
         <div className="thumb-strip is-small">
           {items.slice(1, 12).map((m) => (
@@ -70,7 +72,7 @@ function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
       </div>
       <div className="series-actions">
         <Button size="sm" icon={Eye} onClick={show}>
-          Show
+          {t("Show")}
         </Button>
         <Button
           size="sm"
@@ -79,9 +81,16 @@ function SeriesRow({ series, onShow }: { series: Series; onShow(): void }) {
           onClick={() => void run(series)}
           disabled={state.kind === "running"}
         >
-          {share ? "Share" : series.exportedPath ? "Export again" : "Export"}
+          {share ? t("Share") : series.exportedPath ? t("Export again") : t("Export")}
         </Button>
       </div>
     </li>
   );
+}
+
+/** Where a series went: "shared" and "downloads" are markers, anything else a folder path. */
+function exportedText(path: string): string {
+  if (path === "shared") return t("shared");
+  if (path === "downloads") return t("downloaded");
+  return t("exported to {path}", { path });
 }

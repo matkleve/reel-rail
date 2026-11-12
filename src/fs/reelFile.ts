@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import { DEFAULT_TAG_PRESETS, emptyReel, type ReelFile } from "@/types";
 
 export const REEL_NAME = ".reel.json";
@@ -20,7 +21,7 @@ async function readJson(dir: FileSystemDirectoryHandle, name: string): Promise<R
 export function normalize(raw: unknown, now = new Date()): ReelFile {
   const r = (raw ?? {}) as Omit<Partial<ReelFile>, "version"> & { version?: number };
   const version = r.version ?? 2;
-  if (version !== 1 && version !== 2) throw new Error(`Unsupported .reel.json version ${r.version}`);
+  if (version !== 1 && version !== 2) throw new Error(t("Unsupported .reel.json version {version}", { version: String(r.version) }));
   const media = r.media ?? {};
   for (const m of Object.values(media)) {
     m.tags ??= [];

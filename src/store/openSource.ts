@@ -2,6 +2,7 @@ import { FilesSource } from "@/fs/filesSource";
 import { FolderSource } from "@/fs/folderSource";
 import { ensurePermission, loadHandle, saveHandle } from "@/fs/handleStore";
 import { scanSource } from "@/fs/scan";
+import { t } from "@/i18n";
 import { PhotoLibrary } from "@/native/photoLibrary";
 import { peekSource, setSource } from "@/fs/session";
 import type { Source } from "@/fs/source";
@@ -47,7 +48,7 @@ async function openSource(source: Source): Promise<void> {
 /** Folder mode. Must start from a user gesture (permission prompt). */
 export async function openFolder(handle: FileSystemDirectoryHandle): Promise<void> {
   if (!(await ensurePermission(handle))) {
-    useUi.getState().set({ phase: "start", error: "Access to the folder was not granted." });
+    useUi.getState().set({ phase: "start", error: t("Access to the folder was not granted.") });
     return;
   }
   await saveHandle("root", handle);
@@ -78,7 +79,7 @@ export async function openFiles(picked: File[]): Promise<void> {
   const added = source.add(picked);
 
   if (!source.size) {
-    ui.set({ error: "That selection had no photos or videos." });
+    ui.set({ error: t("That selection had no photos or videos.") });
     return;
   }
   if (!appending) {
@@ -88,7 +89,7 @@ export async function openFiles(picked: File[]): Promise<void> {
     return openSource(source);
   }
   if (!added) {
-    showToast("Already here — nothing new");
+    showToast(t("Already here — nothing new"));
     return;
   }
 
@@ -97,7 +98,7 @@ export async function openFiles(picked: File[]): Promise<void> {
     const reel = await scanSource(source, useReel.getState().reel, onProgress);
     useReel.getState().refresh(reel);
     ui.set({ phase: "ready" });
-    showToast(`${added} added`);
+    showToast(t("{n} added", { n: added }));
   } catch (err) {
     ui.set({ phase: "error", error: err instanceof Error ? err.message : String(err) });
   }
@@ -113,7 +114,7 @@ export async function openPhotos(): Promise<void> {
   try {
     const { access } = await PhotoLibrary.requestAccess();
     if (access !== "full" && access !== "limited") {
-      ui.set({ error: "reel-rail needs access to your photos. Allow it in Settings → Privacy & Security → Photos → reel-rail." });
+      ui.set({ error: t("reel-rail needs access to your photos. Allow it in Settings → Privacy & Security → Photos → reel-rail.") });
       return;
     }
     const { PhotosSource } = await import("@/native/photosSource");

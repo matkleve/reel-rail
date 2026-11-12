@@ -1,6 +1,7 @@
 import { ArrowDownToLine, Check, Layers, Pause, X } from "lucide-react";
 
 import { TOGGLE_PLAY } from "@/carousel/events";
+import { t } from "@/i18n";
 import { togglePick } from "@/store/picks";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
@@ -27,17 +28,17 @@ export function Dock() {
     <div className="dock-wrap">
       {!selected && <LeavingBar />}
       {selected > 0 && (
-        <div className="dock dock-selection" role="toolbar" aria-label="Selection">
+        <div className="dock dock-selection" role="toolbar" aria-label={t("Selection")}>
           <span className="selection-count">
-            <span className="tabular">{selected}</span> selected
+            <span className="tabular">{selected}</span> {t("selected")}
           </span>
           <Button icon={Layers} variant="primary" size="sm" onClick={() => useUi.getState().set({ dialog: "createSeries" })}>
-            Create series
+            {t("Create series")}
           </Button>
-          <Button icon={X} label="Clear selection" kbd="Esc" size="sm" tipSide="above" onClick={() => useReel.getState().clearSelection()} />
+          <Button icon={X} label={t("Clear selection")} kbd="Esc" size="sm" tipSide="above" onClick={() => useReel.getState().clearSelection()} />
         </div>
       )}
-      <div className="dock" role="toolbar" aria-label={selected ? "Selected items" : "Current item"}>
+      <div className="dock" role="toolbar" aria-label={selected ? t("Selected items") : t("Current item")}>
         <RatingControl value={media.rating} many={selected > 0} />
         <span className="divider-v" />
         <TagGroup media={media} />
@@ -46,7 +47,7 @@ export function Dock() {
           <Button
             className="dock-play"
             icon={Pause}
-            label="Play / pause"
+            label={t("Play / pause")}
             kbd="V"
             tipSide="above"
             onClick={() => window.dispatchEvent(new Event(TOGGLE_PLAY))}
@@ -60,15 +61,15 @@ export function Dock() {
           title={
             files
               ? picked
-                ? "Unpick (Space)"
-                : "Pick — share all picks from the header (Space)"
+                ? t("Unpick (Space)")
+                : t("Pick — share all picks from the header (Space)")
               : picked
-                ? "Take the copy back out (Space)"
-                : "Copy to your picks folder (Space)"
+                ? t("Take the copy back out (Space)")
+                : t("Copy to your picks folder (Space)")
           }
         >
-          <span className="dock-label">{picked ? "Picked" : "Pick"}</span>
-          <kbd className="kbd kbd-key">Space</kbd>
+          <span className="dock-label">{picked ? t("Picked") : t("Pick")}</span>
+          <kbd className="kbd kbd-key">{t("Space")}</kbd>
         </Button>
       </div>
     </div>

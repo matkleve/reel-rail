@@ -1,6 +1,7 @@
 import { ChevronDown, FolderOpen, Images, Keyboard, Settings } from "lucide-react";
 
 import { canPickFolder, isTouch } from "@/fs/support";
+import { t } from "@/i18n";
 import { useUi } from "@/store/useUi";
 
 import { Kbd } from "./kit/Kbd";
@@ -29,19 +30,19 @@ export function LibraryMenu() {
         )}
       >
         <button type="button" className="menu-item" onClick={() => (close(), photos.open())}>
-          <Images size={15} /> Add photos & videos…
+          <Images size={15} /> {t("Add photos & videos…")}
         </button>
         {canPickFolder() && (
           <button type="button" className="menu-item" onClick={() => (close(), folder.open())}>
-            <FolderOpen size={15} /> {isTouch() ? "From the Files app (folder)…" : "Add a folder…"}
+            <FolderOpen size={15} /> {isTouch() ? t("From the Files app (folder)…") : t("Add a folder…")}
           </button>
         )}
         <hr />
         <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "settings" }))}>
-          <Settings size={15} /> Tag presets…
+          <Settings size={15} /> {t("Tag presets…")}
         </button>
         <button type="button" className="menu-item" onClick={() => (close(), useUi.getState().set({ dialog: "help" }))}>
-          <Keyboard size={15} /> Keyboard shortcuts <Kbd>?</Kbd>
+          <Keyboard size={15} /> {t("Keyboard shortcuts")} <Kbd>?</Kbd>
         </button>
       </Popover>
     </>

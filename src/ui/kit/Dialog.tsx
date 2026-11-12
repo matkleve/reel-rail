@@ -1,6 +1,8 @@
 import { X } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 
+import { t } from "@/i18n";
+
 import { Button } from "./Button";
 
 /**
@@ -53,7 +55,7 @@ export function Dialog({ open, onClose, title, subtitle, children, footer, wide 
               <h2 id="dialog-title">{title}</h2>
               {subtitle && <p>{subtitle}</p>}
             </div>
-            <Button icon={X} label="Close" kbd="Esc" size="sm" onClick={onClose} />
+            <Button icon={X} label={t("Close")} kbd="Esc" size="sm" onClick={onClose} />
           </div>
           {children && <div className="dialog-body">{children}</div>}
           {footer && <div className="dialog-footer">{footer}</div>}
