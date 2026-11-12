@@ -58,13 +58,12 @@ The Vercel project has `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
 (public by design; RLS protects the data). Without them the app runs with
 no account UI. Payments are not wired yet (UC-006): Pro is granted by hand.
 
-### Hosting (Vercel) with a password
+### Hosting (Vercel)
 
-The app is a static site. On Vercel, `middleware.ts` puts a password page in
-front of it: set the environment variable **`REEL_PASSWORD`** in the Vercel
-project and redeploy. After logging in, the browser remembers it for a year
-(cookie). Changing the password logs everyone out. Without the variable the
-site stays locked. Locally (`npm run dev`) there is no password.
+The app is a static site, open to anyone with the link — nothing is uploaded,
+photos stay on the device. (Until 2026-11-12 a `middleware.ts` put a password
+page in front of it; the user switched it off. It is in the git history if a
+gate is ever wanted again.)
 
 ---
 
@@ -324,7 +323,6 @@ supabase/      database migrations (schema + row-level security)
 src/trim/      video trimming (dialog, filmstrip)
 src/ui/kit/    design-system components (see docs/DESIGN-SYSTEM.md)
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
-middleware.ts  password gate when hosted on Vercel
 scripts/       verify gate, e2e test, icon renderer
 docs/          use-cases/, adr/, TRAPS.md, diary/
 ```

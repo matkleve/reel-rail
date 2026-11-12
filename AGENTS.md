@@ -43,8 +43,7 @@ Never report work as done without a green `verify`. Re-run one check alone:
    they work offline; they replaced Inter with the warm "Sand" look), mediabunny (lossless MP4/MOV
    trimming — the platform has no muxer; loaded only when someone trims),
    @supabase/supabase-js (accounts; loaded only when someone signs in),
-   @capacitor/core (native iPhone app bridge; inert in a browser).
-   Server: @vercel/functions (only for `next()` in the middleware). That is
+   @capacitor/core (native iPhone app bridge; inert in a browser). That is
    the list.
 5. **Design system first:** [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
    No raw colors, radii, shadows or durations in components or CSS rules —
@@ -72,7 +71,6 @@ src/series/    title suggestion/dice (pure, tested), create/list dialogs, export
 src/ui/kit/    design-system components: Button, Tip, Kbd, Segmented, Switch, Popover, Dialog
 src/ui/        header, stage overlay, dock, start screen, help, settings, keyboard
 scripts/       verify gate, e2e smoke test, icon renderer
-middleware.ts  Vercel password gate (REEL_PASSWORD) — server side, never shipped to the browser
 docs/          use-cases/ (what people want — start here), adr/ (big decisions),
                TRAPS.md (code that misleads), diary/ (what was decided)
 ```
