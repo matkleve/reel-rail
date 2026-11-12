@@ -1,15 +1,30 @@
 /* ---- Phone timeline: days as stacks of prints (src/timeline/DayPiles.tsx, D-031) ---- */
 
-.day-piles {
+.group-view {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   height: 100%;
-  overflow-y: auto;
-  padding: var(--space-3) var(--space-3) var(--space-6);
-  padding-left: calc(var(--space-3) + env(safe-area-inset-left, 0px));
-  padding-right: calc(var(--space-3) + env(safe-area-inset-right, 0px));
-  overscroll-behavior: contain;
+  padding-top: var(--space-3);
+}
+
+/* The stacks side by side, one in the middle, the neighbours peeking in:
+   swiped left and right, snapping to a stack (native scrolling — smooth). */
+.day-piles {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-2) 12% var(--space-4);
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.day-piles::-webkit-scrollbar {
+  display: none;
 }
 .day-empty {
   margin: var(--space-8) auto;
@@ -19,17 +34,19 @@
 .day-pile {
   display: flex;
   flex: none;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-5);
-  width: 100%;
-  padding: var(--space-4) var(--space-4) var(--space-4) var(--space-5);
+  gap: var(--space-3);
+  width: min(76vw, 340px);
+  padding: var(--space-5) var(--space-4) var(--space-4);
   border: 0;
   border-radius: var(--radius-xl);
   background: var(--surface-1);
   box-shadow: var(--shadow-1);
   color: var(--text);
   font: inherit;
-  text-align: left;
+  text-align: center;
+  scroll-snap-align: center;
   cursor: pointer;
   transition:
     transform var(--dur-1) var(--ease-out),
@@ -49,14 +66,14 @@
 /* Three prints: the day's best on top, the next two peeking out askew. */
 .day-stack {
   position: relative;
-  flex: none;
-  width: 128px;
-  height: 120px;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
 }
 .day-print {
   position: absolute;
-  inset: 6px 10px;
-  padding: 4px;
+  inset: 4% 12%;
+  padding: 6px;
   border-radius: var(--radius-md);
   background: var(--frame);
   box-shadow: var(--shadow-2);
@@ -67,7 +84,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  border-radius: calc(var(--radius-md) - 4px);
+  border-radius: calc(var(--radius-md) - 6px);
   object-fit: cover;
 }
 .day-print.is-cover {
@@ -76,23 +93,25 @@
 }
 .day-print.is-behind-1 {
   z-index: 2;
-  transform: translate(10px, -3px) rotate(6deg);
+  transform: translate(8%, -2%) rotate(6deg);
 }
 .day-print.is-behind-2 {
   z-index: 1;
-  transform: translate(-9px, 3px) rotate(-9deg);
+  transform: translate(-8%, 2%) rotate(-8deg);
 }
 /* A tap spreads the pile a little — the start of the fan-out. */
 .day-pile:active .is-behind-1 {
-  transform: translate(22px, -4px) rotate(11deg);
+  transform: translate(16%, -3%) rotate(11deg);
 }
 .day-pile:active .is-behind-2 {
-  transform: translate(-20px, 4px) rotate(-14deg);
+  transform: translate(-16%, 3%) rotate(-13deg);
 }
 
 .day-label {
   display: flex;
+  flex: none;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   min-width: 0;
 }
@@ -113,6 +132,7 @@
 .day-ratings {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-1);
   margin-top: var(--space-1);
 }
@@ -137,14 +157,14 @@
   --level: var(--text-3);
 }
 
-/* In a fanned-out day: back to all days. */
+/* In a fanned-out stack: fold it back ("Stack up"). */
 .day-back {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--space-1);
   height: var(--control-sm);
   margin-bottom: var(--space-2);
-  padding: 0 var(--space-3) 0 var(--space-1);
+  padding: 0 var(--space-3) 0 var(--space-2);
   border: 0;
   border-radius: var(--radius-full);
   background: var(--accent-soft);
@@ -163,6 +183,17 @@
 }
 @keyframes day-fan-out {
   from {
+    opacity: 0;
+    translate: calc(var(--cx, 0px) - var(--x, 0px)) 28px;
+    scale: 0.55;
+  }
+}
+/* "Stack up": the photos slide back into the middle and the pile returns. */
+.stage.is-folding .card {
+  animation: day-fold 300ms var(--ease-out) both;
+}
+@keyframes day-fold {
+  to {
     opacity: 0;
     translate: calc(var(--cx, 0px) - var(--x, 0px)) 28px;
     scale: 0.55;

@@ -36,29 +36,62 @@ export function GroupSwitch() {
 
 /**
  * The phone's Timeline tab, closed: every group one stack of prints, its best
- * photo on top (D-031). Tap a stack and it fans out into its photos, one by
- * one. The bars below still show the whole trip.
+ * photo on top (D-031), side by side — swiped left and right like the photos
+ * themselves (a list read as a different app, user 2026-11-12). Tap a stack
+ * and it fans out into its photos, one by one. The bars below show the trip.
  */
 export function GroupPiles() {
   const { groups, groupOf } = useGroups();
   const media = useReel((x) => x.reel.media);
   const here = useReel((x) => (x.currentId ? groupOf.get(x.currentId) : undefined));
   const list = useRef<HTMLDivElement>(null);
+  const fromScroll = useRef<string>(undefined);
 
-  // The stack you were in (or tapped on the bars) comes into view.
+  // The stack you were in (or tapped on the bars) comes to the middle — unless
+  // it got there by being swiped there.
   useEffect(() => {
-    list.current?.querySelector(".day-pile.is-here")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (here && here === fromScroll.current) return;
+    list.current?.querySelector(".day-pile.is-here")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
   }, [here]);
 
+  // Swiping through the stacks moves the bars' marker along: the stack in the
+  // middle becomes the current one (its best photo), without opening it.
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => {
+      const mid = el.scrollLeft + el.clientWidth / 2;
+      let best: HTMLElement | undefined;
+      for (const pile of el.querySelectorAll<HTMLElement>(".day-pile"))
+        if (!best || Math.abs(pile.offsetLeft + pile.offsetWidth / 2 - mid) < Math.abs(best.offsetLeft + best.offsetWidth / 2 - mid)) best = pile;
+      const g = groups.find((x) => x.key === best?.dataset.key);
+      if (!g || g.key === here) return;
+      fromScroll.current = g.key;
+      useReel.getState().setCurrent(g.top3[0] ?? g.ids[0]!);
+    };
+    const onScroll = () => {
+      clearTimeout(timer);
+      timer = setTimeout(settle, 140);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [groups, here]);
+
   return (
-    <div className="day-piles" ref={list}>
+    <div className="group-view">
       <div className="group-switch">
         <GroupSwitch />
       </div>
       {groups.length === 0 && <p className="day-empty">{t("Nothing passes the filters.")}</p>}
-      {groups.map((g) => (
-        <Pile key={g.key} group={g} media={media} here={g.key === here} onOpen={() => openGroup(groups, g.key)} />
-      ))}
+      <div className="day-piles" ref={list}>
+        {groups.map((g) => (
+          <Pile key={g.key} group={g} media={media} here={g.key === here} onOpen={() => openGroup(groups, g.key)} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -83,6 +116,7 @@ function Pile({ group, media, here, onOpen }: { group: Group; media: Record<stri
     <button
       type="button"
       className={here ? "day-pile is-here" : "day-pile"}
+      data-key={group.key}
       onClick={onOpen}
       aria-label={t("{day}, {n} photos — open", { day: `${title} ${sub}`.trim(), n: group.ids.length })}
     >

@@ -1,4 +1,4 @@
-import { ChevronLeft, MapPin, X } from "lucide-react";
+import { Layers, MapPin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -49,9 +49,9 @@ export function StageOverlay() {
           </div>
         ) : (
           open && (
-            <button type="button" className="day-back" onClick={closeGroup}>
-              <ChevronLeft size={16} strokeWidth={2.4} aria-hidden="true" />
-              {t("All stacks")}
+            <button type="button" className="day-back" onClick={foldBack}>
+              <Layers size={15} strokeWidth={2.4} aria-hidden="true" />
+              {t("Stack up")}
             </button>
           )
         )}
@@ -72,6 +72,14 @@ export function StageOverlay() {
       <Hints />
     </>
   );
+}
+
+/** The photos slide back into the middle, then the stack is shown again (days.css .is-folding). */
+function foldBack(): void {
+  const stage = document.querySelector(".stage");
+  if (!stage || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return closeGroup();
+  stage.classList.add("is-folding");
+  setTimeout(closeGroup, 300);
 }
 
 /** Commits on Enter/blur; applies to the whole selection when there is one. */

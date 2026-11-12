@@ -160,7 +160,7 @@ export const DE_UI: Record<string, string> = {
   "{n} open": "{n} offen",
   "1 photo": "1 Foto",
   "{n} photos": "{n} Fotos",
-  "All stacks": "Alle Stapel",
+  "Stack up": "Zusammenlegen",
   "Stack by": "Stapeln nach",
   Single: "Einzeln",
   Day: "Tag",

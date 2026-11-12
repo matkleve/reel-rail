@@ -318,7 +318,7 @@ const dayCount = await page.locator(".stage-count").innerText();
 if (!/^1 \/ \d+$/.test(dayCount.trim())) await fail(`the count should be the day's, starting at 1: ${dayCount}`);
 await noOverflow("phone timeline");
 await page.screenshot({ path: `${OUT}/5-phone-timeline.png` });
-await page.getByRole("button", { name: "All stacks" }).click();
+await page.getByRole("button", { name: "Stack up" }).click();
 await page.locator(".day-pile").first().waitFor();
 // Other ways to stack: stretches of time (found from the gaps), places, or none at all.
 await page.getByRole("radio", { name: "Time" }).click();
@@ -336,7 +336,7 @@ await page.getByRole("radio", { name: "Day" }).click();
 await page.locator(".day-pile").first().waitFor();
 await page.getByRole("button", { name: "Sort" }).click();
 await page.locator(".deck-card.is-top").waitFor();
-ok("phone: Timeline tab shows each day as a stack; a tap fans it out (no bursts folded), All stacks folds it back; Time / Place / Single re-stack; Sort goes back to the deck");
+ok("phone: Timeline tab shows each day as a stack; a tap fans it out (no bursts folded), Stack up folds it back; Time / Place / Single re-stack; Sort goes back to the deck");
 
 // ---- A bigger screen sorts too: header switch, arrow keys throw -------------------------------------
 await page.setViewportSize({ width: 1180, height: 820 });
