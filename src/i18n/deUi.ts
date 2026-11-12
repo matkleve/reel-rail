@@ -161,6 +161,7 @@ export const DE_UI: Record<string, string> = {
   "1 photo": "1 Foto",
   "{n} photos": "{n} Fotos",
   "Stack up": "Zusammenlegen",
+  "Cut clips": "Clips schneiden",
   "Stack by": "Stapeln nach",
   Single: "Einzeln",
   Day: "Tag",

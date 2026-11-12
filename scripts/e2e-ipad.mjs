@@ -400,7 +400,8 @@ ok("trim: lossless copy shared as clip-trimmed.mp4; the original left after its 
 // ---- Several clips out of one video (UC-007): two clips, shared together; the whole video becomes a discard ----
 await page.locator(".card.is-current .card-trim").waitFor(); // whichever of the two videos is current
 await page.waitForTimeout(500);
-await page.getByRole("button", { name: "Trim video" }).click();
+// The dock has the scissors too (the small one on the card was easy to miss on a phone).
+await page.getByRole("button", { name: "Cut clips" }).click();
 await page.getByRole("slider", { name: "Trim end" }).focus();
 await page.keyboard.press("Shift+ArrowLeft");
 await page.keyboard.press("Shift+ArrowLeft"); // clip 1: 0–2 s

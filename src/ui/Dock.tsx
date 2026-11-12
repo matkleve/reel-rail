@@ -1,6 +1,7 @@
-import { ArrowDownToLine, Check, Layers, Pause, X } from "lucide-react";
+import { ArrowDownToLine, Check, Layers, Pause, Scissors, X } from "lucide-react";
 
 import { TOGGLE_PLAY } from "@/carousel/events";
+import { TRIMMABLE } from "@/fs/trimVideo";
 import { t } from "@/i18n";
 import { togglePick } from "@/store/picks";
 import { useReel } from "@/store/useReel";
@@ -51,6 +52,18 @@ export function Dock() {
             kbd="V"
             tipSide="above"
             onClick={() => window.dispatchEvent(new Event(TOGGLE_PLAY))}
+          />
+        )}
+        {media.type === "video" && TRIMMABLE.test(media.path) && !selected && (
+          // In the dock too, not only as the small scissors on the playing card:
+          // on a phone that one was easy to miss (user, 2026-11-12).
+          <Button
+            className="dock-trim"
+            icon={Scissors}
+            label={t("Cut clips")}
+            kbd="C"
+            tipSide="above"
+            onClick={() => useUi.getState().set({ dialog: "trim" })}
           />
         )}
         <Button
