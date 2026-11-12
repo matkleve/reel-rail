@@ -1,0 +1,205 @@
+/* ---- Trim / clips dialog ----------------------------------------------------- */
+
+.trim-stage {
+  display: grid;
+  place-items: center;
+  height: min(46vh, 420px);
+  border-radius: var(--radius-md);
+  background: var(--bg-stage);
+  overflow: hidden;
+}
+.trim-video {
+  max-width: 100%;
+  max-height: 100%;
+}
+.trim-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.trim-track {
+  position: relative;
+  flex: 1;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  touch-action: none;
+  cursor: pointer;
+}
+.trim-film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+}
+.trim-cut {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--scrim);
+  pointer-events: none;
+}
+.trim-keep {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  border: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+}
+/* The clip being edited: solid frame and handles; the others are dashed. */
+.trim-keep.is-active {
+  z-index: 1;
+  border: 2px solid var(--accent);
+}
+.trim-keep-n {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  translate: -50% 0;
+}
+.trim-keep:not(.is-active) .trim-keep-n {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.trim-playhead {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text);
+  pointer-events: none;
+}
+.trim-handle {
+  position: absolute;
+  z-index: 2;
+  top: -2px;
+  bottom: -2px;
+  width: 20px;
+  margin-left: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  cursor: ew-resize;
+  touch-action: none;
+}
+.trim-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--text-on-accent);
+  translate: -50% -50%;
+}
+.trim-handle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* A finger is wider than a 20 px handle: grow the hit area, not the handle. */
+.trim-handle::before {
+  content: "";
+  position: absolute;
+  inset: -8px -12px;
+}
+.trim-times {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--space-2) 0 0 calc(var(--control-md) + var(--space-3));
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+.trim-progress {
+  flex: 1;
+}
+
+/* ---- Several clips (UC-007) ---------------------------------------------------- */
+
+.clip-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.clip-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.clip-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+.clip-chip.is-active {
+  background: var(--accent-soft);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.clip-chip-pick,
+.clip-chip-x {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: var(--control-md);
+  padding: 0 var(--space-2) 0 var(--space-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.clip-chip-x {
+  padding: 0 var(--space-3) 0 var(--space-1);
+  color: var(--text-3);
+}
+.clip-chip-x:hover {
+  color: var(--danger);
+}
+.clip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+.clip-keep {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-2);
+  font-size: var(--text-md);
+  cursor: pointer;
+}
+.clip-keep input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* Phone: the video gets less height so track, clips and options stay in view. */
+@media (max-width: 600px) {
+  .trim-stage {
+    height: min(30vh, 260px);
+  }
+  .trim-controls {
+    margin-top: var(--space-3);
+  }
+}

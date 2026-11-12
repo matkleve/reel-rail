@@ -11,8 +11,12 @@ export type Stacks = {
 };
 
 /**
- * Groups consecutive media less than 3 s apart. The stack id is the id of its
+ * Groups consecutive photos less than 3 s apart. The stack id is the id of its
  * first member, so it is stable as long as the burst itself is.
+ *
+ * Videos are never part of a burst: a burst is "the same moment, pick the
+ * best one", and clips cut out of one video (UC-007) are seconds apart by
+ * nature but each a moment of its own — stacked, all but one would vanish.
  */
 export function computeStacks(order: string[], media: Record<string, Media>, burstMs = BURST_MS): Stacks {
   const stackOf: Record<string, string> = {};
@@ -29,6 +33,12 @@ export function computeStacks(order: string[], media: Record<string, Media>, bur
   };
 
   for (const id of order) {
+    if (media[id]!.type === "video") {
+      close();
+      run = [];
+      prevT = -Infinity;
+      continue;
+    }
     const t = Date.parse(media[id]!.takenAt);
     if (t - prevT < burstMs) run.push(id);
     else {

@@ -51,6 +51,23 @@ export const DE_DIALOGS: Record<string, string> = {
   Trim: "Schneiden",
   "Trim start": "Schnittanfang",
   "Trim end": "Schnittende",
+  // Several clips out of one video (UC-007)
+  Clips: "Clips",
+  "Remove clip {n}": "Clip {n} entfernen",
+  "Add clip": "Clip hinzufügen",
+  "Keep the whole video": "Ganzes Video behalten",
+  "Clip ready. Save it to Photos.": "Clip fertig. Sichere ihn in Fotos.",
+  "{n} clips ready. Save them to Photos.": "{n} Clips fertig. Sichere sie in Fotos.",
+  "Each clip becomes a video of its own, at its own time. The whole video stays.":
+    "Jeder Clip wird ein eigenes Video, zu seiner eigenen Uhrzeit. Das ganze Video bleibt.",
+  "Each clip becomes a video of its own, at its own time. The whole video is rated Delete.":
+    "Jeder Clip wird ein eigenes Video, zu seiner eigenen Uhrzeit. Das ganze Video wird auf „Löschen“ gesetzt.",
+  "Save clip": "Clip sichern",
+  "Save {n} clips": "{n} Clips sichern",
+  "{n} clips, {part} of {whole}": "{n} Clips, {part} von {whole}",
+  "Play this clip": "Diesen Clip abspielen",
+  "1 clip saved next to the original": "1 Clip neben dem Original gesichert",
+  "{n} clips saved next to the original": "{n} Clips neben dem Original gesichert",
 
   // Series
   "Series created": "Serie erstellt",

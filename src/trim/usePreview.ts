@@ -1,19 +1,27 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction, type SyntheticEvent } from "react";
 
 import { getMediaFile } from "@/fs/session";
+import type { TrimRange } from "@/fs/trimVideo";
 import type { Media } from "@/types";
 
+import { clipAt } from "./clips";
+
+const NONE: TrimRange = { start: 0, end: 0 };
+
 /**
- * The trim dialog's player: the original as an object URL, the kept range,
- * the playhead, and a preview that loops inside the kept part.
+ * The trim dialog's player: the original as an object URL, the clips to
+ * keep (one to start with — a plain trim), which one is being edited, the
+ * playhead, and a preview that loops inside the active clip.
  */
 export function usePreview(media: Media) {
   const [url, setUrl] = useState<string>();
   const [duration, setDuration] = useState(0);
-  const [range, setRange] = useState({ start: 0, end: 0 });
+  const [clips, setClips] = useState<TrimRange[]>([]);
+  const [active, setActive] = useState(0);
   const [playhead, setPlayhead] = useState(0);
   const [playing, setPlaying] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
+  const range = clips[active] ?? NONE;
 
   useEffect(() => {
     let made: string | undefined;
@@ -38,11 +46,13 @@ export function usePreview(media: Media) {
   };
 
   /** Moving a handle pauses and shows the frame at the handle. */
-  const changeRange = (r: { start: number; end: number }, showAt: number) => {
-    setRange(r);
+  const changeRange = (r: TrimRange, showAt: number) => {
+    setClips((all) => all.map((c, i) => (i === active ? r : c)));
     video.current?.pause();
     seek(showAt);
   };
+
+  const { addClip, selectClip, removeClip } = clipOps({ clips, setClips, setActive, duration, playhead, seek, pause: () => video.current?.pause() });
 
   const videoProps = {
     ref: video,
@@ -54,7 +64,8 @@ export function usePreview(media: Media) {
       if (!Number.isFinite(d)) return;
       setDuration(d);
       // A trim kept as a decision (folder left as it is) opens where it was left.
-      setRange(media.trim ? { start: media.trim.start, end: Math.min(d, media.trim.end) } : { start: 0, end: d });
+      setClips([media.trim ? { start: media.trim.start, end: Math.min(d, media.trim.end) } : { start: 0, end: d }]);
+      setActive(0);
     },
     onTimeUpdate: (e: SyntheticEvent<HTMLVideoElement>) => {
       const v = e.currentTarget;
@@ -68,13 +79,56 @@ export function usePreview(media: Media) {
   return {
     url,
     duration,
+    clips,
+    active,
     range,
     playhead,
     playing,
     seek,
     togglePlay,
     changeRange,
+    addClip,
+    selectClip,
+    removeClip,
     videoProps,
     pause: () => video.current?.pause(),
+  };
+}
+
+type ClipOpsArgs = {
+  clips: TrimRange[];
+  setClips: Dispatch<SetStateAction<TrimRange[]>>;
+  setActive: Dispatch<SetStateAction<number>>;
+  duration: number;
+  playhead: number;
+  seek(t: number): void;
+  pause(): void;
+};
+
+/** Adding, picking and dropping clips — each pauses, and shows the frame where the clip starts. */
+function clipOps({ clips, setClips, setActive, duration, playhead, seek, pause }: ClipOpsArgs) {
+  return {
+    /** Another clip, at the playhead — it becomes the one being edited. */
+    addClip() {
+      pause();
+      const next = clipAt(playhead, duration);
+      setClips((all) => [...all, next]);
+      setActive(clips.length);
+      seek(next.start);
+    },
+    selectClip(i: number) {
+      const c = clips[i];
+      if (!c) return;
+      pause();
+      setActive(i);
+      seek(c.start);
+    },
+    /** The last clip stays: no clips would be nothing to save. */
+    removeClip(i: number) {
+      if (clips.length < 2) return;
+      pause();
+      setClips((all) => all.filter((_, j) => j !== i));
+      setActive((a) => (a > i ? a - 1 : a === i ? Math.max(0, i - 1) : a));
+    },
   };
 }

@@ -156,6 +156,13 @@ original's name, rating, tags and series, and the original goes to
 applied on export. A video with a track that cannot be copied (e.g. spatial
 audio) is refused rather than trimmed without it. MP4, MOV and M4V.
 
+**Several clips out of one video.** On the same screen, "Add clip" adds a
+5-second clip at the playhead; tap a clip on the strip (or its chip) to adjust
+it. Each clip becomes a video of its own (`name-clip1.mov` …, or shared
+together on the iPhone) at the time it happened, with the original's tags,
+place and series. The whole video is rated *Delete*, unless "Keep the whole
+video" is ticked. Not in a folder left as it is (one trim per video there).
+
 **Place:** there is no reverse geocoding (that would need the internet). Type
 a place in the info bar (or press **P**). With a selection it applies to all
 selected items. Until then, a telling folder name (e.g. `Porto/`) is used for

@@ -1,8 +1,9 @@
-import { Pause, Play, Scissors, Share } from "lucide-react";
+import { Pause, Play } from "lucide-react";
 import { useState } from "react";
 
-import { canShareFiles, shareFiles } from "@/fs/share";
-import { t } from "@/i18n";
+import { shareFiles } from "@/fs/share";
+import { t, tn } from "@/i18n";
+import { saveClips } from "@/store/clips";
 import { saveTrim } from "@/store/trim";
 import { useReel } from "@/store/useReel";
 import { showToast, useUi } from "@/store/useUi";
@@ -10,10 +11,15 @@ import { KEEP_DAYS, type Media } from "@/types";
 import { Button } from "@/ui/kit/Button";
 import { Dialog } from "@/ui/kit/Dialog";
 
+import { ClipBar, TrimFooter, type Phase, type TrimMode } from "./ClipBar";
+import { keptSeconds } from "./clips";
 import { MIN_LENGTH, TrimTrack, formatTime } from "./TrimTrack";
 import { usePreview } from "./usePreview";
 
-/** Trim the current video: keep the part between the handles, the rest goes. */
+/**
+ * Trim the current video — keep one part, or pull several clips out of it
+ * (UC-002, UC-007).
+ */
 export function TrimDialog() {
   const open = useUi((s) => s.dialog === "trim");
   const media = useReel((s) => (s.currentId ? s.reel.media[s.currentId] : undefined));
@@ -22,29 +28,37 @@ export function TrimDialog() {
   return <Trim media={media} onDone={() => useUi.getState().set({ dialog: null })} />;
 }
 
-type Phase = { kind: "edit" } | { kind: "saving"; progress: number } | { kind: "share"; file: File };
-
 function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
   // The video this dialog was opened for, fixed for its lifetime.
   const [media] = useState(current);
   const files = useUi((s) => s.sourceKind === "files");
   const exporting = useReel((s) => s.reel.workflow === "export");
-  const mode = files ? "files" : exporting ? "export" : "edit";
+  const mode: TrimMode = files ? "files" : exporting ? "export" : "edit";
   const [phase, setPhase] = useState<Phase>({ kind: "edit" });
-  const { url, duration, range, playhead, playing, seek, togglePlay, changeRange, videoProps, pause } =
-    usePreview(media);
+  const [keepWhole, setKeepWhole] = useState(false);
+  const p = usePreview(media);
+  const { clips, duration, range } = p;
+  // One clip and the whole video not kept is the plain trim: it replaces the original.
+  const plain = mode === "export" || (clips.length === 1 && !keepWhole);
 
   const save = async () => {
-    pause();
+    p.pause();
     setPhase({ kind: "saving", progress: 0 });
+    const onProgress = (progress: number) => setPhase({ kind: "saving", progress });
     try {
-      const out = await saveTrim(media, range, (progress) => setPhase({ kind: "saving", progress }));
-      if (out.kind === "share") return setPhase({ kind: "share", file: out.file });
-      showToast(
-        out.kind === "replaced"
-          ? t("Trimmed — the original is in Recently deleted for {days} days", { days: KEEP_DAYS })
-          : t("Trim saved — it is applied when you export the result"),
-      );
+      if (plain) {
+        const out = await saveTrim(media, range, onProgress);
+        if (out.kind === "share") return setPhase({ kind: "share", files: [out.file] });
+        showToast(
+          out.kind === "replaced"
+            ? t("Trimmed — the original is in Recently deleted for {days} days", { days: KEEP_DAYS })
+            : t("Trim saved — it is applied when you export the result"),
+        );
+        return onDone();
+      }
+      const out = await saveClips(media, clips, keepWhole, onProgress);
+      if (out.kind === "share") return setPhase({ kind: "share", files: out.files });
+      showToast(tn("1 clip saved next to the original", "{n} clips saved next to the original", out.count));
       onDone();
     } catch (err) {
       console.error(err);
@@ -53,55 +67,67 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
     }
   };
 
-  const share = async (file: File) => {
+  const share = async (list: File[]) => {
     // A tap of its own: Safari only opens the share sheet straight from a gesture.
     try {
-      await shareFiles([file], file.name);
+      await shareFiles(list, list[0]!.name);
       onDone();
     } catch (err) {
       showToast(t("Sharing failed: {error}", { error: err instanceof Error ? err.message : String(err) }), "error");
     }
   };
 
-  const length = range.end - range.start;
-  const unchanged = range.start < 0.05 && duration - range.end < 0.05;
+  const unchanged = plain && range.start < 0.05 && duration - range.end < 0.05;
+  const valid = clips.length > 0 && clips.every((c) => c.end - c.start >= MIN_LENGTH);
+  const kept = formatTime(keptSeconds(clips));
+  const whole = formatTime(duration);
 
   return (
     <Dialog
       open
       onClose={phase.kind === "saving" ? () => {} : onDone}
       title={t("Trim video")}
-      subtitle={duration ? t("Keep {part} of {whole}", { part: formatTime(length), whole: formatTime(duration) }) : undefined}
+      subtitle={
+        !duration
+          ? undefined
+          : clips.length > 1
+            ? t("{n} clips, {part} of {whole}", { n: clips.length, part: kept, whole })
+            : t("Keep {part} of {whole}", { part: kept, whole })
+      }
       wide
       footer={
         <TrimFooter
           phase={phase}
           mode={mode}
-          canSave={duration > 0 && !unchanged && length >= MIN_LENGTH}
+          plain={plain}
+          count={clips.length}
+          keepWhole={keepWhole}
+          canSave={duration > 0 && valid && !unchanged}
           onCancel={onDone}
           onSave={() => void save()}
-          onShare={(file) => void share(file)}
+          onShare={(list) => void share(list)}
         />
       }
     >
-      <div className="trim-stage">{url && <video className="trim-video" {...videoProps} />}</div>
+      <div className="trim-stage">{p.url && <video className="trim-video" {...p.videoProps} />}</div>
       <div className="trim-controls">
         <Button
-          icon={playing ? Pause : Play}
-          label={playing ? t("Pause") : t("Play the kept part")}
+          icon={p.playing ? Pause : Play}
+          label={p.playing ? t("Pause") : clips.length > 1 ? t("Play this clip") : t("Play the kept part")}
           variant="secondary"
-          onClick={togglePlay}
+          onClick={p.togglePlay}
           disabled={!duration || phase.kind !== "edit"}
         />
-        {url && duration > 0 && (
+        {p.url && duration > 0 && (
           <TrimTrack
-            url={url}
+            url={p.url}
             duration={duration}
-            start={range.start}
-            end={range.end}
-            playhead={playhead}
-            onChange={changeRange}
-            onSeek={seek}
+            clips={clips}
+            active={p.active}
+            playhead={p.playhead}
+            onChange={p.changeRange}
+            onSeek={p.seek}
+            onSelect={p.selectClip}
           />
         )}
       </div>
@@ -109,56 +135,17 @@ function Trim({ media: current, onDone }: { media: Media; onDone(): void }) {
         <span>{formatTime(range.start)}</span>
         <span>{formatTime(range.end)}</span>
       </div>
+      {mode !== "export" && duration > 0 && phase.kind === "edit" && (
+        <ClipBar
+          clips={clips}
+          active={p.active}
+          keepWhole={keepWhole}
+          onSelect={p.selectClip}
+          onRemove={p.removeClip}
+          onAdd={p.addClip}
+          onKeepWhole={setKeepWhole}
+        />
+      )}
     </Dialog>
-  );
-}
-
-type FooterProps = {
-  phase: Phase;
-  mode: "files" | "edit" | "export";
-  canSave: boolean;
-  onCancel(): void;
-  onSave(): void;
-  onShare(file: File): void;
-};
-
-/** Edit → saving (progress) → share (files mode only). */
-function TrimFooter({ phase, mode, canSave, onCancel, onSave, onShare }: FooterProps) {
-  if (phase.kind === "share")
-    return (
-      <div className="footer-row" key="share">
-        <span className="note">{t("Trimmed. Save it to Photos, then delete the original there.")}</span>
-        <span className="spacer" />
-        <Button variant="primary" icon={Share} onClick={() => onShare(phase.file)} autoFocus>
-          {canShareFiles([phase.file]) ? t("Save to Photos…") : t("Download")}
-        </Button>
-      </div>
-    );
-  if (phase.kind === "saving")
-    return (
-      <div className="footer-row" key="saving">
-        <div className="progress trim-progress">
-          <div className="progress-bar" style={{ width: `${Math.round(phase.progress * 100)}%` }} />
-        </div>
-        <span className="text-2 tabular">{t("Trimming… {pct} %", { pct: Math.round(phase.progress * 100) })}</span>
-      </div>
-    );
-  return (
-    <div className="footer-row" key="edit">
-      <span className="note">
-        {mode === "files"
-          ? t("The cut is lossless. Your library keeps the original until you delete it in Photos.")
-          : mode === "export"
-            ? t("The folder stays as it is — the trim is applied when you export the result.")
-            : t("The cut-away part leaves the folder. The original waits {days} days in Recently deleted.", { days: KEEP_DAYS })}
-      </span>
-      <span className="spacer" />
-      <Button variant="ghost" onClick={onCancel}>
-        {t("Cancel")}
-      </Button>
-      <Button variant="primary" icon={Scissors} onClick={onSave} disabled={!canSave}>
-        {mode === "edit" ? t("Trim & replace") : t("Trim")}
-      </Button>
-    </div>
   );
 }

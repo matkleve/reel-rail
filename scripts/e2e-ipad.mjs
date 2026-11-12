@@ -370,6 +370,30 @@ await page.keyboard.press("Escape");
 if (!(await page.locator('.card-face[aria-label^="video clip.mp4,"]').count())) await fail("bring back should put it on the rail");
 ok("trim: lossless copy shared as clip-trimmed.mp4; the original left after its countdown and came back");
 
+// ---- Several clips out of one video (UC-007): two clips, shared together; the whole video becomes a discard ----
+await page.locator(".card.is-current .card-trim").waitFor(); // whichever of the two videos is current
+await page.waitForTimeout(500);
+await page.getByRole("button", { name: "Trim video" }).click();
+await page.getByRole("slider", { name: "Trim end" }).focus();
+await page.keyboard.press("Shift+ArrowLeft");
+await page.keyboard.press("Shift+ArrowLeft"); // clip 1: 0–2 s
+await page.getByRole("button", { name: "Add clip" }).click();
+await page.getByRole("slider", { name: "Trim start" }).focus();
+await page.keyboard.press("Shift+ArrowRight");
+await page.keyboard.press("Shift+ArrowRight"); // clip 2: 2–4 s
+if ((await page.locator(".clip-chip").count()) !== 2) await fail("two clips should show as two chips");
+if ((await page.locator(".trim-keep").count()) !== 2) await fail("two clips should be framed on the track");
+await page.screenshot({ path: `${OUT}/7-clips.png` });
+await page.getByRole("button", { name: "Save 2 clips" }).click();
+await page.getByRole("button", { name: "Save to Photos…" }).click();
+const sharedClips = (await page.evaluate(() => window.__shared)).at(-1);
+const [c1, c2] = sharedClips?.names ?? [];
+if (sharedClips?.names?.length !== 2 || !/-clip1\.mp4$/.test(c1) || c2 !== c1.replace("-clip1", "-clip2"))
+  await fail(`both clips should be shared together, in order: ${JSON.stringify(sharedClips)}`);
+await page.locator(`.card.is-current .card-face[aria-label^="video ${c1}"]`).waitFor();
+if (!(await page.locator(`.card-face[aria-label^="video ${c2}"]`).count())) await fail("the second clip should be on the rail too");
+ok(`clips: two clips out of one video, shared together as ${c1} / ${c2}, each on the rail`);
+
 await browser.close();
 server.kill();
 console.log(`\n✓ iPad e2e passed — screenshots in ${OUT}/`);

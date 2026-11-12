@@ -1,6 +1,9 @@
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from "react";
 
+import type { TrimRange } from "@/fs/trimVideo";
 import { t } from "@/i18n";
+
+import { clipIndexAt, gaps } from "./clips";
 
 const FRAMES = 8;
 /** The shortest clip worth keeping, in seconds. */
@@ -9,19 +12,22 @@ export const MIN_LENGTH = 0.5;
 type Props = {
   url: string;
   duration: number;
-  start: number;
-  end: number;
+  clips: TrimRange[];
+  active: number;
   playhead: number;
-  onChange(range: { start: number; end: number }, seekTo: number): void;
+  onChange(range: TrimRange, seekTo: number): void;
   onSeek(t: number): void;
+  onSelect(i: number): void;
 };
 
 /**
- * A filmstrip with two handles: drag them (finger or mouse) to keep the part
- * between. Tapping the strip moves the playhead. Handles are sliders for
- * keyboard and screen readers too: ←/→ move 0.1 s, Shift ±1 s.
+ * A filmstrip with the clips to keep on it. The active clip has two handles:
+ * drag them (finger or mouse) to keep the part between. Tapping another clip
+ * makes it the active one; tapping elsewhere moves the playhead. Handles are
+ * sliders for keyboard and screen readers too: ←/→ move 0.1 s, Shift ±1 s.
  */
-export function TrimTrack({ url, duration, start, end, playhead, onChange, onSeek }: Props) {
+export function TrimTrack({ url, duration, clips, active, playhead, onChange, onSeek, onSelect }: Props) {
+  const { start, end } = clips[active] ?? { start: 0, end: duration };
   const track = useRef<HTMLDivElement>(null);
   const pct = (t: number) => `${(t / duration) * 100}%`;
   const timeAt = (clientX: number) => {
@@ -66,11 +72,18 @@ export function TrimTrack({ url, duration, start, end, playhead, onChange, onSee
   };
 
   return (
-    <div className="trim-track" ref={track} onPointerDown={(e) => onSeek(timeAt(e.clientX))}>
+    <div
+      className="trim-track"
+      ref={track}
+      onPointerDown={(e) => {
+        const at = timeAt(e.clientX);
+        const i = clipIndexAt(clips, at);
+        if (i >= 0 && i !== active) onSelect(i);
+        else onSeek(at);
+      }}
+    >
       <Filmstrip url={url} duration={duration} />
-      <div className="trim-cut" style={{ left: 0, width: pct(start) }} />
-      <div className="trim-cut" style={{ left: pct(end), right: 0 }} />
-      <div className="trim-keep" style={{ left: pct(start), width: pct(end - start) }} />
+      <ClipFrames clips={clips} active={active} duration={duration} />
       <div className="trim-playhead" style={{ left: pct(playhead) }} />
       {(["start", "end"] as const).map((which) => (
         <button
@@ -89,6 +102,27 @@ export function TrimTrack({ url, duration, start, end, playhead, onChange, onSee
         />
       ))}
     </div>
+  );
+}
+
+/** What is cut away (shaded) and each kept clip (framed; numbered when there are several). */
+function ClipFrames({ clips, active, duration }: { clips: TrimRange[]; active: number; duration: number }) {
+  const pct = (t: number) => `${(t / duration) * 100}%`;
+  return (
+    <>
+      {gaps(clips, duration).map((g) => (
+        <div key={g.start} className="trim-cut" style={{ left: pct(g.start), width: pct(g.end - g.start) }} />
+      ))}
+      {clips.map((c, i) => (
+        <div
+          key={i}
+          className={i === active ? "trim-keep is-active" : "trim-keep"}
+          style={{ left: pct(c.start), width: pct(c.end - c.start) }}
+        >
+          {clips.length > 1 && <span className="trim-keep-n">{i + 1}</span>}
+        </div>
+      ))}
+    </>
   );
 }
 

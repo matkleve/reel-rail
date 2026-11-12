@@ -15,6 +15,7 @@ import "./styles/carousel.css";
 import "./styles/deck.css";
 import "./styles/timeline.css";
 import "./styles/screens.css";
+import "./styles/trim.css";
 import "./styles/responsive.css";
 
 startAccount();

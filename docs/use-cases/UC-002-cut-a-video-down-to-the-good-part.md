@@ -26,5 +26,5 @@ on a computer. Either way the original's quality and date are at risk.
 
 ## Out of scope
 
-Cutting out a middle section, speed changes, filters, frame-exact cuts (the
+Several clips out of one video (that is UC-007), speed changes, filters, frame-exact cuts (the
 cut starts at the key frame at or before the left handle).
