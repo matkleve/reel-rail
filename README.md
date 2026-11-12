@@ -167,8 +167,8 @@ Press **?** in the app for this list.
 
 | Key | Action |
 | --- | --- |
-| ← / → | Previous / next (skips filtered ones) |
-| ↑ / ↓ | Better / worse (five levels) |
+| ← / → | Timeline: previous / next (skips filtered ones) · Sort: bad / good |
+| ↑ / ↓ | Timeline: one level better / worse · Sort: top / delete |
 | Space | Pick: copy to the picks folder (again: take it back) |
 | V / M | Video play/pause / sound on/off |
 | C | Trim the video |

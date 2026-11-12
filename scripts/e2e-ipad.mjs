@@ -175,9 +175,14 @@ ok("swipe up / down rates, with a live preview of the level");
 // ---- Tap targets and the dock ------------------------------------------------------------
 const rate = await page.locator(".rate-btn").first().boundingBox();
 if (rate.width < 44 || rate.height < 44) await fail(`rating buttons should be ≥ 44 px on touch, are ${rate.width}`);
-await page.locator(".dock").getByRole("radio", { name: "Top", exact: true }).tap();
+const dockTop = page.locator(".dock").getByRole("button", { name: "Top", exact: true });
+await dockTop.tap();
 if (!(await page.locator(".card.is-current.r2").count())) await fail("tapping Top should set it");
-ok("dock buttons are ≥ 44 px and work by tap");
+if ((await page.locator(".dock .rate-btn").count()) !== 4) await fail("the dock should offer the deck's four verdicts");
+await dockTop.tap();
+if (!(await page.locator(".card.is-current.r0").count())) await fail("tapping the lit Top again should take the rating back");
+await dockTop.tap();
+ok("dock: the four verdicts, ≥ 44 px, tap to set, tap again to clear");
 
 // ---- Pick + share ---------------------------------------------------------------------------
 await page.getByRole("button", { name: /^Pick/ }).tap();
