@@ -1,4 +1,5 @@
 import { Plus, Scissors, Share, X } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 import { canShareFiles } from "@/fs/share";
 import type { TrimRange } from "@/fs/trimVideo";
@@ -26,10 +27,15 @@ type BarProps = {
  * "Add clip" at the playhead, and whether the whole video stays.
  */
 export function ClipBar({ clips, active, keepWhole, onSelect, onRemove, onAdd, onKeepWhole }: BarProps) {
+  const row = useRef<HTMLDivElement>(null);
+  // The clip being edited stays in view in the sideways row.
+  useEffect(() => {
+    row.current?.querySelector(".clip-chip.is-active")?.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [active, clips.length]);
   return (
     <div className="clip-bar">
       {clips.length > 1 && (
-        <div className="clip-chips" role="list" aria-label={t("Clips")}>
+        <div className="clip-chips" role="list" aria-label={t("Clips")} ref={row}>
           {clips.map((c, i) => (
             <span key={i} role="listitem" className={i === active ? "clip-chip is-active" : "clip-chip"}>
               <button type="button" className="clip-chip-pick" aria-pressed={i === active} onClick={() => onSelect(i)}>

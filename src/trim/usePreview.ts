@@ -4,7 +4,7 @@ import { getMediaFile } from "@/fs/session";
 import type { TrimRange } from "@/fs/trimVideo";
 import type { Media } from "@/types";
 
-import { clipAt } from "./clips";
+import { clipAt, inOrder } from "./clips";
 
 const NONE: TrimRange = { start: 0, end: 0 };
 
@@ -111,9 +111,11 @@ function clipOps({ clips, setClips, setActive, duration, playhead, seek, pause }
     /** Another clip, at the playhead — it becomes the one being edited. */
     addClip() {
       pause();
+      // Numbered in video order — as the saved files are — so a new clip takes its place among them.
       const next = clipAt(playhead, duration);
-      setClips((all) => [...all, next]);
-      setActive(clips.length);
+      const all = inOrder([...clips, next]);
+      setClips(all);
+      setActive(all.indexOf(next));
       seek(next.start);
     },
     selectClip(i: number) {
