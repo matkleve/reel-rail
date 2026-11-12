@@ -127,6 +127,12 @@
   --on-photo-hover: rgb(255 255 255 / 0.16);
   --stamp-bg: rgb(26 19 16 / 0.82);
 
+  /* The mark (public/icon.svg): the same in both themes — a brand, not chrome. */
+  --logo-bg: var(--terracotta-6);
+  --logo-back: #f0c9ae;
+  --logo-print: #fffaf4;
+  --logo-photo: var(--amber-4);
+
   /* ---- 3. Scales -------------------------------------------------------- */
   /* Nunito: round terminals, friendly at small sizes. Fraunces: a soft serif
      for dates and titles — the caption on a print. Both bundled (offline). */

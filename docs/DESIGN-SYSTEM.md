@@ -149,6 +149,11 @@ switches to it in the header.
 
 - No raw colour, radius, shadow or duration in a component or CSS rule:
   add a token first.
+- Logo (`src/ui/Logo.tsx`, `public/icon.svg`): the top pick — a print with a
+  star on top of the pile, on terracotta. The user's pick of three (2026-11-12).
+  Colours from the `--logo-*` tokens, the same in both themes. After editing
+  `public/icon.svg` run `node scripts/make-icons.mjs`: it writes the web icons,
+  the iPhone app icon and the launch splash.
 - Icons: `lucide-react`, 14–18 px, stroke 2. No emoji or Unicode symbols as
   icons.
 - New controls go into `src/ui/kit/` once a second place needs them.

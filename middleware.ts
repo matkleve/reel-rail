@@ -32,22 +32,37 @@ function cookieValue(request: Request): string | undefined {
     .find(([k]) => k === COOKIE)?.[1];
 }
 
-function loginPage(error: boolean, status: number): Response {
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#131316">
+/** The login page's words — German when the browser asks for German first, like the app (src/i18n). */
+const WORDS = {
+  en: { lang: "en", password: "Password", open: "Open", wrong: "Wrong password." },
+  de: { lang: "de", password: "Passwort", open: "Öffnen", wrong: "Falsches Passwort." },
+};
+
+function wordsFor(request: Request) {
+  return /^de\b/i.test(request.headers.get("accept-language") ?? "") ? WORDS.de : WORDS.en;
+}
+
+// Colours and type of the app's light "Sand" theme (src/styles/tokens.css) — this page runs
+// before the app's CSS exists, so they are repeated here.
+function loginPage(error: boolean, status: number, w = WORDS.en): Response {
+  const html = `<!doctype html><html lang="${w.lang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f5ede3">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="reel-rail">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">
 <title>reel-rail</title><style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0c0c0e;color:#f2f2f4;font:16px system-ui,-apple-system,sans-serif}
-form{display:flex;flex-direction:column;gap:12px;width:min(320px,calc(100vw - 32px))}
-h1{margin:0 0 8px;font-size:40px;letter-spacing:-.03em}
-input{height:48px;padding:0 14px;border:1px solid #3c3c44;border-radius:12px;background:#131316;color:inherit;font:inherit}
-input:focus{outline:none;border-color:#6f9dff;box-shadow:0 0 0 3px rgb(111 157 255/.2)}
-button{height:48px;border:0;border-radius:12px;background:#f2f2f4;color:#0c0c0e;font:600 16px system-ui,-apple-system,sans-serif;cursor:pointer}
-p{margin:0;color:#f77b7b}</style></head><body>
-<form method="post" action="${LOGIN_PATH}"><h1>reel-rail</h1>
-<input type="password" name="password" placeholder="Password" autocomplete="current-password" autofocus required>
-${error ? "<p>Wrong password.</p>" : ""}<button>Open</button></form></body></html>`;
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f5ede3;color:#2b211b;font:16px ui-rounded,system-ui,-apple-system,sans-serif}
+form{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:min(320px,calc(100vw - 32px))}
+img{width:88px;height:88px;margin:0 auto 4px;filter:drop-shadow(0 12px 24px rgb(120 80 50/.22))}
+h1{margin:0 0 10px;font:600 34px/1.1 Georgia,"Times New Roman",serif;text-align:center;letter-spacing:-.02em}
+input{height:52px;padding:0 18px;border:0;border-radius:999px;background:#fff;color:inherit;font:inherit;box-shadow:0 1px 3px rgb(120 80 50/.1)}
+input:focus{outline:none;box-shadow:0 0 0 3px rgb(200 100 59/.35)}
+button{height:52px;border:0;border-radius:999px;background:#c8643b;color:#fff;font:700 16px ui-rounded,system-ui,-apple-system,sans-serif;cursor:pointer}
+button:active{transform:scale(.98)}
+p{margin:0;color:#b53c30;text-align:center}</style></head><body>
+<form method="post" action="${LOGIN_PATH}"><img src="/icon.svg" alt=""><h1>reel-rail</h1>
+<input type="password" name="password" placeholder="${w.password}" aria-label="${w.password}" autocomplete="current-password" autofocus required>
+${error ? `<p>${w.wrong}</p>` : ""}<button>${w.open}</button></form></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
@@ -61,7 +76,7 @@ export default async function middleware(request: Request): Promise<Response> {
 
   if (url.pathname === LOGIN_PATH && request.method === "POST") {
     const form = await request.formData();
-    if (form.get("password") !== password) return loginPage(true, 401);
+    if (form.get("password") !== password) return loginPage(true, 401, wordsFor(request));
     return new Response(null, {
       status: 303,
       headers: {
@@ -72,5 +87,5 @@ export default async function middleware(request: Request): Promise<Response> {
   }
 
   if (cookieValue(request) === token) return next();
-  return loginPage(false, 401);
+  return loginPage(false, 401, wordsFor(request));
 }
