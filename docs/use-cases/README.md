@@ -46,3 +46,5 @@ The adjacent things a reader would assume are included.
 | [UC-005](UC-005-share-the-best-shots.md) | Share the best shots | built |
 | [UC-006](UC-006-pay-for-reel-rail.md) | Pay for reel-rail and use it with an account | open questions |
 | [UC-007](UC-007-pull-several-moments-out-of-one-video.md) | Pull several moments out of one long video | built |
+
+The small moments inside these — 100 detail use cases with status and a top-10 to build next — are in [DETAILS.md](DETAILS.md).
