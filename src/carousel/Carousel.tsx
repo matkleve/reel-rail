@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type RefObject } from "react";
 import { ImageOff } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
@@ -7,7 +7,11 @@ import { locale, t } from "@/i18n";
 import { passes } from "@/store/filters";
 import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel } from "@/store/useReel";
+import { useUi } from "@/store/useUi";
+import { dayKey } from "@/timeline/days";
+import { openDay, unfoldBursts } from "@/timeline/dayMode";
 import { RATING_LABEL, ratingClass, type Rating } from "@/types";
+import { PHONE, useMedia } from "@/ui/useMedia";
 import { useSize } from "@/ui/useSize";
 
 import { Card } from "./Card";
@@ -44,7 +48,8 @@ export function Carousel() {
   const size = useSize(stage);
   const thumbs = useSyncExternalStore(subscribeThumbs, thumbsVersion);
 
-  const ids = useMemo(() => visibleOrder(s.order, s.stacks, s.expanded, s.media), [s.order, s.stacks, s.expanded, s.media]);
+  const { day, ids } = useStripIds(s);
+  const fanning = useDayFollow(day, s.currentId ? s.media[s.currentId]?.takenAt : undefined, s.stacks);
   // A current item hidden in a collapsed burst is represented by the burst's cover.
   const sid = s.currentId ? s.stacks.stackOf[s.currentId] : undefined;
   const shownId =
@@ -68,11 +73,12 @@ export function Carousel() {
 
   return (
     <div
-      className={drag ? "stage is-dragging" : "stage"}
+      className={["stage", drag && "is-dragging", fanning && "is-fanning"].filter(Boolean).join(" ")}
       ref={stage}
       style={{
         ["--drag-x" as string]: drag?.axis === "x" ? `${drag.dx * 0.8}px` : "0px",
         ["--drag-y" as string]: drag?.axis === "y" ? `${Math.max(-60, Math.min(60, drag.dy * 0.3))}px` : "0px",
+        ["--cx" as string]: `${size.w / 2}px`,
       }}
     >
       <div className="stage-spotlight" />
@@ -109,6 +115,47 @@ export function Carousel() {
       )}
     </div>
   );
+}
+
+type Strip = Pick<ReturnType<typeof useReel.getState>, "order" | "stacks" | "expanded"> & {
+  media: ReturnType<typeof useReel.getState>["reel"]["media"];
+};
+
+/** What the strip shows. Phone: one fanned-out day (D-031) — every photo of it, bursts unfolded. */
+function useStripIds(s: Strip) {
+  const phone = useMedia(PHONE);
+  const day = useUi((x) => (phone ? x.openDay : undefined));
+  const ids = useMemo(
+    () =>
+      day
+        ? s.order.filter((id) => dayKey(s.media[id]!.takenAt) === day)
+        : visibleOrder(s.order, s.stacks, s.expanded, s.media),
+    [day, s.order, s.stacks, s.expanded, s.media],
+  );
+  return { day, ids };
+}
+
+/**
+ * In a fanned-out day: swiping past its last (or first) photo goes straight on
+ * into the next (or previous) day, which fans out in turn; a burst formed by a
+ * new rating is unfolded at once. Returns whether the fan-out animation runs.
+ */
+function useDayFollow(day: string | undefined, takenAt: string | undefined, stacks: unknown): boolean {
+  const [fanning, setFanning] = useState(false);
+  const now = takenAt ? dayKey(takenAt) : undefined;
+  useEffect(() => {
+    if (day && now && now !== day) openDay(now, useReel.getState().currentId);
+  }, [day, now]);
+  useEffect(() => {
+    if (day) unfoldBursts();
+  }, [day, stacks]);
+  useEffect(() => {
+    if (!day) return;
+    setFanning(true);
+    const timer = setTimeout(() => setFanning(false), 700);
+    return () => clearTimeout(timer);
+  }, [day]);
+  return fanning;
 }
 
 /** A click/tap on a card. Tapping the playing video pauses it — on a phone the dock has no room for a play button. */

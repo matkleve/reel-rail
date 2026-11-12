@@ -12,9 +12,9 @@ Status is judged against the code on `main` (2026-11-12), honestly:
 
 | Status | Count |
 | --- | --- |
-| built | 57 |
-| partly | 19 |
-| missing | 19 |
+| built | 59 |
+| partly | 18 |
+| missing | 18 |
 | decide | 5 |
 
 ## Top 10 to build next
@@ -158,13 +158,13 @@ Expected: pinch on the card zooms (no throw while two fingers are down). Status:
 ## C. Timeline view
 
 **D-031** I open the Timeline tab and see a whole trip.
-Expected: one stack per day; tap fans it out into its photos (see Top 10 #1). Status: `missing` — today a flat strip of all items with day separators; bursts folded.
+Expected: one stack per day; tap fans it out into its photos (see Top 10 #1). Status: `built` on the phone (2026-11-12): DayPiles → tap fans out, ← / → runs on into the next day, “All days” folds back. iPad/desktop keep the flat strip.
 
 **D-032** I'm in the timeline and see 300 photos of Saturday — what do I do with them?
 Expected: the timeline is for **checking and choosing**, not first sorting: see where the Top shots are, fill gaps with Good ones, pick for sharing, trim videos. A one-line hint says so the first time. Status: `decide` — the role is clear in our heads, not in the UI.
 
 **D-033** I swipe ← / → in the timeline.
-Expected: one photo at a time, every photo — bursts not folded while going through one by one. Status: `partly` — browsing works; bursts are folded (Enter / tap opens them).
+Expected: one photo at a time, every photo — bursts not folded while going through one by one. Status: `built` on the phone — inside a day nothing is folded; iPad/desktop still fold bursts.
 
 **D-034** I see a "2" on a card in the timeline.
 Expected: either no burst folding at all, or a clear "burst of 2 — tap to open". Status: `decide` — with day stacks (D-031) the burst badge could go.

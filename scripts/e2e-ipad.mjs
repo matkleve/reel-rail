@@ -304,13 +304,25 @@ await page.screenshot({ path: `${OUT}/5-phone-deck.png` });
 ok("phone: swipe deck — throw right deals the next card, Undo brings it back, buttons throw too");
 
 await page.getByRole("button", { name: "Timeline" }).click();
-await page.locator(".card.is-current").waitFor();
+// Every day one stack (D-031); a tap fans the day out into its photos, one by one.
+await page.locator(".day-pile").first().waitFor();
+if ((await page.locator(".day-pile").count()) < 2) await fail("the phone timeline should show one stack per day");
 if (!(await page.locator(".timeline canvas").count())) await fail("the phone's Timeline tab should show the bars");
+await noOverflow("phone day stacks");
+await page.screenshot({ path: `${OUT}/5-phone-days.png` });
+await page.locator(".day-pile").first().click();
+await page.locator(".card.is-current").waitFor();
+await page.waitForTimeout(800); // the fan-out
+if (await page.locator(".card-count").count()) await fail("inside a day no burst is folded");
+const dayCount = await page.locator(".stage-count").innerText();
+if (!/^1 \/ \d+$/.test(dayCount.trim())) await fail(`the count should be the day's, starting at 1: ${dayCount}`);
 await noOverflow("phone timeline");
 await page.screenshot({ path: `${OUT}/5-phone-timeline.png` });
+await page.getByRole("button", { name: "All days" }).click();
+await page.locator(".day-pile").first().waitFor();
 await page.getByRole("button", { name: "Sort" }).click();
 await page.locator(".deck-card.is-top").waitFor();
-ok("phone: Timeline tab shows the photos over the bars, Sort goes back to the deck");
+ok("phone: Timeline tab shows each day as a stack; a tap fans it out (no bursts folded), All days folds it back; Sort goes back to the deck");
 
 // ---- A bigger screen sorts too: header switch, arrow keys throw -------------------------------------
 await page.setViewportSize({ width: 1180, height: 820 });

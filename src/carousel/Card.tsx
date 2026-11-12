@@ -37,14 +37,7 @@ export const Card = memo(function Card(p: Props) {
   const cls = ["card", ratingClass(media.rating), p.current && "is-current", p.selected && "is-selected", p.dimmed && "is-dimmed"]
     .filter(Boolean)
     .join(" ");
-  const style = {
-    width: place.w,
-    height: place.h,
-    // Neighbours lie a little askew, like prints on a table; the current one straight.
-    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotate(${Math.sign(place.d) * 1.5}deg)`,
-    zIndex: 100 - Math.abs(place.d),
-    "--dim": Math.max(0.35, 1 - Math.abs(place.d) * 0.16),
-  } as CSSProperties;
+  const style = placeStyle(place);
 
   return (
     <div className={cls} style={style} data-id={media.id}>
@@ -112,6 +105,19 @@ export const Card = memo(function Card(p: Props) {
     </div>
   );
 });
+
+/** Where a card sits. Neighbours lie a little askew, like prints on a table; the current one straight. */
+function placeStyle(place: CardPlace): CSSProperties {
+  return {
+    width: place.w,
+    height: place.h,
+    transform: `translate3d(${place.x - place.w / 2}px, ${place.bottom - place.h}px, 0) rotate(${Math.sign(place.d) * 1.5}deg)`,
+    zIndex: 100 - Math.abs(place.d),
+    "--x": `${place.x}px`, // for the day fan-out (days.css)
+    "--fan-i": Math.min(6, Math.abs(place.d)),
+    "--dim": Math.max(0.35, 1 - Math.abs(place.d) * 0.16),
+  } as CSSProperties;
+}
 
 function cardLabel(media: Media, stackCount?: number): string {
   const vars = { path: media.path, rating: media.rating };

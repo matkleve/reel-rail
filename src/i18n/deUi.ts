@@ -155,6 +155,12 @@ export const DE_UI: Record<string, string> = {
   "Nothing to sort": "Nichts zu sortieren",
   "All sorted": "Alles sortiert",
   "Nothing passes the filters.": "Nichts passt zu den Filtern.",
+  // Phone timeline: days as stacks (D-031)
+  "{day}, {n} photos — open": "{day}, {n} Fotos — öffnen",
+  "{n} open": "{n} offen",
+  "1 photo": "1 Foto",
+  "{n} photos": "{n} Fotos",
+  "All days": "Alle Tage",
   "No photos or videos here yet.": "Hier sind noch keine Fotos oder Videos.",
   "That was the last one. The timeline shows where your top shots are.":
     "Das war das letzte. Die Zeitleiste zeigt dir, wo deine Top-Fotos sind.",

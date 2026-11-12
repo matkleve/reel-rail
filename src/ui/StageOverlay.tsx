@@ -1,14 +1,18 @@
-import { MapPin, X } from "lucide-react";
+import { ChevronLeft, MapPin, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 
 import { isTouch } from "@/fs/support";
 import { locale, t } from "@/i18n";
 import { setPlace } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
+import { dayKey } from "@/timeline/days";
+import { closeDay } from "@/timeline/dayMode";
 
 import { Button } from "./kit/Button";
 import { Kbd } from "./kit/Kbd";
+import { PHONE, useMedia } from "./useMedia";
 
 const DATE = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" });
 const TIME = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
@@ -20,8 +24,15 @@ const HINTS_KEY = "reel-rail:hints-dismissed";
  */
 export function StageOverlay() {
   const media = useReel((s) => (s.currentId ? s.reel.media[s.currentId] : undefined));
-  const index = useReel((s) => (s.currentId ? s.order.indexOf(s.currentId) : -1));
-  const total = useReel((s) => s.order.length);
+  // In a fanned-out day (phone) the count is the day's: "3 / 312" of Saturday.
+  const phone = useMedia(PHONE);
+  const day = useUi((s) => (phone ? s.openDay : undefined));
+  const [index, total] = useReel(
+    useShallow((s) => {
+      const list = day ? s.order.filter((id) => dayKey(s.reel.media[id]!.takenAt) === day) : s.order;
+      return [s.currentId ? list.indexOf(s.currentId) : -1, list.length];
+    }),
+  );
   if (!media) return null;
   const at = new Date(media.takenAt);
   const name = media.path.slice(media.path.lastIndexOf("/") + 1);
@@ -29,6 +40,12 @@ export function StageOverlay() {
   return (
     <>
       <div className="stage-meta">
+        {day && (
+          <button type="button" className="day-back" onClick={closeDay}>
+            <ChevronLeft size={16} strokeWidth={2.4} aria-hidden="true" />
+            {t("All days")}
+          </button>
+        )}
         <h1 className="stage-date">{DATE.format(at)}</h1>
         <div className="stage-sub">
           <span className="tabular">{TIME.format(at)}</span>

@@ -23,6 +23,11 @@ type UiState = {
   timeZoom: number;
   /** The two screens: the swipe deck (sort) or the photo strip over the timeline. */
   view: "sort" | "timeline";
+  /**
+   * Phone timeline: the day fanned out into its photos ("YYYY-MM-DD", local
+   * time); none = every day as one stack (src/timeline/days.ts).
+   */
+  openDay?: string;
   /** Name of the Space-key picks folder, once known. */
   picksFolderName?: string;
   toast?: Toast;
