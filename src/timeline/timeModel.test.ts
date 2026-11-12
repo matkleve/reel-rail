@@ -61,7 +61,7 @@ describe("barBins", () => {
   it("leaves discards out — they are on their way out", () => {
     const { bins, max } = barBins(axis, map, windowAt(axis, 1, 0), 1);
     expect(bins[0]).toEqual({ top: 1, good: 1, bad: 1, unrated: 1 });
-    expect(max).toBe(MIN_SCALE); // 4 shots are scaled as a quiet stretch, not a full bar
+    expect(max).toBe(Math.max(4, MIN_SCALE)); // never below MIN_SCALE: a quiet stretch is not a full bar
     expect(levelOf({ rating: -2 })).toBeUndefined();
   });
 

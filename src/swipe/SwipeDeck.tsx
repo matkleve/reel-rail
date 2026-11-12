@@ -110,10 +110,10 @@ export function SwipeDeck() {
         )}
         {done && <Finished empty={ids.length === 0} />}
         {note && <DeckNote key={note.at} verdict={note.verdict} onUndo={undo} />}
-        {!done && <DeckHint />}
       </div>
       <LeavingBar />
       <DeckActions media={topMedia} onThrow={throwCard} onUndo={undo} />
+      {!done && <DeckHint />}
     </div>
   );
 }

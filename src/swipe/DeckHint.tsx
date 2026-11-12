@@ -5,7 +5,11 @@ import { Button } from "@/ui/kit/Button";
 
 const KEY = "reel-rail:deck-hint-dismissed";
 
-/** First run on the phone: what each direction means. Dismissed for good with ×. */
+/**
+ * First run on the phone: what each direction means. A quiet line under the
+ * buttons, not over the photo — the photo is what you are judging.
+ * Dismissed for good with ×.
+ */
 export function DeckHint() {
   const [hidden, setHidden] = useState(() => {
     try {
@@ -24,7 +28,7 @@ export function DeckHint() {
     }
   };
   return (
-    <div className="hints deck-hint" role="note">
+    <div className="deck-hint" role="note">
       <span>→ good</span>
       <span>← bad</span>
       <span>↑ top</span>

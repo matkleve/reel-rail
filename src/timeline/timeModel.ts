@@ -65,9 +65,10 @@ export type Bars = { bins: Bin[]; max: number };
 
 /**
  * A bar is never scaled as if fewer than this many shots filled it: one photo
- * in a quiet hour reads as "one photo", not as a full-height bar.
+ * in a quiet hour reads as "one photo", not as a full-height bar. 3, not 6:
+ * at 6 a short trip's bars were dots on a phone (user, 2026-11-12).
  */
-export const MIN_SCALE = 6;
+export const MIN_SCALE = 3;
 
 /** Which part of a bar a medium is. Discards are not drawn: they are on their way out. */
 export function levelOf(m: Pick<Media, "rating">): Level | undefined {

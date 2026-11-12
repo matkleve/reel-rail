@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpDown, FolderOpen, Lock } from "lucide-react";
+import { ArrowDownToLine, FolderOpen, Layers, Lock } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { isTouch, sourceMode } from "@/fs/support";
@@ -60,14 +60,14 @@ export function Steps() {
         <span>{files ? "photos and videos from Photos or Files" : "a trip folder — sub-folders included"}</span>
       </li>
       <li>
-        <ArrowUpDown size={18} aria-hidden="true" />
+        <Layers size={18} aria-hidden="true" />
         <strong>Rate</strong>
         <span>
           {touch ? (
-            "Swipe up or down — five levels, from discard to favorite"
+            "Swipe each photo: → good, ← bad, ↑ top, ↓ delete"
           ) : (
             <>
-              <Kbd>↑</Kbd> <Kbd>↓</Kbd> five levels, from discard to favorite
+              <Kbd>→</Kbd> good, <Kbd>←</Kbd> bad, <Kbd>↑</Kbd> top, <Kbd>↓</Kbd> delete
             </>
           )}
         </span>
