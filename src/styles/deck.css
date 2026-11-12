@@ -14,6 +14,9 @@
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  /* The card is sized from this box (cq units): as big as the photo's shape allows. */
+  container-type: size;
+  --progress: 0;
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
@@ -21,21 +24,39 @@
 
 /* ---- Cards ------------------------------------------------------------------ */
 
-/* A print: frame, photo window, caption. */
+/* A print: frame, photo, caption — cut to the photo's shape (--aspect, w/h),
+   as large as the deck allows, centred. Portrait shots get a tall print,
+   landscape a wide one; there are no side bars to fill. */
 .deck-card {
+  --dx: 0px;
+  --dy: 0px;
+  --rot: 0deg;
+  --good: 0;
+  --bad: 0;
+  --top: 0;
+  --delete: 0;
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
   display: flex;
   flex-direction: column;
+  width: min(
+    100cqw,
+    calc((100cqh - var(--deck-caption-h) - var(--frame-w)) * var(--aspect, 0.75) + 2 * var(--frame-w))
+  );
   overflow: hidden;
   padding: var(--frame-w) var(--frame-w) 0;
   border-radius: var(--radius-deck);
   background: var(--frame);
   box-shadow: var(--shadow-photo);
+  translate: -50% -50%;
   -webkit-user-select: none;
   user-select: none;
   touch-action: none;
-  transition: transform var(--dur-3) var(--ease-out);
+  will-change: transform;
+  transition:
+    transform var(--dur-3) var(--ease-spring),
+    width var(--dur-2) var(--ease-out);
 }
 .deck-card.is-top {
   z-index: 2;
@@ -51,49 +72,41 @@
   z-index: 1;
   transform: translateY(calc((1 - var(--progress)) * 14px)) scale(calc(0.94 + 0.06 * var(--progress)))
     rotate(calc((1 - var(--progress)) * 2.5deg));
-  filter: brightness(calc(0.8 + 0.2 * var(--progress)));
+  /* Out of sight until the top card moves: at rest it is one print, not a pile
+     (a different-shaped card peeking out read as "stacked" — user, 2026-11-12). */
+  opacity: var(--progress);
   transition:
-    transform var(--dur-1) linear,
-    filter var(--dur-1) linear;
+    transform var(--dur-2) var(--ease-out),
+    opacity var(--dur-1) linear,
+    width var(--dur-2) var(--ease-out);
 }
-.deck-card.is-leaving-good {
-  transform: translate(150%, var(--space-8)) rotate(24deg);
-}
-.deck-card.is-leaving-bad {
-  transform: translate(-150%, var(--space-8)) rotate(-24deg);
-}
-.deck-card.is-leaving-top {
-  transform: translateY(-140%);
+/* Thrown: on from where the finger let go, along the throw, off the screen (flyOut.ts). */
+.deck-card.is-leaving {
+  transform: translate(var(--out-x), var(--out-y)) rotate(var(--out-rot));
+  transition: transform var(--dur-fly) var(--ease-fly);
+  pointer-events: none;
 }
 .deck-card.is-leaving-delete {
-  transform: translateY(140%) scale(0.85);
+  transform: translate(var(--out-x), var(--out-y)) rotate(var(--out-rot)) scale(0.8);
 }
 
 .deck-print {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  aspect-ratio: var(--aspect, 0.75);
   overflow: hidden;
   border-radius: calc(var(--radius-deck) - var(--frame-w));
-  background: var(--black);
+  background: var(--surface-3);
 }
 
-/* The whole photo over a blurred copy of itself: rated as it was taken, not as a crop. */
-.deck-fill {
-  position: absolute;
-  inset: -10%;
-  width: 120%;
-  height: 120%;
-  object-fit: cover;
-  filter: blur(var(--deck-blur)) brightness(0.6);
-}
+/* The print has the photo's shape, so cover crops nothing — and leaves no hairline. */
 .deck-photo,
 .deck-card .card-original {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   background: transparent;
   -webkit-user-drag: none;
 }
@@ -204,9 +217,11 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: flex-start;
   gap: var(--space-1);
-  padding: var(--space-3) var(--space-2) var(--space-3);
+  min-height: var(--deck-caption-h);
+  padding: var(--space-2) var(--space-3);
   color: var(--text);
 }
 .deck-when {
@@ -285,49 +300,66 @@
 }
 
 /* Top left, clear of the pick button on the right. */
-.deck-note {
-  position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  z-index: var(--z-stage-ui);
+/* Under the buttons: the hint line, or what just happened (DeckNote). One
+   fixed-height row, so the buttons never jump. */
+.deck-status {
   display: flex;
   align-items: center;
+  justify-content: center;
+  min-height: var(--control-lg);
+}
+.deck-note {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
-  padding: 4px 4px 4px var(--space-3);
+  height: var(--control-md);
+  padding: 0 var(--space-1) 0 var(--space-1);
   border-radius: var(--radius-full);
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--shadow-2);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-1);
   color: var(--text);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
+  font-weight: 650;
   white-space: nowrap;
-  animation: deck-note-in var(--dur-2) var(--ease-out);
+  animation: deck-note-in var(--dur-2) var(--ease-spring);
 }
-.deck-note .btn {
+.deck-note-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--level) 16%, transparent);
+  color: var(--level);
 }
-.deck-note-dot {
-  width: 8px;
-  height: 8px;
+.deck-note.is-good {
+  --level: var(--rating-1);
+}
+.deck-note.is-top {
+  --level: var(--rating-2);
+}
+.deck-note.is-bad {
+  --level: var(--rating-m1);
+}
+.deck-note.is-delete {
+  --level: var(--rating-m2);
+}
+.deck-note-undo {
+  height: 26px;
+  padding: 0 var(--space-3);
+  border: 0;
   border-radius: var(--radius-full);
-}
-.deck-note.is-good .deck-note-dot {
-  background: var(--rating-1);
-}
-.deck-note.is-delete .deck-note-dot {
-  background: var(--rating-m2);
-}
-.deck-note.is-top .deck-note-dot {
-  background: var(--rating-2);
-}
-.deck-note.is-bad .deck-note-dot {
-  background: var(--rating-m1);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 750;
+  cursor: pointer;
 }
 @keyframes deck-note-in {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translateY(4px) scale(0.96);
   }
 }
 
@@ -337,7 +369,6 @@
   align-items: center;
   justify-content: center;
   gap: 0 var(--space-3);
-  margin-top: calc(-1 * var(--space-1));
   color: var(--text-3);
   font-size: var(--text-sm);
 }

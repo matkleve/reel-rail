@@ -1,10 +1,9 @@
 import { ChartColumn, PartyPopper, RotateCcw } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 
 import { TOGGLE_PLAY } from "@/carousel/events";
 import { t } from "@/i18n";
-import { graceMs } from "@/store/discards";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
 import { Button } from "@/ui/kit/Button";
@@ -13,10 +12,12 @@ import { LeavingBar } from "@/ui/LeavingBar";
 import { decide, deckOrder, restartDeck, topOf, undoDecision } from "./deck";
 import { DeckActions } from "./DeckActions";
 import { DeckCard } from "./DeckCard";
-import { DECIDE_PX, type Throw, type Verdict } from "./deckGesture";
+import type { Throw, Verdict } from "./deckGesture";
+import { DeckNote } from "./DeckNote";
+import { exitFor, type Exit } from "./flyOut";
 import { DeckHint } from "./DeckHint";
 import { THROW, UNDO_THROW } from "./events";
-import { useDeckDrag } from "./useDeckDrag";
+import { useDeckDrag, type At } from "./useDeckDrag";
 
 /** A duration token in ms — the fly-out waits for the CSS transition it starts. */
 function tokenMs(name: string): number {
@@ -25,6 +26,7 @@ function tokenMs(name: string): number {
 }
 
 type Note = { verdict: Verdict; at: number };
+type Leaving = { verdict: Verdict; exit: Exit };
 
 /**
  * The phone: one card at a time, thrown right (good), left (bad — still a
@@ -45,19 +47,24 @@ export function SwipeDeck() {
   const ids = useMemo(() => deckOrder(s), [s]);
   const top = topOf(s);
   const [finishedAt, setFinishedAt] = useState<string>();
-  const [leaving, setLeaving] = useState<Verdict>();
+  const [leaving, setLeaving] = useState<Leaving>();
   const [note, setNote] = useState<Note>();
+  const deckRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const done = !top || finishedAt === top || !ids.includes(top);
   const next = done ? undefined : ids[ids.indexOf(top) + 1];
 
-  const throwCard = (verdict: Verdict) => {
+  /** Throws the top card from `from` (where the finger let go; at rest for a button or key). */
+  const throwCard = (verdict: Verdict, from: At = { dx: 0, dy: 0 }) => {
     if (leaving || done) return;
-    setLeaving(verdict);
+    setLeaving({ verdict, exit: exitFor(verdict, from, { w: window.innerWidth, h: window.innerHeight }) });
+    deckRef.current?.style.setProperty("--progress", "1");
     setTimeout(() => {
       if (!decide(verdict)) setFinishedAt(useReel.getState().currentId);
+      deckRef.current?.style.setProperty("--progress", "0");
       setLeaving(undefined);
       setNote({ verdict, at: Date.now() });
-    }, tokenMs("--dur-3"));
+    }, tokenMs("--dur-fly"));
   };
   const undo = () => {
     if (leaving || !undoDecision()) return;
@@ -65,11 +72,11 @@ export function SwipeDeck() {
     setNote(undefined);
   };
 
-  const onThrow = (th: Throw) => {
-    if (th.kind === "decide") throwCard(th.verdict);
+  const onRelease = (th: Throw, at: At) => {
+    if (th.kind === "decide") throwCard(th.verdict, at);
     else if (th.kind === "tap" && top && s.reel.media[top]?.type === "video") window.dispatchEvent(new Event(TOGGLE_PLAY));
   };
-  const { drag, handlers } = useDeckDrag(onThrow, !leaving && !done);
+  const drag = useDeckDrag(cardRef, deckRef, onRelease, !leaving && !done);
 
   // The current item may not pass a filter just switched on: deal the next one that does.
   useEffect(() => {
@@ -86,35 +93,31 @@ export function SwipeDeck() {
     return () => clearTimeout(timer);
   }, [note]);
 
-  const progress = leaving ? 1 : Math.min(1, Math.max(Math.abs(drag.dx), Math.abs(drag.dy)) / DECIDE_PX);
-  const stackCount = (id: string) => {
-    const sid = s.stacks.stackOf[id];
-    return sid && !s.expanded.has(sid) ? s.stacks.members[sid]!.length : undefined;
-  };
   const topMedia = !done && top ? s.reel.media[top] : undefined;
 
   return (
     <div className="deck-wrap">
-      <div className="deck" style={{ "--progress": progress } as CSSProperties}>
-        {next && <DeckCard key={next} media={s.reel.media[next]!} top={false} drag={drag} stackCount={stackCount(next)} presets={s.reel.tagPresets} />}
+      <div className="deck" ref={deckRef}>
+        {next && <DeckCard key={next} media={s.reel.media[next]!} top={false} presets={s.reel.tagPresets} />}
         {topMedia && (
           <DeckCard
             key={topMedia.id}
             media={topMedia}
             top
-            drag={drag}
+            dragging={drag.active}
             leaving={leaving}
-            stackCount={stackCount(topMedia.id)}
             presets={s.reel.tagPresets}
-            handlers={handlers}
+            handlers={drag.handlers}
+            cardRef={cardRef}
           />
         )}
         {done && <Finished empty={ids.length === 0} />}
-        {note && <DeckNote key={note.at} verdict={note.verdict} onUndo={undo} />}
       </div>
       <LeavingBar />
-      <DeckActions media={topMedia} onThrow={throwCard} onUndo={undo} />
-      {!done && <DeckHint />}
+      <DeckActions media={topMedia} onThrow={(v) => throwCard(v)} onUndo={undo} />
+      <div className="deck-status">
+        {note ? <DeckNote key={note.at} verdict={note.verdict} onUndo={undo} /> : !done && <DeckHint />}
+      </div>
     </div>
   );
 }
@@ -158,29 +161,6 @@ function Finished({ empty }: { empty: boolean }) {
           </Button>
         </div>
       )}
-    </div>
-  );
-}
-
-const NOTE_TEXT: Record<Verdict, string> = { good: t("Good"), top: t("Top"), bad: t("Bad — kept as a filler"), delete: t("Deleted") };
-
-/** What just happened, with one tap to take it back. */
-function DeckNote({ verdict, onUndo }: { verdict: Verdict; onUndo(): void }) {
-  const inPlace = useReel((x) => x.reel.workflow === "edit") && useUi.getState().sourceKind === "folder";
-  const grace = Math.round(graceMs() / 1000);
-  const text =
-    verdict === "delete"
-      ? inPlace
-        ? t("Leaves the folder in {n} s", { n: grace })
-        : t("Deleted — leaves in {n} s", { n: grace })
-      : NOTE_TEXT[verdict];
-  return (
-    <div className={`deck-note is-${verdict}`} role="status">
-      <span className="deck-note-dot" aria-hidden="true" />
-      {text}
-      <Button size="sm" variant="secondary" onClick={onUndo}>
-        {t("Undo")}
-      </Button>
     </div>
   );
 }

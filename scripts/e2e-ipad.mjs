@@ -280,9 +280,10 @@ const firstCard = await topCard();
 if (!firstCard) await fail("no swipe deck on a phone");
 if (await page.locator(".card").count()) await fail("the carousel should give way to the deck on a phone");
 {
-  const box = await page.locator(".deck").boundingBox();
-  const x = box.x + box.width / 2;
-  const y = box.y + box.height * 0.2;
+  // The card is cut to its photo's shape and centred: grab it, not a spot of the deck.
+  const box = await page.locator(".deck-card.is-top .deck-print").boundingBox();
+  const x = box.x + box.width * 0.4;
+  const y = box.y + box.height * 0.5;
   await page.mouse.move(x, y);
   await page.mouse.down();
   for (let i = 1; i <= 10; i++) await page.mouse.move(x + i * 18, y + i * 2);

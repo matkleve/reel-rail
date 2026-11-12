@@ -1,6 +1,5 @@
 import { t } from "@/i18n";
 import { passes } from "@/store/filters";
-import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel, type ReelState } from "@/store/useReel";
 import { showToast } from "@/store/useUi";
 import type { Rating } from "@/types";
@@ -16,16 +15,19 @@ import { VERDICT_RATING, type Verdict } from "./deckGesture";
 
 type Deck = Pick<ReelState, "order" | "stacks" | "expanded" | "currentId" | "filters" | "reel">;
 
-/** What the deck deals: on the rail, passing the filters, in time order. */
+/**
+ * What the deck deals: every item passing the filters, in time order. Bursts
+ * are not folded here — the deck is one decision per photo, and a stack with
+ * a "2" on it only raised the question where the other one went (user,
+ * 2026-11-12). The timeline still folds them.
+ */
 export function deckOrder(s: Deck): string[] {
-  return visibleOrder(s.order, s.stacks, s.expanded, s.reel.media).filter((id) => passes(s.reel.media[id]!, s.filters));
+  return s.order.filter((id) => passes(s.reel.media[id]!, s.filters));
 }
 
-/** The top card: the current item, or the cover of the burst it is hidden in. */
+/** The top card: the current item. */
 export function topOf(s: Deck): string | undefined {
-  const id = s.currentId;
-  const sid = id ? s.stacks.stackOf[id] : undefined;
-  return id && sid && !s.expanded.has(sid) ? coverOf(s.stacks.members[sid]!, s.reel.media) : id;
+  return s.currentId;
 }
 
 const history: { id: string; before: Rating }[] = [];
@@ -36,12 +38,14 @@ export function decide(verdict: Verdict): boolean {
   const id = topOf(s);
   const m = id ? s.reel.media[id] : undefined;
   if (!id || !m) return false;
-  if (s.currentId !== id) s.setCurrent(id);
+  // The next card is decided before rating: the new rating may take this one out of the filter.
+  const order = deckOrder(s);
+  const next = order[order.indexOf(id) + 1];
   history.push({ id, before: m.rating });
   if (history.length > 200) history.shift();
   s.setRatings([{ id, rating: VERDICT_RATING[verdict] }]);
-  useReel.getState().step(1);
-  return useReel.getState().currentId !== id;
+  if (next) useReel.getState().setCurrent(next);
+  return !!next;
 }
 
 /** ↺ — the last decision comes back to the top of the deck with its old rating. */

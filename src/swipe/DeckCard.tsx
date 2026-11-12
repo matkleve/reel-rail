@@ -1,5 +1,5 @@
-import { ArrowDownToLine, Check, Layers, MapPin, Play, Scissors, Tag as TagIcon } from "lucide-react";
-import type { CSSProperties, HTMLAttributes } from "react";
+import { ArrowDownToLine, Check, MapPin, Play, Scissors, Tag as TagIcon } from "lucide-react";
+import { useState, type CSSProperties, type HTMLAttributes, type Ref, type SyntheticEvent } from "react";
 
 import { Original } from "@/carousel/Original";
 import { TRIMMABLE } from "@/fs/trimVideo";
@@ -13,66 +13,75 @@ import { TagPanel } from "@/ui/TagMenu";
 import { tagStyle } from "@/ui/tagColor";
 import { useThumb } from "@/ui/useThumb";
 
-import { leanOf, type Verdict } from "./deckGesture";
-import type { DeckDrag } from "./useDeckDrag";
+import type { Verdict } from "./deckGesture";
+import type { Exit } from "./flyOut";
 
 const WHEN = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-const STAMPS: { verdict: Verdict; label: string }[] = [
-  { verdict: "good", label: t("Good") },
-  { verdict: "bad", label: t("Bad") },
-  { verdict: "top", label: t("Top") },
-  { verdict: "delete", label: t("Delete") },
-];
+const STAMPS: Verdict[] = ["good", "bad", "top", "delete"];
+const STAMP_LABEL: Record<Verdict, string> = { good: t("Good"), bad: t("Bad"), top: t("Top"), delete: t("Delete") };
 
-const UPRIGHT: Record<Verdict, number> = { good: 0, bad: 0, top: 0, delete: 0 };
+/**
+ * Each photo's shape, once its preview has loaded — the frame is cut to it.
+ * Kept across cards: the card underneath learns its shape before it is on top.
+ */
+const aspects = new Map<string, number>();
+const DEFAULT_ASPECT = 3 / 4;
+const clampAspect = (a: number) => Math.min(2.2, Math.max(0.45, a));
 
 type Props = {
   media: Media;
   /** The card you are deciding on; the other one waits underneath. */
   top: boolean;
-  drag: DeckDrag;
-  leaving?: Verdict;
-  stackCount?: number;
+  dragging?: boolean;
+  leaving?: { verdict: Verdict; exit: Exit };
   presets: string[];
   handlers?: HTMLAttributes<HTMLDivElement>;
+  cardRef?: Ref<HTMLDivElement>;
 };
 
 /**
- * One photo/video on the deck, as a print: a frame, the whole photo (contain,
- * over a blurred copy of itself — a landscape shot is rated as taken, not as
- * a crop), and the caption underneath.
+ * One photo/video on the deck, as a print: the frame hugs the photo (a
+ * portrait shot gets a tall print, a landscape one a wide print — no blurred
+ * side bars), the caption underneath.
+ *
+ * Drag position and lean are CSS variables written by useDeckDrag; this
+ * component only renders when the card changes, not while it moves.
  */
-export function DeckCard({ media, top, drag, leaving, stackCount, presets, handlers }: Props) {
+export function DeckCard({ media, top, dragging, leaving, presets, handlers, cardRef }: Props) {
   const thumb = useThumb(media);
+  const [aspect, setAspect] = useState(() => aspects.get(media.id) ?? DEFAULT_ASPECT);
   const picked = media.exportedTo.some((e) => e.series === PICKS);
-  const lean = leaving ? { ...UPRIGHT, [leaving]: 1 } : top ? leanOf(drag.dx, drag.dy) : UPRIGHT;
-  const cls = ["deck-card", top ? "is-top" : "is-next", drag.active && top && "is-dragging", leaving && `is-leaving-${leaving}`]
+  const learn = (e: SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    if (!w || !h) return;
+    const a = clampAspect(w / h);
+    aspects.set(media.id, a);
+    setAspect(a);
+  };
+  const cls = ["deck-card", top ? "is-top" : "is-next", dragging && "is-dragging", leaving && `is-leaving is-leaving-${leaving.verdict}`]
     .filter(Boolean)
     .join(" ");
   const style = {
-    "--dx": `${top ? drag.dx : 0}px`,
-    "--dy": `${top ? drag.dy : 0}px`,
-    // The card tilts as it is thrown sideways, like one held at the bottom.
-    "--rot": `${top ? drag.dx / 18 : 0}deg`,
-    "--good": lean.good,
-    "--bad": lean.bad,
-    "--top": lean.top,
-    "--delete": lean.delete,
+    "--aspect": aspect,
+    ...(leaving && {
+      "--out-x": `${leaving.exit.x}px`,
+      "--out-y": `${leaving.exit.y}px`,
+      "--out-rot": `${leaving.exit.rot}deg`,
+      ...Object.fromEntries(STAMPS.map((v) => [`--${v}`, v === leaving.verdict ? 1 : 0])),
+    }),
   } as CSSProperties;
 
   return (
-    <div className={cls} style={style} data-id={media.id} aria-hidden={!top} {...(top ? handlers : {})}>
+    <div ref={cardRef} className={cls} style={style} data-id={media.id} aria-hidden={!top} {...(top ? handlers : {})}>
       <div className="deck-print">
-        {thumb.url && <img className="deck-fill" src={thumb.url} alt="" draggable={false} />}
-        {thumb.url ? <img className="deck-photo" src={thumb.url} alt="" draggable={false} /> : <span className="card-ph" />}
+        {thumb.url ? (
+          <img className="deck-photo" src={thumb.url} alt="" draggable={false} onLoad={learn} />
+        ) : (
+          <span className="card-ph" />
+        )}
         {top && <Original media={media} />}
 
-        {stackCount && (
-          <span className="deck-chip deck-burst">
-            <Layers size={13} aria-hidden="true" /> {stackCount}
-          </span>
-        )}
         {media.type === "video" && !top && (
           <span className="deck-chip deck-video" aria-hidden="true">
             <Play size={13} fill="currentColor" />
@@ -80,9 +89,9 @@ export function DeckCard({ media, top, drag, leaving, stackCount, presets, handl
         )}
         {top && <CardTools media={media} picked={picked} />}
 
-        {STAMPS.map((s) => (
-          <span key={s.verdict} className={`deck-stamp is-${s.verdict}`} aria-hidden="true">
-            {s.label}
+        {STAMPS.map((v) => (
+          <span key={v} className={`deck-stamp is-${v}`} aria-hidden="true">
+            {STAMP_LABEL[v]}
           </span>
         ))}
       </div>

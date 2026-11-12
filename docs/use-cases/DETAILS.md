@@ -12,8 +12,8 @@ Status is judged against the code on `main` (2026-11-12), honestly:
 
 | Status | Count |
 | --- | --- |
-| built | 53 |
-| partly | 23 |
+| built | 57 |
+| partly | 19 |
 | missing | 19 |
 | decide | 5 |
 
@@ -96,10 +96,10 @@ Expected: the whole app is German, dates too. Status: `built`
 ## B. Sort deck
 
 **D-011** A portrait photo, then a landscape one, then a square one.
-Expected: the white print frame hugs each photo; no blurred or black bars. Status: `partly` — being changed now (2026-11-12).
+Expected: the white print frame hugs each photo; no blurred or black bars. Status: `built` (2026-11-12).
 
 **D-012** I drag a card slowly, then flick it right.
-Expected: it sticks to my finger, tilts, and keeps flying off-screen the way I threw it. Status: `partly` — being changed now; it used to stutter and stop at the edge.
+Expected: it sticks to my finger, tilts, and keeps flying off-screen the way I threw it. Status: `built` — drag by CSS variables once per frame, fly-out along the throw (2026-11-12).
 
 **D-013** I let go halfway.
 Expected: it springs back to the middle, stamps fade out. Status: `built`
@@ -120,7 +120,7 @@ Expected: ↺ brings the card back on top with its old rating. Status: `built`
 Expected: five decisions come back, newest first. Status: `built` — up to 200.
 
 **D-019** Two photos taken a second apart.
-Expected: two cards, one after the other — no folding, no "2" badge. Status: `partly` — being changed now; the deck used to fold bursts.
+Expected: two cards, one after the other — no folding, no "2" badge. Status: `built` (2026-11-12).
 
 **D-020** A video comes up in the deck.
 Expected: it plays muted on the card; tap pauses; scissors open the trimmer. Status: `built`
@@ -150,7 +150,7 @@ Expected: tag button on the card, presets one tap away. Status: `built`
 Expected: the place field in the caption; the next photos of that day suggest the same place. Status: `partly` — editable per photo; no suggestion carried over.
 
 **D-029** The note after a throw ("Good · Undo").
-Expected: a quiet message in the app's style, not over the photo. Status: `partly` — being restyled now.
+Expected: a quiet message in the app's style, not over the photo. Status: `built` — under the buttons, verdict icon + Undo (2026-11-12).
 
 **D-030** I want to zoom into a photo to check focus.
 Expected: pinch on the card zooms (no throw while two fingers are down). Status: `missing`

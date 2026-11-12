@@ -64,13 +64,15 @@ describe("the deck", () => {
     expect(deckOrder(s())).toEqual(["b"]);
   });
 
-  it("shows a burst by its cover and starts over from the first card", () => {
+  it("deals every photo of a burst — no folding in the deck — and starts over from the first card", () => {
     const close = ["x", "y"].map((id, i) => media(id, { takenAt: new Date(Date.UTC(2026, 9, 15, 9, 0, i)).toISOString() }));
-    close[1]!.rating = 2;
     s().load({ ...emptyReel(), media: Object.fromEntries(close.map((m) => [m.id, m])) });
     s().setCurrent("x");
-    expect(topOf(s())).toBe("y");
-    restartDeck();
+    expect(deckOrder(s())).toEqual(["x", "y"]);
+    expect(topOf(s())).toBe("x");
+    expect(decide("good")).toBe(true);
     expect(s().currentId).toBe("y");
+    restartDeck();
+    expect(s().currentId).toBe("x");
   });
 });
