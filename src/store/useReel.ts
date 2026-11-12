@@ -15,6 +15,12 @@ export type ReelState = {
   order: string[];
   stacks: Stacks;
   expanded: ReadonlySet<string>;
+  /**
+   * The order ← / → walks in, when it is not `order`: the phone timeline's
+   * groups one after another (a place group is not one stretch of time). Set
+   * by src/timeline/groupMode.ts; no burst is folded while it is set.
+   */
+  nav?: readonly string[];
   currentId?: string;
   selection: ReadonlySet<string>;
   anchorId?: string;
@@ -97,7 +103,7 @@ export const useReel = create<ReelState>()((set, get) => ({
   load(reel) {
     const d = derive(reel);
     const first = visibleOrder(d.order, d.stacks, new Set(), d.reel.media)[0];
-    set({ ...d, expanded: new Set(), currentId: first, selection: new Set(), anchorId: undefined, undoStack: [] });
+    set({ ...d, expanded: new Set(), nav: undefined, currentId: first, selection: new Set(), anchorId: undefined, undoStack: [] });
   },
 
   refresh(reel) {
@@ -129,13 +135,14 @@ export const useReel = create<ReelState>()((set, get) => ({
   },
 
   step(dir, extend = false) {
-    const { order, currentId, reel, filters, stacks, expanded } = get();
-    let i = currentId ? order.indexOf(currentId) : -1;
-    for (i += dir; i >= 0 && i < order.length; i += dir) {
-      const id = order[i]!;
-      if (passes(reel.media[id]!, filters) && isShown(id, stacks, expanded, reel.media)) break;
+    const { order, nav, currentId, reel, filters, stacks, expanded } = get();
+    const list = nav ?? order;
+    let i = currentId ? list.indexOf(currentId) : -1;
+    for (i += dir; i >= 0 && i < list.length; i += dir) {
+      const id = list[i]!;
+      if (passes(reel.media[id]!, filters) && (nav || isShown(id, stacks, expanded, reel.media))) break;
     }
-    const id = order[i];
+    const id = list[i];
     if (id) get().setCurrent(id, extend ? "extend" : "replace");
   },
 

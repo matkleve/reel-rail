@@ -5,7 +5,7 @@ import { CleanupDialog } from "@/cleanup/CleanupDialog";
 import { CreateSeriesDialog } from "@/series/CreateSeriesDialog";
 import { SeriesListDialog } from "@/series/SeriesListDialog";
 import { useUi } from "@/store/useUi";
-import { DayPiles } from "@/timeline/DayPiles";
+import { GroupPiles } from "@/timeline/GroupPiles";
 import { Timeline } from "@/timeline/Timeline";
 import { TrimDialog } from "@/trim/TrimDialog";
 import { Dock } from "@/ui/Dock";
@@ -30,8 +30,8 @@ export function App() {
   // thumb, a bigger screen in the header.
   const phone = useMedia(PHONE);
   const sorting = useUi((s) => s.view === "sort");
-  // Phone timeline: the days as stacks until one is fanned out (D-031).
-  const piles = useUi((s) => phone && !s.openDay);
+  // Phone timeline: stacks (per day, time or place) until one is fanned out (D-031).
+  const piles = useUi((s) => phone && s.groupBy !== "single" && !s.openGroup);
   useKeyboard();
 
   // Layout effect: it must land before children's effects run — the timeline
@@ -55,7 +55,7 @@ export function App() {
         {sorting ? (
           <SwipeDeck />
         ) : piles ? (
-          <DayPiles />
+          <GroupPiles />
         ) : (
           <>
             <Carousel />

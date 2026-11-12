@@ -7,8 +7,8 @@ import { locale, t } from "@/i18n";
 import { setPlace } from "@/store/actions";
 import { targetIds, useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
-import { dayKey } from "@/timeline/days";
-import { closeDay } from "@/timeline/dayMode";
+import { closeGroup, useGroups } from "@/timeline/groupMode";
+import { GroupSwitch } from "@/timeline/GroupPiles";
 
 import { Button } from "./kit/Button";
 import { Kbd } from "./kit/Kbd";
@@ -24,13 +24,16 @@ const HINTS_KEY = "reel-rail:hints-dismissed";
  */
 export function StageOverlay() {
   const media = useReel((s) => (s.currentId ? s.reel.media[s.currentId] : undefined));
-  // In a fanned-out day (phone) the count is the day's: "3 / 312" of Saturday.
+  // In a fanned-out stack (phone) the count is the stack's: "3 / 312" of Saturday.
   const phone = useMedia(PHONE);
-  const day = useUi((s) => (phone ? s.openDay : undefined));
+  const open = useUi((s) => (phone ? s.openGroup : undefined));
+  const single = useUi((s) => phone && s.groupBy === "single");
+  const { groups } = useGroups();
+  const list = open ? groups.find((g) => g.key === open)?.ids : undefined;
   const [index, total] = useReel(
     useShallow((s) => {
-      const list = day ? s.order.filter((id) => dayKey(s.reel.media[id]!.takenAt) === day) : s.order;
-      return [s.currentId ? list.indexOf(s.currentId) : -1, list.length];
+      const ids = list ?? s.order;
+      return [s.currentId ? ids.indexOf(s.currentId) : -1, ids.length];
     }),
   );
   if (!media) return null;
@@ -40,11 +43,17 @@ export function StageOverlay() {
   return (
     <>
       <div className="stage-meta">
-        {day && (
-          <button type="button" className="day-back" onClick={closeDay}>
-            <ChevronLeft size={16} strokeWidth={2.4} aria-hidden="true" />
-            {t("All days")}
-          </button>
+        {single ? (
+          <div className="group-switch is-on-stage">
+            <GroupSwitch />
+          </div>
+        ) : (
+          open && (
+            <button type="button" className="day-back" onClick={closeGroup}>
+              <ChevronLeft size={16} strokeWidth={2.4} aria-hidden="true" />
+              {t("All stacks")}
+            </button>
+          )
         )}
         <h1 className="stage-date">{DATE.format(at)}</h1>
         <div className="stage-sub">

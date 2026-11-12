@@ -8,8 +8,8 @@ import { passes } from "@/store/filters";
 import { coverOf, visibleOrder } from "@/store/stacks";
 import { useReel } from "@/store/useReel";
 import { useUi } from "@/store/useUi";
-import { dayKey } from "@/timeline/days";
-import { openDay, unfoldBursts } from "@/timeline/dayMode";
+import { openGroup, useGroups } from "@/timeline/groupMode";
+import type { Group } from "@/timeline/groups";
 import { RATING_LABEL, ratingClass, type Rating } from "@/types";
 import { PHONE, useMedia } from "@/ui/useMedia";
 import { useSize } from "@/ui/useSize";
@@ -48,8 +48,9 @@ export function Carousel() {
   const size = useSize(stage);
   const thumbs = useSyncExternalStore(subscribeThumbs, thumbsVersion);
 
-  const { day, ids } = useStripIds(s);
-  const fanning = useDayFollow(day, s.currentId ? s.media[s.currentId]?.takenAt : undefined, s.stacks);
+  const strip = useStripIds(s);
+  const ids = strip.ids;
+  const fanning = useDayFollow(strip, s.currentId, s.stacks);
   // A current item hidden in a collapsed burst is represented by the burst's cover.
   const sid = s.currentId ? s.stacks.stackOf[s.currentId] : undefined;
   const shownId =
@@ -121,40 +122,53 @@ type Strip = Pick<ReturnType<typeof useReel.getState>, "order" | "stacks" | "exp
   media: ReturnType<typeof useReel.getState>["reel"]["media"];
 };
 
-/** What the strip shows. Phone: one fanned-out day (D-031) — every photo of it, bursts unfolded. */
+/**
+ * What the strip shows. Phone: one fanned-out stack (D-031) — every photo of
+ * it, bursts unfolded; "single" is one stack of everything, always open.
+ */
 function useStripIds(s: Strip) {
   const phone = useMedia(PHONE);
-  const day = useUi((x) => (phone ? x.openDay : undefined));
+  const open = useUi((x) => (phone ? x.openGroup : undefined));
+  const single = useUi((x) => phone && x.groupBy === "single");
+  const { groups, groupOf } = useGroups();
+  const group = open ? groups.find((g) => g.key === open) : undefined;
   const ids = useMemo(
-    () =>
-      day
-        ? s.order.filter((id) => dayKey(s.media[id]!.takenAt) === day)
-        : visibleOrder(s.order, s.stacks, s.expanded, s.media),
-    [day, s.order, s.stacks, s.expanded, s.media],
+    () => group?.ids ?? visibleOrder(s.order, s.stacks, s.expanded, s.media),
+    [group, s.order, s.stacks, s.expanded, s.media],
   );
-  return { day, ids };
+  return { day: open, ids, groups, groupOf, single };
 }
 
 /**
- * In a fanned-out day: swiping past its last (or first) photo goes straight on
- * into the next (or previous) day, which fans out in turn; a burst formed by a
- * new rating is unfolded at once. Returns whether the fan-out animation runs.
+ * In a fanned-out stack: swiping past its last (or first) photo goes straight
+ * on into the next (or previous) stack, which fans out in turn; the walking
+ * order and the unfolded bursts follow changes. Returns whether the fan-out
+ * animation runs.
  */
-function useDayFollow(day: string | undefined, takenAt: string | undefined, stacks: unknown): boolean {
+function useDayFollow(
+  strip: { day?: string; groups: Group[]; groupOf: Map<string, string>; single: boolean },
+  currentId: string | undefined,
+  stacks: unknown,
+): boolean {
+  const { day, groups, groupOf, single } = strip;
   const [fanning, setFanning] = useState(false);
-  const now = takenAt ? dayKey(takenAt) : undefined;
+  const now = currentId ? groupOf.get(currentId) : undefined;
   useEffect(() => {
-    if (day && now && now !== day) openDay(now, useReel.getState().currentId);
-  }, [day, now]);
-  useEffect(() => {
-    if (day) unfoldBursts();
-  }, [day, stacks]);
+    if (single && !day && groups[0]) openGroup(groups, groups[0].key, currentId);
+    else if (day && now && now !== day) openGroup(groups, now, currentId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [single, day, now]);
   useEffect(() => {
     if (!day) return;
+    const s = useReel.getState();
+    useReel.setState({ nav: groups.flatMap((g) => g.ids), expanded: new Set(Object.keys(s.stacks.members)) });
+  }, [day, groups, stacks]);
+  useEffect(() => {
+    if (!day || single) return;
     setFanning(true);
     const timer = setTimeout(() => setFanning(false), 700);
     return () => clearTimeout(timer);
-  }, [day]);
+  }, [day, single]);
   return fanning;
 }
 

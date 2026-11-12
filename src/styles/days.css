@@ -173,3 +173,23 @@
     animation: none;
   }
 }
+
+/* How to stack: Single · Day · Time · Place. Above the stacks, or on the stage in "Single". */
+.group-switch {
+  display: flex;
+  justify-content: center;
+  flex: none;
+}
+.group-switch .segmented {
+  background: var(--surface-1);
+  box-shadow: var(--shadow-1);
+}
+.group-switch .segmented button {
+  gap: 4px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+.group-switch.is-on-stage {
+  justify-content: flex-start;
+  margin-bottom: var(--space-2);
+}

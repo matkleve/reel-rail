@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
 import type { ScanProgress } from "@/fs/scan";
+import { initialGroupBy } from "@/timeline/groupPref";
+import type { GroupBy } from "@/timeline/groups";
 
 export type Toast = { id: number; text: string; kind: "info" | "error" };
 export type Phase = "start" | "scanning" | "ready" | "error";
@@ -23,11 +25,10 @@ type UiState = {
   timeZoom: number;
   /** The two screens: the swipe deck (sort) or the photo strip over the timeline. */
   view: "sort" | "timeline";
-  /**
-   * Phone timeline: the day fanned out into its photos ("YYYY-MM-DD", local
-   * time); none = every day as one stack (src/timeline/days.ts).
-   */
-  openDay?: string;
+  /** Phone timeline: how the photos are stacked (src/timeline/groups.ts). */
+  groupBy: GroupBy;
+  /** Phone timeline: the stack fanned out into its photos (a Group key); none = all stacks. */
+  openGroup?: string;
   /** Name of the Space-key picks folder, once known. */
   picksFolderName?: string;
   toast?: Toast;
@@ -62,6 +63,7 @@ export const useUi = create<UiState>()((set) => ({
   theme: initialTheme(),
   timeZoom: 1,
   view: initialView(),
+  groupBy: initialGroupBy(),
   handover: false,
   set: (patch) => set(patch),
 }));
